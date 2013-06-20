@@ -1,4 +1,4 @@
 pyrsistent
 ==========
 
-Port of some of clojures persistent data structures in Python
+Port of some of Clojures persistent data structures in Python
