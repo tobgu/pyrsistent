@@ -5,7 +5,7 @@ allocations = set()
 
 for line in open('meminfo.txt'):
     (_, command, address) = line.split()
-    if command == 'malloc_new':
+    if (command == 'malloc_new') or (command == 'malloc_copy'):
         allocations.add(address)
     elif command == 'free':
         if not address in allocations:
@@ -13,5 +13,6 @@ for line in open('meminfo.txt'):
         else:
             allocations.remove(address)
 
-    if allocations:
-        print 'Allocations remain: ' + str(allocations)
+if allocations:
+    print 'Allocations remain: ' + str(len(allocations))
+    print 'Those are: ' + str(allocations)

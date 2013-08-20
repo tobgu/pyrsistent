@@ -44,13 +44,20 @@ static PyMemberDef PVector_members[] = {
 
 static int nodeCount = 0;
 
+static void debug(char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  //  vprintf(fmt, args);
+  va_end(args);
+}
+
 static VNode* newNode() {
   VNode* result = malloc(sizeof(VNode));
   printf("meminfo malloc_new %x\n", result);
   memset(result, 0x0, sizeof(VNode));
   result->refCount = 1;
   nodeCount++;
-  printf("newNode() Node count = %i\n", nodeCount);
+  debug("newNode() Node count = %i\n", nodeCount);
   return result;
 }
 
@@ -67,18 +74,23 @@ static VNode* copyNode(VNode* source) {
       ((VNode*)result->items[i])->refCount++;
     }
   }
+
   result->refCount = 1;
   nodeCount++;
-  printf("copyNode(): Node count = %i\n", nodeCount);
+  debug("copyNode(): Node count = %i\n", nodeCount);
   return result;
 }
 
+// 1924 allocations too many at the end of the day
+// 1987 copyNode allocations
+// Is there a connection? Maybe it's just a coincidence... Can't really find anything that points
+// in the direction of a problem with the copy routine right now. It's probably something else...
 
 static void freeNode(VNode* node) {
   free(node);
   nodeCount--;
   printf("meminfo free %x\n", node);
-  printf("freeNode(): Node count = %i\n", nodeCount);
+  debug("freeNode(): Node count = %i\n", nodeCount);
 }
 
 
@@ -136,7 +148,7 @@ static void releaseNode(int level, VNode *node) {
     return;
   }
 
-  printf("releaseNode(): node=%x, level=%i, refCount=%i\n", node, level, node->refCount);
+  debug("releaseNode(): node=%x, level=%i, refCount=%i\n", node, level, node->refCount);
 
   int i;
   if(level > 0) {
@@ -159,7 +171,7 @@ static void releaseNode(int level, VNode *node) {
     }
   }
 
-  printf("releaseNode(): Done! node=%x!\n", node);
+  debug("releaseNode(): Done! node=%x!\n", node);
 }
 
 /*
@@ -168,13 +180,13 @@ static void releaseNode(int level, VNode *node) {
  those if needed.
 */
 static void PVector_dealloc(PVector *self) {
-  printf("Dealloc(): self=%x, self->count=%i, tail->refCount=%i, root->refCount=%i, self->shift=%i\n", self, self->count, self->tail->refCount, self->root->refCount, self->shift);
-  printf("Dealloc(): Releasing self->tail=%x\n", self->tail);
+  debug("Dealloc(): self=%x, self->count=%i, tail->refCount=%i, root->refCount=%i, self->shift=%i\n", self, self->count, self->tail->refCount, self->root->refCount, self->shift);
+  debug("Dealloc(): Releasing self->tail=%x\n", self->tail);
   releaseNode(0, self->tail);
-  printf("Dealloc(): Releasing self->root=%x\n", self->root);
+  debug("Dealloc(): Releasing self->root=%x\n", self->root);
   releaseNode(self->shift, self->root);
 
-  printf("Dealloc(): Done!\n");
+  debug("Dealloc(): Done!\n");
 }
 
 static void copy_insert(void** dest, void** src, Py_ssize_t pos, void *obj) {
@@ -253,12 +265,10 @@ static PyObject* pyrsistent_pvec(PyObject *self, PyObject *args) {
   return EMPTY_VECTOR;
 }
 
-
-
 static PVector* emptyNewPvec() {
   // TODO: Support GC
   PVector *pvec = PyObject_New(PVector, &PVectorType);
-  printf("Ref cnt: %u\n", pvec->ob_refcnt);
+  debug("Ref cnt: %u\n", pvec->ob_refcnt);
   pvec->count = (Py_ssize_t)0;
   pvec->dict = PyDict_New();
   pvec->shift = SHIFT;
@@ -299,7 +309,7 @@ static void incRefs(PyObject **obj) {
 static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
   // TODO: Support GC
   PVector *pvec = PyObject_New(PVector, &PVectorType);
-  printf("Ref cnt: %u\n", pvec->ob_refcnt);
+  debug("Ref cnt: %u\n", pvec->ob_refcnt);
   pvec->count = count;
   pvec->dict = PyDict_New();
   pvec->shift = shift;
@@ -310,6 +320,7 @@ static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
 
 static VNode* newPath(unsigned int level, VNode* node){
   if(level == 0) {
+    node->refCount++;
     return node;
   }
   
@@ -323,7 +334,7 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
   VNode* result = copyNode(parent);
   VNode* nodeToInsert;
   VNode* child;
-  printf("pushTail(): count = %i, sub_index = %i\n", count, sub_index);
+  debug("pushTail(): count = %i, sub_index = %i\n", count, sub_index);
 
   if(level == SHIFT) {
     // We're at the bottom
@@ -347,10 +358,11 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
  Haven't really decided if this is the right thing to do yet...
 */
 static PyObject* PVector_append(PVector *self, PyObject *obj) {
+  // TODO: Refactor and cleanup this function
   assert (obj != NULL);
 
   unsigned int tail_size = self->count - vec_tailoff(self);
-  printf("append(): count = %u, tail_size = %u\n", self->count, tail_size);
+  debug("append(): count = %u, tail_size = %u\n", self->count, tail_size);
 
   // Does the new object fit in the tail? If so, take a copy of the tail and
   // insert the new element in that.
@@ -359,23 +371,33 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
     PVector *new_pvec = newPvec(self->count + 1, self->shift, self->root);
     copy_insert(new_pvec->tail->items, self->tail->items, tail_size, obj);
     incRefs(new_pvec->tail->items);
-    //    new_pvec->count = self->count + 1;
-    printf("append(): new_pvec=%x, new_pvec->tail=%x, new_pvec->root=%x\n", new_pvec, new_pvec->tail, new_pvec->root);
+    debug("append(): new_pvec=%x, new_pvec->tail=%x, new_pvec->root=%x\n", new_pvec, new_pvec->tail, new_pvec->root);
 
     return new_pvec;
   }
 
   // Tail is full, need to push it into the tree
-  //  if((self->count >> SHIFT) > (1 < self->SHIFT))
-  // TODO: Is the root full?
-  unsigned int new_shift = self->shift;
-  VNode* new_root = pushTail(self->shift, self->count, self->root, self->tail);
-  //  self->tail->refCount++;
+  
+  // Is the root node full?
+  VNode* new_root;
+  unsigned int new_shift;
+  if((self->count >> SHIFT) > (1 << self->shift)) {
+    new_root = newNode();
+    new_root->items[0] = self->root;
+    self->root->refCount++;
+    new_root->items[1] = newPath(self->shift, self->tail);
+    new_shift = self->shift + SHIFT;
+  } else {
+    new_root = pushTail(self->shift, self->count, self->root, self->tail);
+    new_shift = self->shift;
+  }
+
   PVector* pvec = newPvec(self->count + 1, new_shift, new_root);
   pvec->tail->items[0] = obj;
   Py_XINCREF(obj);
-  printf("append_push(): pvec=%x, pvec->tail=%x, pvec->root=%x\n", pvec, pvec->tail, pvec->root);
+  debug("append_push(): pvec=%x, pvec->tail=%x, pvec->root=%x\n", pvec, pvec->tail, pvec->root);
   return pvec;
+
 }
 
 static PyMethodDef PyrsistentMethods[] = {
@@ -396,7 +418,7 @@ PyMODINIT_FUNC initpyrsistentc(void) {
   PyObject* c = PyDict_GetItemString(moduleDict, "Sequence");
   
   if(c == NULL) {
-    printf("Was NULL!\n");
+    debug("Was NULL!\n");
   }
 
   Py_INCREF(c);
