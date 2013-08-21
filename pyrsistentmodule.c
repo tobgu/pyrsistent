@@ -47,13 +47,13 @@ static int nodeCount = 0;
 static void debug(char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  //  vprintf(fmt, args);
+  //vprintf(fmt, args);
   va_end(args);
 }
 
 static VNode* newNode() {
   VNode* result = malloc(sizeof(VNode));
-  printf("meminfo malloc_new %x\n", result);
+  debug("meminfo malloc_new %x\n", result);
   memset(result, 0x0, sizeof(VNode));
   result->refCount = 1;
   nodeCount++;
@@ -64,7 +64,7 @@ static VNode* newNode() {
 static VNode* copyNode(VNode* source) {
   int i = 0;
   VNode* result = malloc(sizeof(VNode));
-  printf("meminfo malloc_copy %x\n", result);
+  debug("meminfo malloc_copy %x\n", result);
   memcpy(result->items, source->items, sizeof(source->items));
   
   // Need to increment the reference count of the pointed
@@ -89,7 +89,7 @@ static VNode* copyNode(VNode* source) {
 static void freeNode(VNode* node) {
   free(node);
   nodeCount--;
-  printf("meminfo free %x\n", node);
+  debug("meminfo free %x\n", node);
   debug("freeNode(): Node count = %i\n", nodeCount);
 }
 
@@ -151,24 +151,26 @@ static void releaseNode(int level, VNode *node) {
   debug("releaseNode(): node=%x, level=%i, refCount=%i\n", node, level, node->refCount);
 
   int i;
-  if(level > 0) {
-    node->refCount--;
-    if(node->refCount == 0) {
+
+  node->refCount--;
+  if(node->refCount == 0) {
+    if(level > 0) {
       for(i = 0; i < BRANCH_FACTOR; i++) {
 	if(node->items[i] != NULL) {
 	  releaseNode(level - SHIFT, node->items[i]);
 	}
       }
       freeNode(node);
-    }
-  } else {
-    node->refCount--;
-    if(node->refCount == 0) {
+    } else {
       for(i = 0; i < BRANCH_FACTOR; i++) {
 	Py_XDECREF(node->items[i]);
       }
       freeNode(node);
     }
+  } else if (node->refCount < 0) {
+    // Strictly for error checking, this means that the refcount was never increased
+    printf("Trying to deallocate node without refCount. This is most likely wrong! node = %x, refCount = %x", 
+	   node, node->refCount);
   }
 
   debug("releaseNode(): Done! node=%x!\n", node);
@@ -186,6 +188,7 @@ static void PVector_dealloc(PVector *self) {
   debug("Dealloc(): Releasing self->root=%x\n", self->root);
   releaseNode(self->shift, self->root);
 
+  Py_DECREF(self->dict);
   debug("Dealloc(): Done!\n");
 }
 
@@ -343,9 +346,18 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
   } else {
     // More levels available in the tree
     child = parent->items[sub_index];
-    nodeToInsert = (child != NULL) ?
-      pushTail(level - SHIFT, count, child, tail) :
-      newPath(level - SHIFT, tail);
+
+    if(child != NULL) {
+      nodeToInsert = pushTail(level - SHIFT, count, child, tail);
+
+      // Need to make an adjustment of the refCount for the child node here since
+      // it was incremented in an earlier stage when the node was copied. Now the child
+      // node will be part of the path copy so the number of references to the original
+      // child will not increase at all.
+      child->refCount--;
+    } else {
+      nodeToInsert = newPath(level - SHIFT, tail);
+    }
   }
   
   result->items[sub_index] = nodeToInsert;
@@ -384,6 +396,7 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   if((self->count >> SHIFT) > (1 << self->shift)) {
     new_root = newNode();
     new_root->items[0] = self->root;
+    // TODO: Is it possible to use pushTail here somehow?
     self->root->refCount++;
     new_root->items[1] = newPath(self->shift, self->tail);
     new_shift = self->shift + SHIFT;

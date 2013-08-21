@@ -8,7 +8,7 @@ class TestPyVec(unittest.TestCase):
     def insert_in_vector(self):
         m = pvector(range(50000))
 
-    def xtest_appends_to_small_and_medium_sized_vectors(self):
+    def test_appends_to_small_and_medium_sized_vectors(self):
         # Tests inserts where either the insert fits in the tail, or
         # it fits in the first level of the root node.
         p_next = pvec()
@@ -34,7 +34,7 @@ class TestPyVec(unittest.TestCase):
         for x in range(size):
             self.assertEqual(p_next[x], x)
 
-    def xtest_pvec_is_a_collection(self):
+    def test_pvec_is_a_collection(self):
         # Check that inheritance works as expected
         assert isinstance(pvec(), Sequence)
     
