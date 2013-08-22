@@ -188,8 +188,13 @@ static void PVector_dealloc(PVector *self) {
   debug("Dealloc(): Releasing self->root=%x\n", self->root);
   releaseNode(self->shift, self->root);
 
+  //  printf("Dealloc(): Dict->refCount=%x\n", self->dict->ob_refcnt);
+
   Py_DECREF(self->dict);
   debug("Dealloc(): Done!\n");
+  
+  // TODO: How do I deallocate myself? Seems to be a memory leak here somewhere...
+  PyObject_Del(self);
 }
 
 static void copy_insert(void** dest, void** src, Py_ssize_t pos, void *obj) {
@@ -279,28 +284,6 @@ static PVector* emptyNewPvec() {
   pvec->tail = newNode();
   return pvec;
 }
-
-
-/*
-    def append(self, val):
-        #room in tail?
-        if((self.cnt - self._tailoff()) < BRANCH_FACTOR):
-            new_tail = list(self.tail)
-            new_tail.append(val)
-            return PVector(self.cnt + 1, self.shift, self.root, new_tail)
-        
-        # Full tail, push into tree
-        new_shift = self.shift
-        # Overflow root?
-        if((self.cnt >> SHIFT) > (1 << self.shift)): # >>>
-            new_root = [self.root, self.new_path(self.shift, self.tail)]
-            new_shift += SHIFT
-         else:
-            new_root = self.push_tail(self.shift, self.root, self.tail)
-    
-        return PVector(self.cnt + 1, new_shift, new_root, [val])
-*/
-
 
 static void incRefs(PyObject **obj) {
   int i;
@@ -410,7 +393,6 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   Py_XINCREF(obj);
   debug("append_push(): pvec=%x, pvec->tail=%x, pvec->root=%x\n", pvec, pvec->tail, pvec->root);
   return pvec;
-
 }
 
 static PyMethodDef PyrsistentMethods[] = {

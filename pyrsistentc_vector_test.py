@@ -22,6 +22,17 @@ class TestPyVec(unittest.TestCase):
                 count += 1
                 self.assertEqual(p_next[y], y)
 
+    def xtest_infinity(self):
+        print "Starting to test infinity"
+
+#        while True:
+        x = pvec()
+        print("Start")
+        for z in range(10000000):
+            x = x.append(z)
+        print("Stop")
+
+
     def test_appends_to_large_sized_vectors(self):
         # Tests appends where the inserts do not fit within the first level
         # of the root but must be pushed further down the tree.
