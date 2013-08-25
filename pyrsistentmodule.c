@@ -1,11 +1,14 @@
 #include <Python.h>
 #include <structmember.h>
+
 /*
 TODO: 
 - Python 3 compatibility?
-- Inherit Sequence
+- Factory method for vector, implement transient vector for efficient initialization
+- Support garbage collection (cycle detection)
+- Code clean up
+(- Iterator)
 */
-
 
 /*
 Persistant/Immutable data structures. Unfortunately I have not been able to come
@@ -13,7 +16,18 @@ up with an implementation that is 100% immutable due to the ref counts used by
 Python internally so the GIL must still be at work...
 
 To the end user they should appear immutable at least.
+
+Naming conventions
+------------------
+initpyrsistentc - This is the method that initializes the whole module
+pyrsistent_* -    Methods part of the interface
+Pvector_*    -    Instance methods of the PVector object
+
+All other methods are camel cased without prefix. All methods are static, none should require to be exposed 
+outside of this module. 
+
 */
+
 #define BRANCH_FACTOR 32
 #define BIT_MASK (BRANCH_FACTOR - 1)
 
@@ -81,11 +95,6 @@ static VNode* copyNode(VNode* source) {
   return result;
 }
 
-// 1924 allocations too many at the end of the day
-// 1987 copyNode allocations
-// Is there a connection? Maybe it's just a coincidence... Can't really find anything that points
-// in the direction of a problem with the copy routine right now. It's probably something else...
-
 static void freeNode(VNode* node) {
   free(node);
   nodeCount--;
@@ -99,7 +108,7 @@ static Py_ssize_t PVector_len(PVector *self) {
 }
 
 
-static Py_ssize_t vec_tailoff(PVector *self) {
+static Py_ssize_t tailOff(PVector *self) {
   if(self->count < BRANCH_FACTOR) {
     return 0;
   }
@@ -111,7 +120,7 @@ static Py_ssize_t vec_tailoff(PVector *self) {
 static VNode* nodeFor(PVector *self, int i){
   int level;
   if((i >= 0) && (i < self->count)) {
-    if(i >= vec_tailoff(self)) {
+    if(i >= tailOff(self)) {
       return self->tail;
     }
 
@@ -144,6 +153,7 @@ static PyObject* PVector_get_item(PVector *self, unsigned int pos) {
 }
 
 static void releaseNode(int level, VNode *node) {
+  // TODO: Refactor and clean up this function
   if(node == NULL) {
     return;
   }
@@ -188,21 +198,20 @@ static void PVector_dealloc(PVector *self) {
   debug("Dealloc(): Releasing self->root=%x\n", self->root);
   releaseNode(self->shift, self->root);
 
-  //  printf("Dealloc(): Dict->refCount=%x\n", self->dict->ob_refcnt);
-
   Py_DECREF(self->dict);
   debug("Dealloc(): Done!\n");
   
-  // TODO: How do I deallocate myself? Seems to be a memory leak here somewhere...
   PyObject_Del(self);
 }
 
-static void copy_insert(void** dest, void** src, Py_ssize_t pos, void *obj) {
+static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
   memcpy(dest, src, BRANCH_FACTOR * sizeof(void*));
   dest[pos] = obj;
 }
 
 static PyObject* PVector_append(PVector *self, PyObject *obj);
+
+static PyObject* PVector_assoc(PVector *self, PyObject *obj);
 
 static PySequenceMethods PVector_sequence_methods = {
     PVector_len,                  /* sq_length */
@@ -218,7 +227,8 @@ static PySequenceMethods PVector_sequence_methods = {
 };
 
 static PyMethodDef PVector_methods[] = {
-	{"append",  (PyCFunction)PVector_append,  METH_O, "Appends an element"},
+	{"append",  (PyCFunction)PVector_append, METH_O,       "Appends an element"},
+	{"assoc",   (PyCFunction)PVector_assoc,  METH_VARARGS, "Inserts an element at the specified position"},
 	{NULL}
 };
 
@@ -249,8 +259,8 @@ static PyTypeObject PVectorType = {
   0,				/* tp_clear          */
   0,				/* tp_richcompare    */
   0,				/* tp_weaklistoffset */
-  0,				/* tp_iter           */
-  0,				/* tp_iternext       */
+  0,				/* tp_iter           */ // TODO
+  0,				/* tp_iternext       */ // TODO
   PVector_methods,	        /* tp_methods        */
   PVector_members,		/* tp_members        */
   0,				/* tp_getset         */
@@ -268,9 +278,43 @@ static PyTypeObject PVectorType = {
 static PVector* EMPTY_VECTOR = NULL;
 
 static PyObject* pyrsistent_pvec(PyObject *self, PyObject *args) {
-  // TODO: Support GC
-  Py_INCREF(EMPTY_VECTOR);
-  return EMPTY_VECTOR;
+    PyObject *argObj = NULL;  /* list of arguments */
+    PyObject *result;
+    PyObject *tempVec;
+
+    debug("pyrsistent_pvec(): %x\n", args);
+
+    /* the O! parses for a Python object (listObj) checked to be of type PyList_Type */
+    if(!PyArg_ParseTuple(args, "|O", &argObj)) return NULL;
+    
+    Py_INCREF(EMPTY_VECTOR);
+    result = EMPTY_VECTOR;
+
+    if(argObj == NULL) return result; 
+
+    debug("pyrsistent_pvec(): Arguments passed\n", args);
+
+    PyObject *iterator = PyObject_GetIter(argObj);
+    PyObject *item;
+
+    if (iterator == NULL) {
+      return NULL;
+    }
+
+    debug("pyrsistent_pvec(): Iterating\n");
+    
+    // TODO: More efficient version that fills up to full tail
+    //       before pushing it into the vector
+    while (item = PyIter_Next(iterator)) {
+      tempVec = PVector_append(result, item);
+      Py_DECREF(result);
+      result = tempVec;
+      Py_DECREF(item);
+    }
+
+    Py_DECREF(iterator);
+
+    return result;
 }
 
 static PVector* emptyNewPvec() {
@@ -356,7 +400,7 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   // TODO: Refactor and cleanup this function
   assert (obj != NULL);
 
-  unsigned int tail_size = self->count - vec_tailoff(self);
+  unsigned int tail_size = self->count - tailOff(self);
   debug("append(): count = %u, tail_size = %u\n", self->count, tail_size);
 
   // Does the new object fit in the tail? If so, take a copy of the tail and
@@ -364,7 +408,7 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   if(tail_size < BRANCH_FACTOR) {
     self->root->refCount++;
     PVector *new_pvec = newPvec(self->count + 1, self->shift, self->root);
-    copy_insert(new_pvec->tail->items, self->tail->items, tail_size, obj);
+    copyInsert(new_pvec->tail->items, self->tail->items, tail_size, obj);
     incRefs(new_pvec->tail->items);
     debug("append(): new_pvec=%x, new_pvec->tail=%x, new_pvec->root=%x\n", new_pvec, new_pvec->tail, new_pvec->root);
 
@@ -394,6 +438,71 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   debug("append_push(): pvec=%x, pvec->tail=%x, pvec->root=%x\n", pvec, pvec->tail, pvec->root);
   return pvec;
 }
+
+static VNode* doAssoc(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
+  if(level == 0) {
+    debug("doAssoc(): level == 0\n");
+    VNode* theNewNode = newNode();
+    copyInsert(theNewNode->items, node->items, position & BIT_MASK, value);
+    incRefs(theNewNode->items);
+    return theNewNode;
+  } else {
+    debug("doAssoc(): level == %i\n", level);
+    VNode* theNewNode = copyNode(node);
+    Py_ssize_t index = (position >> level) & BIT_MASK;
+
+    // Release this node since we're about to replace it
+    ((VNode*)theNewNode->items[index])->refCount--;
+    theNewNode->items[index] = doAssoc(node->items[index], level - SHIFT, position, value); 
+    return theNewNode;
+  }
+}
+
+/*
+ Steals a reference to the object that is appended to the list.
+ Haven't really decided if this is the right thing to do yet...
+*/
+static PyObject* PVector_assoc(PVector *self, PyObject *args) {
+  PyObject *argObj = NULL;  /* list of arguments */
+  Py_ssize_t position;
+
+  debug("\nassoc(): Entering\n");
+
+  /* The n parses for size, the O parses for a Python object 
+     (listObj) checked to be of type PyList_Type */
+  if(!PyArg_ParseTuple(args, "nO", &position, &argObj)) return NULL;
+
+  debug("assoc(): Arguments parsed: %d, count=%d\n", position, self->count);
+    
+  if((0 <= position) && (position < self->count)) {
+    debug("assoc(): Position within bounds\n");
+    if(position >= tailOff(self)) {
+      debug("assoc(): Position in tail\n");
+      self->root->refCount++;
+      PVector *new_pvec = newPvec(self->count, self->shift, self->root);
+      copyInsert(new_pvec->tail->items, self->tail->items, position & BIT_MASK, argObj);
+      incRefs(new_pvec->tail->items);
+      return new_pvec;
+    } else {
+      VNode *newRoot = doAssoc(self->root, self->shift, position, argObj);
+      PVector *new_pvec = newPvec(self->count, self->shift, newRoot);
+
+      // Free the tail and replace it with a reference to the tail to the original vector
+      freeNode(new_pvec->tail);
+      new_pvec->tail = self->tail;
+      self->tail->refCount++;
+      return new_pvec;
+    }
+  } else if (position == self->count) {
+    debug("assoc(): Applying append instead\n");
+    return PVector_append(self, argObj);
+  } else {
+    debug("assoc(): Index out of range\n");
+    PyErr_SetString(PyExc_IndexError, "System command failed");
+    return NULL;
+  }
+}
+
 
 static PyMethodDef PyrsistentMethods[] = {
   {"pvec", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
@@ -435,17 +544,3 @@ PyMODINIT_FUNC initpyrsistentc(void) {
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
 }
-
-
-/*
-1 - Full support for insert and direct access
-2 - Proper reference counting for these cases
-
-TODO:
-- Accessor function
-- Reference counting
-- Factory method for vector
-- Inherit abstract sequence class
-- Tests
-- Code clean up
-*/
