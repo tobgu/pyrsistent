@@ -7,6 +7,8 @@ TODO:
 - Factory method for vector, implement transient vector for efficient initialization
 - Support garbage collection (cycle detection)
 - Code clean up
+- Memory check
+- Investigate seg fault in unit tests
 (- Iterator)
 */
 
@@ -61,13 +63,13 @@ static int nodeCount = 0;
 static void debug(char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  //vprintf(fmt, args);
+  printf(fmt, args);
   va_end(args);
 }
 
 static VNode* newNode() {
   VNode* result = malloc(sizeof(VNode));
-  debug("meminfo malloc_new %x\n", result);
+  printf("meminfo malloc_new %x\n", result);
   memset(result, 0x0, sizeof(VNode));
   result->refCount = 1;
   nodeCount++;
@@ -78,7 +80,7 @@ static VNode* newNode() {
 static VNode* copyNode(VNode* source) {
   int i = 0;
   VNode* result = malloc(sizeof(VNode));
-  debug("meminfo malloc_copy %x\n", result);
+  printf("meminfo malloc_copy %x\n", result);
   memcpy(result->items, source->items, sizeof(source->items));
   
   // Need to increment the reference count of the pointed
@@ -98,7 +100,7 @@ static VNode* copyNode(VNode* source) {
 static void freeNode(VNode* node) {
   free(node);
   nodeCount--;
-  debug("meminfo free %x\n", node);
+  //printf("meminfo free %x\n", node);
   debug("freeNode(): Node count = %i\n", nodeCount);
 }
 
@@ -200,8 +202,10 @@ static void PVector_dealloc(PVector *self) {
 
   Py_DECREF(self->dict);
   debug("Dealloc(): Done!\n");
-  
-  PyObject_Del(self);
+ 
+  debug("pymem del %x\n", self);
+  self->ob_type->tp_free((PyObject*)self);
+  //  PyObject_Del(self);
 }
 
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
@@ -320,6 +324,7 @@ static PyObject* pyrsistent_pvec(PyObject *self, PyObject *args) {
 static PVector* emptyNewPvec() {
   // TODO: Support GC
   PVector *pvec = PyObject_New(PVector, &PVectorType);
+  debug("pymem alloc_new %x\n", pvec);
   debug("Ref cnt: %u\n", pvec->ob_refcnt);
   pvec->count = (Py_ssize_t)0;
   pvec->dict = PyDict_New();
@@ -339,6 +344,7 @@ static void incRefs(PyObject **obj) {
 static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
   // TODO: Support GC
   PVector *pvec = PyObject_New(PVector, &PVectorType);
+  debug("pymem alloc_copy %x\n", pvec);
   debug("Ref cnt: %u\n", pvec->ob_refcnt);
   pvec->count = count;
   pvec->dict = PyDict_New();
@@ -536,7 +542,8 @@ PyMODINIT_FUNC initpyrsistentc(void) {
     return;
 
   SHIFT = __builtin_popcount(BIT_MASK);
-
+  
+  debug("pymem creating empty vector\n");
   if(EMPTY_VECTOR == NULL) {
     EMPTY_VECTOR = emptyNewPvec();
   }

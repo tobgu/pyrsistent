@@ -1,4 +1,6 @@
 from collections import Sequence, Mapping
+import collections
+
 
 def bitcount(val):
     return bin(val).count("1")
@@ -65,10 +67,13 @@ class PVector(Sequence):
             return node
         
         raise IndexError();
-    
+
+    def _tail_len(self):
+        return self.cnt - self._tailoff()
+
     def append(self, val):
         #room in tail?
-        if((self.cnt - self._tailoff()) < BRANCH_FACTOR):
+        if self._tail_len() < BRANCH_FACTOR:
             new_tail = list(self.tail)
             new_tail.append(val)
             return PVector(self.cnt + 1, self.shift, self.root, new_tail)
@@ -76,7 +81,7 @@ class PVector(Sequence):
         # Full tail, push into tree
         new_shift = self.shift
         # Overflow root?
-        if((self.cnt >> SHIFT) > (1 << self.shift)): # >>>
+        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
             new_root = [self.root, self.new_path(self.shift, self.tail)]
             new_shift += SHIFT
         else:
@@ -90,13 +95,77 @@ class PVector(Sequence):
 
         return [self.new_path(level - SHIFT, node)]
 
+    def _transient_insert_tail(self):
+        # Overflow root?
+        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
+            self.root = [self.root, self.new_path(self.shift, self.tail)]
+            self.shift += SHIFT
+        else:
+            self.root = self.push_tail(self.shift, self.root, self.tail)
+
+        self.tail = []
+
+    def _transient_extend_iterator(self, iterator):
+        try:
+            while True:
+                if len(self.tail) < BRANCH_FACTOR:
+                    self.tail.append(iterator.next())
+                    self.cnt += 1
+                else:
+                    self._transient_insert_tail()
+
+        except StopIteration:
+            # We're done
+            pass
+
+    def extend(self, obj):
+        if isinstance(obj, collections.Sequence):
+            return self.extend_sequence(obj)
+
+        return self.extend_iterator(obj)
+
+    def extend_iterator(self, iterator):
+        try:
+            new_vector = self.append(next(iterator))
+            new_vector._transient_extend_iterator(iterator)
+            return new_vector
+        except StopIteration:
+            # Empty container, nothing to extend with
+            return self
+
+    def _transient_extend_sequence(self, sequence):
+        # This was very fast, is it correct?
+        offset = 0
+        sequence_len = len(sequence)
+        while offset < sequence_len:
+            max_delta_len = BRANCH_FACTOR - len(self.tail)
+            delta = sequence[offset:offset + max_delta_len]
+            self.tail.extend(delta)
+            delta_len = len(delta)
+            self.cnt += delta_len
+            offset += delta_len
+
+            # Overflow root?
+            if len(self.tail) == BRANCH_FACTOR:
+                self._transient_insert_tail()
+
+    def extend_sequence(self, c):
+        if c:
+            new_vector = self.append(c[0])
+            new_vector._transient_extend_sequence(c[1:])
+            return new_vector
+        else:
+            # Empty container, nothing to extend with
+            return self
+
+
     def push_tail(self, level, parent, tail_node):
         """
         if parent is leaf, insert node,
-        else does it map to an existing child? -> 
+        else does it map to an existing child? ->
              node_to_insert = push node one more level
         else alloc new path
-        
+
         return  node_to_insert placed in copy of parent
         """
         subidx = ((self.cnt - 1) >> level) & BIT_MASK # >>>
@@ -107,12 +176,14 @@ class PVector(Sequence):
             ret.append(tail_node)
         else:
             if (len(parent) > subidx):
-                ret[subidx] = self.push_tail(level - SHIFT, parent[subidx], tail_node) 
+                ret[subidx] = self.push_tail(level - SHIFT, parent[subidx], tail_node)
             else:
                 ret.append(self.new_path(level - SHIFT, tail_node))
 
         return ret
-    
+
+
+
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
 def empty_list(length):
@@ -120,9 +191,7 @@ def empty_list(length):
 
 def pvector(elements=[]):
     vec = _EMPTY_VECTOR
-    for e in elements:
-        vec = vec.append(e)
-    return vec
+    return vec.extend(elements)
 
 class Box(object):
     def __init__(self, val = None):
