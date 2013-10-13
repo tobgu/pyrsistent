@@ -59,7 +59,17 @@ def test_multi_level_sequence():
     seq2 = seq.append(11)
 
     assert seq[5] == 5
+    assert seq2[7373] == 7373
     assert seq2[8000] == 11
+
+def test_multi_level_sequence_from_iterator():
+    seq = pvector(iter(range(8000)))
+    seq2 = seq.append(11)
+
+    assert seq[5] == 5
+    assert seq2[7373] == 7373
+    assert seq2[8000] == 11
+
 
 def test_random_insert_within_tail():
     seq = pvector([1, 2, 3])

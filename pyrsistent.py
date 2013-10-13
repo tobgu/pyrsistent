@@ -23,96 +23,93 @@ class PVector(Sequence):
     def __getitem__(self, index):
         if isinstance(index, slice):
             indices = index.indices(len(self))
-            return pvector([self[i] for i in range(*indices)])
+            return pvector([self._get_at(i) for i in range(*indices)])
 
+        return self._get_at(index)
+
+    def _get_at(self, index):
         node = self._array_for(index)
         return node[index & BIT_MASK]
-    
+
     def assoc(self, i, val):
         if 0 <= i < self.cnt:
-            if i >= self._tailoff():
+            if i >= self._tail_offset():
                 new_tail = list(self.tail)
                 new_tail[i & BIT_MASK] = val
                 return PVector(self.cnt, self.shift, self.root, new_tail)
 
-            return PVector(self.cnt, self.shift, self.do_assoc(self.shift, self.root, i, val), self.tail)
+            return PVector(self.cnt, self.shift, self._do_assoc(self.shift, self.root, i, val), self.tail)
         
         if i == self.cnt:
             return self.append(val)
 
         raise IndexError()
 
-    def do_assoc(self, level, node, i, val):
+    def _do_assoc(self, level, node, i, val):
         ret = list(node)
         if level == 0:
             ret[i & BIT_MASK] = val
         else:
             subidx = (i >> level) & BIT_MASK  # >>>
-            ret[subidx] = self.do_assoc(level - SHIFT, node[subidx], i, val)
+            ret[subidx] = self._do_assoc(level - SHIFT, node[subidx], i, val)
             
         return ret
-        
-    def _tailoff(self):
-        if self.cnt < BRANCH_FACTOR:
-            return 0
-        return ((self.cnt - 1) >> SHIFT) << SHIFT # >>>
+
+    def _tail_offset(self):
+        return self.cnt - len(self.tail)
 
     def _array_for(self, i):
         if 0 <= i < self.cnt:
-            if i >= self._tailoff():
+            if i >= self._tail_offset():
                 return self.tail
+
             node = self.root
             for level in range(self.shift, 0, -SHIFT):
-                node = node[(i >> level) & BIT_MASK] # >>>
+                node = node[(i >> level) & BIT_MASK]  # >>>
             return node
         
         raise IndexError()
 
-    def _tail_len(self):
-        return self.cnt - self._tailoff()
+    def _create_new_root(self):
+        new_shift = self.shift
+
+        # Overflow root?
+        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
+            new_root = [self.root, self._new_path(self.shift, self.tail)]
+            new_shift += SHIFT
+        else:
+            new_root = self._push_tail(self.shift, self.root, self.tail)
+
+        return new_root, new_shift
 
     def append(self, val):
-        #room in tail?
-        if self._tail_len() < BRANCH_FACTOR:
+        if len(self.tail) < BRANCH_FACTOR:
             new_tail = list(self.tail)
             new_tail.append(val)
             return PVector(self.cnt + 1, self.shift, self.root, new_tail)
         
         # Full tail, push into tree
-        new_shift = self.shift
-        # Overflow root?
-        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
-            new_root = [self.root, self.new_path(self.shift, self.tail)]
-            new_shift += SHIFT
-        else:
-            new_root = self.push_tail(self.shift, self.root, self.tail)
-    
+        new_root, new_shift = self._create_new_root()
         return PVector(self.cnt + 1, new_shift, new_root, [val])
 
-    def new_path(self, level, node):
+    def _new_path(self, level, node):
         if level == 0:
             return node
 
-        return [self.new_path(level - SHIFT, node)]
+        return [self._new_path(level - SHIFT, node)]
 
     def _transient_insert_tail(self):
-        # Overflow root?
-        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
-            self.root = [self.root, self.new_path(self.shift, self.tail)]
-            self.shift += SHIFT
-        else:
-            self.root = self.push_tail(self.shift, self.root, self.tail)
-
+        self.root, self.shift = self._create_new_root()
         self.tail = []
 
     def _transient_extend_iterator(self, iterator):
         try:
-            while True:
-                if len(self.tail) < BRANCH_FACTOR:
+            while 1:
+                while len(self.tail) < BRANCH_FACTOR:
                     self.tail.append(iterator.next())
                     self.cnt += 1
-                else:
-                    self._transient_insert_tail()
+
+                self._transient_insert_tail()
 
         except StopIteration:
             # We're done
@@ -120,11 +117,11 @@ class PVector(Sequence):
 
     def extend(self, obj):
         if isinstance(obj, collections.Sequence):
-            return self.extend_sequence(obj)
+            return self._extend_sequence(obj)
 
-        return self.extend_iterator(obj)
+        return self._extend_iterator(obj)
 
-    def extend_iterator(self, iterator):
+    def _extend_iterator(self, iterator):
         try:
             new_vector = self.append(next(iterator))
             new_vector._transient_extend_iterator(iterator)
@@ -134,7 +131,6 @@ class PVector(Sequence):
             return self
 
     def _transient_extend_sequence(self, sequence):
-        # This was very fast, is it correct?
         offset = 0
         sequence_len = len(sequence)
         while offset < sequence_len:
@@ -145,11 +141,10 @@ class PVector(Sequence):
             self.cnt += delta_len
             offset += delta_len
 
-            # Overflow root?
             if len(self.tail) == BRANCH_FACTOR:
                 self._transient_insert_tail()
 
-    def extend_sequence(self, c):
+    def _extend_sequence(self, c):
         if c:
             new_vector = self.append(c[0])
             new_vector._transient_extend_sequence(c[1:])
@@ -159,7 +154,7 @@ class PVector(Sequence):
             return self
 
 
-    def push_tail(self, level, parent, tail_node):
+    def _push_tail(self, level, parent, tail_node):
         """
         if parent is leaf, insert node,
         else does it map to an existing child? ->
@@ -175,9 +170,9 @@ class PVector(Sequence):
             ret.append(tail_node)
         else:
             if len(parent) > subidx:
-                ret[subidx] = self.push_tail(level - SHIFT, parent[subidx], tail_node)
+                ret[subidx] = self._push_tail(level - SHIFT, parent[subidx], tail_node)
             else:
-                ret.append(self.new_path(level - SHIFT, tail_node))
+                ret.append(self._new_path(level - SHIFT, tail_node))
 
         return ret
 
