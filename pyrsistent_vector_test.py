@@ -71,6 +71,13 @@ def test_multi_level_sequence_from_iterator():
     assert seq2[8000] == 11
 
 
+def test_vector_to_list():
+    l = range(2000)
+    seq = pvector(l)
+
+    assert seq.to_list() == l
+
+
 def test_random_insert_within_tail():
     seq = pvector([1, 2, 3])
 
@@ -129,3 +136,8 @@ def test_slicing_reverse():
     assert seq2[0] == 9
     assert seq2[1] == 8
     assert len(seq2) == 10
+
+    seq3 = seq[-3: -7: -1]
+    assert seq3[0] == 7
+    assert seq3[3] == 4
+    assert len(seq3) == 4

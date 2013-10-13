@@ -4,6 +4,10 @@ from pyrsistent import pvector
 import time
 
 def test_big_iterator_initialization():
+    """
+    The results are comparable to those of doing it with a list since most of the
+    code is shared.
+    """
     before = time.time()
     iterator = (x for x in range(1000000))
     print "Big iterator: " + str(time.time() - before)
@@ -15,40 +19,16 @@ def test_big_iterator_initialization():
 
 def test_big_list_initialization():
     """
-    Some example results
-    --------------------
+    Some example results, these are some of the fastest I've seen, it tends to vary...
 
     == CPython ==
-    Append only solution cpython:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    Diff list: 0.177649021149
-    Diff vector: 3.94124817848
-
-    Extend solution cpython:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    Diff list: 0.181011199951
-    Diff vector: 2.28535413742
-
-    Slicing solution cpython:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    Diff list: 0.174705028534
-    Diff vector: 0.353514909744
+    Big list: 0.174705028534
+    Big vector: 0.353514909744
 
     == PyPy ==
-    Append only solution PyPy:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
-    Diff list: 0.0462861061096
-    Diff vector: 0.719169139862
-
-    Extend solution PyPy:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
-    Diff list: 0.0473370552063
-    Diff vector: 0.300212144852
-
     Slicing solution PyPy:
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
-    Diff list: 0.0519659519196
-    Diff vector: 0.277094125748
+    Big list: 0.0481958389282
+    Big vector from list: 0.166031122208
 
     """
     before = time.time()
@@ -62,39 +42,16 @@ def test_big_list_initialization():
 
 def test_slicing_performance():
     """
-    == Initial attempt, CPython ==
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0192630290985
-    Pvec slicing: 2.58729600906
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0178990364075
-    Pvec slicing: 4.49369716644
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0190279483795
-    Pvec slicing: 3.3489689827
+    Again, the fastest, large variations exist...
 
+    == CPython ==
+    List slicing: 0.00921297073364
+    Pvec slicing: 0.225503921509
 
-    == With focus optimization, PyPy ==
-    List slicing: 0.0398960113525
-    Pvec slicing: 0.27640914917
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
-    List slicing: 0.00881695747375
-    Pvec slicing: 0.292130947113
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
-    List slicing: 0.00978016853333
-    Pvec slicing: 0.0821239948273
+    == PyPy ==
+    List slicing: 0.00399494171143
+    Pvec slicing: 0.102802991867
 
-    == With focus optimization, CPython ==
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0103480815887
-    Pvec slicing: 1.28191399574
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0108139514923
-    Pvec slicing: 1.12738490105
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.00525212287903
-    Pvec slicing: 0.604376077652
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$
     """
 
     list = [x for x in range(1000000)]
@@ -109,7 +66,42 @@ def test_slicing_performance():
     print "Pvec slicing: " + str(time.time() - before)
 
 
+def test_create_many_small_vectors():
+    """
+    == PyPy ==
+    Single element: 0.149819135666
+    Double elements: 0.350324869156
+    Ten elements: 0.338271856308
+
+    === CPython ===
+    Single element: 3.62240195274
+    Double elements: 8.04715490341
+    Ten elements: 5.73595809937
+    """
+    iterations = range(1000000)
+
+    before = time.time()
+    single = [2]
+    for _ in iterations:
+        vec = pvector(single)
+    print "Single element: " + str(time.time() - before)
+
+
+    before = time.time()
+    double = [2, 3]
+    for _ in iterations:
+        vec = pvector(double)
+    print "Double elements: " + str(time.time() - before)
+
+    before = time.time()
+    ten = range(10)
+    for _ in iterations:
+        vec = pvector(ten)
+    print "Ten elements: " + str(time.time() - before)
+
+
 if __name__ == "__main__":
     test_big_list_initialization()
     test_big_iterator_initialization()
     test_slicing_performance()
+    test_create_many_small_vectors()
