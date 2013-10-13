@@ -10,26 +10,27 @@ BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = bitcount(BIT_MASK)
 
 class PVector(Sequence):
-    
+
     def __init__(self, c, s, r, t):
         self.cnt = c
         self.shift = s
         self.root = r
         self.tail = t
-        
+        self._set_focus(t, self.cnt)
+
+    def _set_focus(self, f, index):
+        self.focus = f
+        self.focus_index = (index >> SHIFT) << SHIFT
+
     def __len__(self):
         return self.cnt
     
     def __getitem__(self, index):
         if isinstance(index, slice):
             indices = index.indices(len(self))
-            return pvector([self._get_at(i) for i in range(*indices)])
+            return pvector([self._list_for(i)[i & BIT_MASK] for i in range(*indices)])
 
-        return self._get_at(index)
-
-    def _get_at(self, index):
-        node = self._array_for(index)
-        return node[index & BIT_MASK]
+        return self._list_for(index)[index & BIT_MASK]
 
     def assoc(self, i, val):
         if 0 <= i < self.cnt:
@@ -58,14 +59,20 @@ class PVector(Sequence):
     def _tail_offset(self):
         return self.cnt - len(self.tail)
 
-    def _array_for(self, i):
+    def _list_for(self, i):
         if 0 <= i < self.cnt:
+            if (i >> SHIFT) << SHIFT == self.focus_index:
+                return self.focus
+
             if i >= self._tail_offset():
-                return self.tail
+                self._set_focus(self.tail, i)
+                return self.focus
 
             node = self.root
             for level in range(self.shift, 0, -SHIFT):
                 node = node[(i >> level) & BIT_MASK]  # >>>
+
+            self._set_focus(node, i)
             return node
         
         raise IndexError()
