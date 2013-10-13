@@ -72,39 +72,29 @@ def test_slicing_performance():
     (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
     List slicing: 0.0190279483795
     Pvec slicing: 3.3489689827
+
+
+    == With focus optimization, PyPy ==
+    List slicing: 0.0398960113525
+    Pvec slicing: 0.27640914917
+    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
+    List slicing: 0.00881695747375
+    Pvec slicing: 0.292130947113
+    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ ../../pypy/pypy-2.1/bin/pypy pyrsistent_performance_test.py
+    List slicing: 0.00978016853333
+    Pvec slicing: 0.0821239948273
+
+    == With focus optimization, CPython ==
     (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0183148384094
-    Pvec slicing: 3.03836488724
+    List slicing: 0.0103480815887
+    Pvec slicing: 1.28191399574
     (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0177810192108
-    Pvec slicing: 3.60482406616
+    List slicing: 0.0108139514923
+    Pvec slicing: 1.12738490105
     (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0187230110168
-    Pvec slicing: 1.7222340107
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0200991630554
-    Pvec slicing: 4.26679897308
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0178098678589
-    Pvec slicing: 3.83749699593
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0199091434479
-    Pvec slicing: 2.45740890503
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0173740386963
-    Pvec slicing: 3.30896997452
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0189118385315
-    Pvec slicing: 1.88046097755
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0187990665436
-    Pvec slicing: 3.70026707649
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.0189371109009
-    Pvec slicing: 2.77570199966
-    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$ python pyrsistent_performance_test.py
-    List slicing: 0.018963098526
-    Pvec slicing: 2.14831399918
+    List slicing: 0.00525212287903
+    Pvec slicing: 0.604376077652
+    (pyrsistent)tobias@Astor-Ubuntu:~/Development/python/pyrsistent/pyrsistent$
     """
 
     list = [x for x in range(1000000)]

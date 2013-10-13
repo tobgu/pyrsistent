@@ -10,20 +10,47 @@ BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = bitcount(BIT_MASK)
 
 class PVector(Sequence):
+    """
+    Persistant vector, persistant in the sense that it is immutable (if only accessing the public API)
 
+    Heavily influenced by the persistant data structures available in Clojure. Initially this was more or
+    less just a port of the Java code for the Clojure data structures. It has since been modified and to
+    some extent optimized for usage in Python.
+
+    The vector is organized as a trie, any mutating method will return a new vector that contains the changes. No
+    updates are done to the original vector. Structural sharing between vectors are applied where possible to save
+    space and to avoid making complete copies.
+
+    Performance is generally in the range of 2 - 100 times slower than using the built in mutable list type in Python.
+    It may be better in some cases and worse in others. Fully PyPy compatible, running it under PyPy speeds operations
+    up considerably if the structure is used heavily (if JITed).
+    """
     def __init__(self, c, s, r, t):
-        self.cnt = c
-        self.shift = s
-        self.root = r
-        self.tail = t
-        self._set_focus(t, self.cnt)
+        """
+        Should never be created directly, use the pvector() factory function instead.
+        """
+        self._count = c
+        self._shift = s
+        self._root = r
+        self._tail = t
+        self._set_focus(t, self._count)
 
-    def _set_focus(self, f, index):
-        self.focus = f
-        self.focus_index = (index >> SHIFT) << SHIFT
+    def _set_focus(self, node, index):
+        # The focus is a kind of cache for the last node that was accessed for reading
+        # it is used to speed up reading of nearby values.
+        # It does make the vector mutable internally but it is never exposed to the outside,
+        # I couldn't come up with any negative aspects of it (except for ugliness perhaps)
+        # but that doesn't mean there aren't any... This is kind of cheating on the immutability
+        # though, not sure if it should be kept. If it is to be kept then it could probably be
+        # explored further so that the focus is brought along to any new vectors created
+        # by "modifying" this one. As it is right now the focus is always set to the tail
+        # initially.
+
+        # Need to set the focus atomically (as one reference) to be thread safe
+        self._focus = {'node': node, 'index': (index >> SHIFT) << SHIFT}
 
     def __len__(self):
-        return self.cnt
+        return self._count
     
     def __getitem__(self, index):
         if isinstance(index, slice):
@@ -33,15 +60,15 @@ class PVector(Sequence):
         return self._list_for(index)[index & BIT_MASK]
 
     def assoc(self, i, val):
-        if 0 <= i < self.cnt:
+        if 0 <= i < self._count:
             if i >= self._tail_offset():
-                new_tail = list(self.tail)
+                new_tail = list(self._tail)
                 new_tail[i & BIT_MASK] = val
-                return PVector(self.cnt, self.shift, self.root, new_tail)
+                return PVector(self._count, self._shift, self._root, new_tail)
 
-            return PVector(self.cnt, self.shift, self._do_assoc(self.shift, self.root, i, val), self.tail)
+            return PVector(self._count, self._shift, self._do_assoc(self._shift, self._root, i, val), self._tail)
         
-        if i == self.cnt:
+        if i == self._count:
             return self.append(val)
 
         raise IndexError()
@@ -57,19 +84,22 @@ class PVector(Sequence):
         return ret
 
     def _tail_offset(self):
-        return self.cnt - len(self.tail)
+        return self._count - len(self._tail)
 
     def _list_for(self, i):
-        if 0 <= i < self.cnt:
-            if (i >> SHIFT) << SHIFT == self.focus_index:
-                return self.focus
+        if 0 <= i < self._count:
+            # Need to keep the reference to the focus locally to make sure that it
+            # isn't tampered with while we are using it.
+            focus = self._focus
+            if (i >> SHIFT) << SHIFT == focus['index']:
+                return focus['node']
 
             if i >= self._tail_offset():
-                self._set_focus(self.tail, i)
-                return self.focus
+                self._set_focus(self._tail, i)
+                return self._tail
 
-            node = self.root
-            for level in range(self.shift, 0, -SHIFT):
+            node = self._root
+            for level in range(self._shift, 0, -SHIFT):
                 node = node[(i >> level) & BIT_MASK]  # >>>
 
             self._set_focus(node, i)
@@ -78,26 +108,26 @@ class PVector(Sequence):
         raise IndexError()
 
     def _create_new_root(self):
-        new_shift = self.shift
+        new_shift = self._shift
 
         # Overflow root?
-        if (self.cnt >> SHIFT) > (1 << self.shift): # >>>
-            new_root = [self.root, self._new_path(self.shift, self.tail)]
+        if (self._count >> SHIFT) > (1 << self._shift): # >>>
+            new_root = [self._root, self._new_path(self._shift, self._tail)]
             new_shift += SHIFT
         else:
-            new_root = self._push_tail(self.shift, self.root, self.tail)
+            new_root = self._push_tail(self._shift, self._root, self._tail)
 
         return new_root, new_shift
 
     def append(self, val):
-        if len(self.tail) < BRANCH_FACTOR:
-            new_tail = list(self.tail)
+        if len(self._tail) < BRANCH_FACTOR:
+            new_tail = list(self._tail)
             new_tail.append(val)
-            return PVector(self.cnt + 1, self.shift, self.root, new_tail)
+            return PVector(self._count + 1, self._shift, self._root, new_tail)
         
         # Full tail, push into tree
         new_root, new_shift = self._create_new_root()
-        return PVector(self.cnt + 1, new_shift, new_root, [val])
+        return PVector(self._count + 1, new_shift, new_root, [val])
 
     def _new_path(self, level, node):
         if level == 0:
@@ -106,15 +136,15 @@ class PVector(Sequence):
         return [self._new_path(level - SHIFT, node)]
 
     def _transient_insert_tail(self):
-        self.root, self.shift = self._create_new_root()
-        self.tail = []
+        self._root, self._shift = self._create_new_root()
+        self._tail = []
 
     def _transient_extend_iterator(self, iterator):
         try:
             while 1:
-                while len(self.tail) < BRANCH_FACTOR:
-                    self.tail.append(iterator.next())
-                    self.cnt += 1
+                while len(self._tail) < BRANCH_FACTOR:
+                    self._tail.append(iterator.next())
+                    self._count += 1
 
                 self._transient_insert_tail()
 
@@ -123,6 +153,8 @@ class PVector(Sequence):
             pass
 
     def extend(self, obj):
+        # Uses methods that mutates the object directly to speed
+        # up construction of large vectors from lists
         if isinstance(obj, collections.Sequence):
             return self._extend_sequence(obj)
 
@@ -141,14 +173,14 @@ class PVector(Sequence):
         offset = 0
         sequence_len = len(sequence)
         while offset < sequence_len:
-            max_delta_len = BRANCH_FACTOR - len(self.tail)
+            max_delta_len = BRANCH_FACTOR - len(self._tail)
             delta = sequence[offset:offset + max_delta_len]
-            self.tail.extend(delta)
+            self._tail.extend(delta)
             delta_len = len(delta)
-            self.cnt += delta_len
+            self._count += delta_len
             offset += delta_len
 
-            if len(self.tail) == BRANCH_FACTOR:
+            if len(self._tail) == BRANCH_FACTOR:
                 self._transient_insert_tail()
 
     def _extend_sequence(self, c):
@@ -170,7 +202,7 @@ class PVector(Sequence):
 
         return  node_to_insert placed in copy of parent
         """
-        subidx = ((self.cnt - 1) >> level) & BIT_MASK # >>>
+        subidx = ((self._count - 1) >> level) & BIT_MASK # >>>
         ret = list(parent)
 
         if level == SHIFT:
