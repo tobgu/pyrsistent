@@ -1,4 +1,4 @@
-from pyrsistent import pvector
+from pyrsistent import pvector, pvec
 
 import pytest
 
@@ -75,7 +75,7 @@ def test_vector_to_list():
     l = range(2000)
     seq = pvector(l)
 
-    assert seq.to_list() == l
+    assert seq.tolist() == l
 
 
 def test_random_insert_within_tail():
@@ -128,6 +128,18 @@ def test_slicing_step():
     assert seq2[0] == 0
     assert seq2[1] == 2
     assert len(seq2) == 5
+
+def test_to_list():
+    l = list(range(32*32 + 64 + 7))
+    v = pvector(l)
+
+    assert l == v.tolist()
+
+def test_addition():
+    v = pvec(1, 2) + pvec(3, 4)
+
+    assert v.tolist() == [1, 2, 3, 4]
+    assert list(v) == v.tolist()
 
 def test_slicing_reverse():
     seq = pvector(range(10))

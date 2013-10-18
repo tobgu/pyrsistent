@@ -1,5 +1,4 @@
-from collections import Sequence, Mapping
-import collections
+from collections import Sequence, Mapping, Set
 
 
 def bitcount(val):
@@ -44,9 +43,12 @@ class PVector(Sequence):
         if isinstance(index, slice):
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date
-            return pvector(self.to_list()[index])
+            return pvector(self.tolist()[index])
 
         return self._list_for(index)[index & BIT_MASK]
+
+    def __add__(self, other):
+        return self.extend(other)
 
     def _fill_list(self, node, shift, the_list):
         if shift:
@@ -56,7 +58,7 @@ class PVector(Sequence):
         else:
             the_list.extend(node)
 
-    def to_list(self):
+    def tolist(self):
         the_list = []
         self._fill_list(self._root, self._shift, the_list)
         the_list.extend(self._tail)
@@ -154,7 +156,7 @@ class PVector(Sequence):
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
-        l = list(obj)
+        l = obj.tolist() if isinstance(obj, PVector) else list(obj)
         if l:
             new_vector = self.append(l[0])
             new_vector._mutating_extend(l[1:])
@@ -189,13 +191,18 @@ class PVector(Sequence):
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
-def empty_list(length):
-    return [None] * length
-
-
 def pvector(elements=[]):
     vec = _EMPTY_VECTOR
     return vec.extend(elements)
+
+def pvec(*elements):
+    return pvector(elements)
+
+####################### PMap #####################################
+
+
+def empty_list(length):
+    return [None] * length
 
 
 class Box(object):
@@ -241,7 +248,7 @@ class HashCollisionNode(object):
                 # Copy with new value
                 return HashCollisionNode(self.hash, clone_and_set(self.array, idx + 1, val))
 
-            # Create a copy of with size + 2 to hold the new element 
+            # Create a copy of us with size + 2 to hold the new element
             new_array = list(self.array)
             new_array.append(key)
             new_array.append(val)
@@ -251,10 +258,11 @@ class HashCollisionNode(object):
         # Another hash, nest ourselves in a bitmap indexed node
         return BitmapIndexedNode(bitpos(self.hash, shift), [None, self]).assoc(shift, key, val, added_leaf)
 
-    def find(self, shift, key, not_found):
+    def find(self, shift, key):
+        # Shift parameter not used here but must exist to adhere to Node protocol
         idx = self.find_index(key)
         if idx < 0:
-            return not_found
+            raise KeyError
 
         return self.array[idx + 1]
 
@@ -325,15 +333,14 @@ class ArrayNode(object):
 
         return ArrayNode(self.count, clone_and_set(self.array, idx, n))
 
-    def find(self, shift, key, not_found):
+    def find(self, shift, key):
         hash_value = hash(key)
         idx = mask(hash_value, shift)
         node = self.array[idx]
         if node is None:
-            return not_found
+            raise KeyError
 
-        return node.find(shift + SHIFT, key, not_found)
-
+        return node.find(shift + SHIFT, key)
 
     def without(self, shift, key):
         key_hash = hash(key)
@@ -403,7 +410,7 @@ class BitmapIndexedNode(object):
             # Unique hash_value value
             n = bitcount(self.bitmap)
             if n >= (BRANCH_FACTOR / 2):
-                # This node is full. Need to convert this node to an ArrayNode.
+                # This node is full. Need to convert it into an ArrayNode.
                 nodes = empty_list(BRANCH_FACTOR)
                 jdx = mask(hash_value, shift)
                 nodes[jdx] = BitmapIndexedNode.EMPTY.assoc(shift + SHIFT, key, val, added_leaf)
@@ -428,21 +435,21 @@ class BitmapIndexedNode(object):
                 new_array.extend(self.array[2 * idx:])
                 return BitmapIndexedNode(self.bitmap | bit, new_array)
 
-
-    def find(self, shift, key, not_found):
+    def find(self, shift, key):
         bit = bitpos(hash(key), shift)
         if (self.bitmap & bit) == 0:
-            return not_found
+            raise KeyError
+
         idx = self.index(bit)
         key_or_none = self.array[2 * idx]
         val_or_node = self.array[2 * idx + 1]
         if key_or_none is None:
-            return val_or_node.find(shift + SHIFT, key, not_found)
+            return val_or_node.find(shift + SHIFT, key)
 
         if key == key_or_none:
             return val_or_node
 
-        return not_found
+        raise KeyError
 
     def without(self, shift, key):
         the_hash = hash(key)
@@ -481,10 +488,36 @@ class PMap(Mapping):
         self.root = root
 
     def __getitem__(self, key):
-        return self.root.find(0, key, None) if self.root else None
+        if self.root:
+            return self.root.find(0, key)
+
+        raise KeyError
 
     def __iter__(self):
+        return self.iterkeys()
+
+    def iterkeys(self):
+        for k, _ in self.iteritems():
+            yield k
+
+    # These are more efficient implementations compared to the original
+    # methods that is based on the keys iterator and then calls the
+    # accessor functions to access the value for the corresponding key
+    def itervalues(self):
+        for _, v in self.iteritems():
+            yield v
+
+    def iteritems(self):
         return iter(self.root if self.root else [])
+
+    def values(self):
+        return list(self.itervalues())
+
+    def keys(self):
+        return list(self.iterkeys())
+
+    def items(self):
+        return list(self.iteritems())
 
     def __len__(self):
         return self.count
@@ -513,10 +546,56 @@ class PMap(Mapping):
 
 _EMPTY_MAP = PMap(0, None)
 
+# Idea, how about making a readonly class (by replacing __dict__) once the mapping
+# and vector have been built up? In order to force the "purity" of immutability.
+# Could also experiment with making the classes inner classes of the factory functions...
 
-def pmap(initial={}):
+# Which name to choose... ?
+def pmap(**kwargs):
+    return pmapping(kwargs)
+
+
+def pmapping(initial={}):
     map = _EMPTY_MAP
     for k, v in initial.iteritems():
         map = map.assoc(k, v)
+
     return map
-    
+
+##################### Pset ########################
+
+class PSet(Set):
+    def __init__(self, m):
+        self.map = m
+
+    def __contains__(self, element):
+        return element in self.map
+
+    def __iter__(self):
+        return iter(self.map)
+
+    def  __len__(self):
+        return len(self.map)
+
+    @classmethod
+    def _from_iterable(cls, it):
+        s = _EMPTY_SET
+        for x in it:
+            s = s.add(x)
+
+        return s
+
+    def toset(self):
+        return set(self.map)
+
+    def add(self, element):
+        return PSet(self.map.assoc(element, True))
+
+    def without(self, element):
+        return PSet(self.map.without(element))
+
+_EMPTY_SET = PSet(_EMPTY_MAP)
+
+
+def pset(elements=[]):
+    return PSet._from_iterable(elements)
