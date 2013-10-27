@@ -1,4 +1,4 @@
-from pyrsistent import pvector
+from pyrsistent import pvector, pset
 
 #import pytest
 import time
@@ -100,8 +100,50 @@ def test_create_many_small_vectors():
     print "Ten elements: " + str(time.time() - before)
 
 
+def test_set_performance():
+    """
+    == PyPy ==
+    Big set from list: 0.0152490139008
+    Big pset from list: 1.62447595596
+    Random access set: 0.0192308425903
+    Random access pset: 2.18643188477
+
+    === CPython ===
+    Big set from list: 0.0202131271362
+    Big pset from list: 2.87654399872
+    Random access set: 0.0950989723206
+    Random access pset: 11.2261350155
+    """
+    l = [x for x in range(100000)]
+
+    before = time.time()
+    s1 = set(l)
+    print "Big set from list: " + str(time.time() - before)
+
+    before = time.time()
+    s2 = pset(l)
+    print "Big pset from list: " + str(time.time() - before)
+
+    before = time.time()
+    random_access(s1)
+    print "Random access set: " + str(time.time() - before)
+
+    before = time.time()
+    random_access(s2)
+    print "Random access pset: " + str(time.time() - before)
+
+def random_access(s):
+    testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]
+    result = False
+    for x in range(100000):
+        for y in testdata:
+            result = y in s
+
+    return result
+
 if __name__ == "__main__":
-    test_big_list_initialization()
-    test_big_iterator_initialization()
-    test_slicing_performance()
-    test_create_many_small_vectors()
+#    test_big_list_initialization()
+#    test_big_iterator_initialization()
+#    test_slicing_performance()
+#    test_create_many_small_vectors()
+    test_set_performance()

@@ -1,4 +1,5 @@
 from collections import Sequence, Mapping, Set
+from itertools import chain
 
 
 def bitcount(val):
@@ -26,15 +27,15 @@ class PVector(Sequence):
     It may be better in some cases and worse in others. Fully PyPy compatible, running it under PyPy speeds operations
     up considerably if the structure is used heavily (if JITed).
     """
-
     def __init__(self, c, s, r, t):
         """
-        Should never be created directly, use the pvector() factory function instead.
+        Should never be created directly, use the pvector() / pvec() factory function instead.
         """
         self._count = c
         self._shift = s
         self._root = r
         self._tail = t
+        # TODO: Calculate tail offset?
 
     def __len__(self):
         return self._count
@@ -88,6 +89,8 @@ class PVector(Sequence):
 
         return ret
 
+    # TODO: Consider rewriting this to remove the function call and calculate the tail offset once
+    #       to avoid overhead when accessing elements in the vector
     def _tail_offset(self):
         return self._count - len(self._tail)
 
@@ -152,6 +155,8 @@ class PVector(Sequence):
             offset = self._mutating_fill_tail(offset, sequence)
             if len(self._tail) == BRANCH_FACTOR:
                 self._mutating_insert_tail()
+
+        # TODO: Set the tail offset here...
 
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
@@ -562,7 +567,126 @@ def pmapping(initial={}):
 
     return map
 
+# TODO: Rewrite the logic for hash collection detection to use two classes, one when there is a collision
+# that contains a list of key value pairs and one when one single element exists that uses straight
+# variables instead. Use __slots__ on these classes to minimize memory usage...
+class PMap2(Mapping):
+    def __init__(self, size, buckets):
+        self.size = size
+        self.buckets = buckets
+
+    def _get_bucket(self, key):
+        h = hash(key)
+        index = h % len(self.buckets)
+        bucket = self.buckets[index]
+        return index, bucket
+
+    def __getitem__(self, key):
+        _, bucket = self._get_bucket(key)
+        if bucket:
+            for k, v in bucket:
+                if k == key:
+                    return  v
+
+        raise KeyError
+
+    def __iter__(self):
+        return self.iterkeys()
+
+    def iterkeys(self):
+        for k, _ in self.iteritems():
+            yield k
+
+    # These are more efficient implementations compared to the original
+    # methods that is based on the keys iterator and then calls the
+    # accessor functions to access the value for the corresponding key
+    def itervalues(self):
+        for _, v in self.iteritems():
+            yield v
+
+    def iteritems(self):
+        for bucket in self.buckets:
+            if bucket:
+                for k, v in bucket:
+                    yield k, v
+
+    def values(self):
+        return list(self.itervalues())
+
+    def keys(self):
+        return list(self.iterkeys())
+
+    def items(self):
+        return list(self.iteritems())
+
+    def __len__(self):
+        return self.size
+
+    def assoc(self, key, val):
+        kv = (key, val)
+        index, bucket = self._get_bucket(key)
+        if bucket:
+            # TODO: Break out handling of hash collisions to own classes
+            for k, v in bucket:
+                if k == key:
+                    if v == val:
+                        return self
+                    else:
+                        new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
+                        return PMap2(self.size, self.buckets.assoc(index, new_bucket))
+
+            # TODO: Precalculate this value as an optimization?
+            if len(self.buckets) < 0.67 * self.size:
+                return PMap2(self.size, self._reallocate()).assoc(key, val)
+            else:
+                new_bucket = [kv]
+                new_bucket.extend(bucket)
+                new_buckets = self.buckets.assoc(index, new_bucket)
+
+            return PMap2(self.size + 1, new_buckets)
+
+        # Skip reallocation check if there was no conflict
+        return PMap2(self.size + 1, self.buckets.assoc(index, [kv]))
+
+    def without(self, key):
+        # Should shrinking of the map ever be done if it becomes very small?
+        index, bucket = self._get_bucket(key)
+
+        if bucket:
+            new_bucket = [(k, v) for (k, v) in bucket if k != key]
+            if len(bucket) > len(new_bucket):
+                return PMap2(self.size - 1, self.buckets.assoc(index, new_bucket if new_bucket else None))
+
+        return self
+
+    def _reallocate(self):
+        new_list = 2 * len(self.buckets) * [None]
+        new_len = len(new_list)
+        for k, v in chain.from_iterable(x for x in self.buckets if x):
+            index = hash(k) % new_len
+            if new_list[index]:
+                new_list[index].append((k, v))
+            else:
+                new_list[index] = [(k, v)]
+
+        return pvector(new_list)
+
+# Start of with eight elements
+_EMPTY_MAP2 = PMap2(0, pvector(8*[None]))
+
+def pmap2(**kwargs):
+    return pmapping2(kwargs)
+
+
+def pmapping2(initial={}):
+    map = _EMPTY_MAP2
+    for k, v in initial.iteritems():
+        map = map.assoc(k, v)
+
+    return map
+
 ##################### Pset ########################
+
 
 class PSet(Set):
     def __init__(self, m):
@@ -594,7 +718,7 @@ class PSet(Set):
     def without(self, element):
         return PSet(self.map.without(element))
 
-_EMPTY_SET = PSet(_EMPTY_MAP)
+_EMPTY_SET = PSet(_EMPTY_MAP2)
 
 
 def pset(elements=[]):

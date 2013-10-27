@@ -1,4 +1,5 @@
-from pyrsistent import pmapping, pmap
+from pyrsistent import pmapping2 as pmapping, pmap2 as pmap
+#from pyrsistent import pmapping, pmap
 
 import pytest
 
