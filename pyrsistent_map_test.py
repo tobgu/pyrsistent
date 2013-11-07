@@ -1,4 +1,4 @@
-from pyrsistent import pmapping2 as pmapping, pmap2 as pmap
+from pyrsistent import pmapping, pmap
 import pytest
 
     
@@ -184,8 +184,6 @@ def test_str():
 pytest.main()
     
 # TODO:
-# - todict
-# - str for all three types
 # - sorting, reverse (test with the reverse slice operation...)
 # - Documentation
 # - Release!

@@ -215,372 +215,7 @@ def pvec(*elements):
 ####################### PMap #####################################
 
 
-def empty_list(length):
-    return [None] * length
-
-
-class Box(object):
-    def __init__(self, val=None):
-        self.val = val
-
-
-def mask(hash, shift):
-    return (hash >> shift) & BIT_MASK # >>>
-
-
-def bitpos(hash, shift):
-    return 1 << mask(hash, shift)
-
-
-def remove_pair(array, index):
-    return array[:2 * index] + array[2 * (index + 1):]
-
-
-class HashCollisionNode(object):
-    def __init__(self, hash, array):
-        self.hash = hash
-        self.array = array
-
-    def find_index(self, key):
-        for i in range(0, 2 * self.count(), 2):
-            if key == self.array[i]:
-                return i
-        return -1
-
-    def __iter__(self):
-        for i in range(0, 2 * self.count(), 2):
-            yield (self.array[i], self.array[i + 1])
-
-    def assoc(self, shift, key, val, added_leaf):
-        the_hash = hash(key)
-        if the_hash == self.hash:
-            idx = self.find_index(key)
-            if idx != -1:
-                if self.array[idx + 1] is val:
-                    return self
-
-                # Copy with new value
-                return HashCollisionNode(self.hash, clone_and_set(self.array, idx + 1, val))
-
-            # Create a copy of us with size + 2 to hold the new element
-            new_array = list(self.array)
-            new_array.append(key)
-            new_array.append(val)
-            added_leaf.val = added_leaf
-            return HashCollisionNode(the_hash, new_array)
-
-        # Another hash, nest ourselves in a bitmap indexed node
-        return BitmapIndexedNode(bitpos(self.hash, shift), [None, self]).assoc(shift, key, val, added_leaf)
-
-    def find(self, shift, key):
-        # Shift parameter not used here but must exist to adhere to Node protocol
-        idx = self.find_index(key)
-        if idx < 0:
-            raise KeyError
-
-        return self.array[idx + 1]
-
-    def count(self):
-        return len(self.array) / 2
-
-    def without(self, shift, key):
-        # Shift parameter not used here but must exist to adhere to Node protocol
-        idx = self.find_index(key)
-        if idx == -1:
-            return self
-
-        if self.count() == 1:
-            return None
-
-        return HashCollisionNode(self.hash, remove_pair(self.array, idx / 2))
-
-
-def create_node(shift, key1, val1, key2, val2):
-    key1hash = hash(key1)
-    key2hash = hash(key2)
-    if key1hash == key2hash:
-        return HashCollisionNode(key1hash, [key1, val1, key2, val2])
-
-    _ = Box()
-    return BitmapIndexedNode.EMPTY \
-        .assoc(shift, key1, val1, _) \
-        .assoc(shift, key2, val2, _)
-
-
-def clone_and_set(original, index, value):
-    clone = list(original)
-    clone[index] = value
-    return clone
-
-
-def clone_and_set2(original, index1, value1, index2, value2):
-    clone = list(original)
-    clone[index1] = value1
-    clone[index2] = value2
-    return clone
-
-
-class ArrayNode(object):
-    def __iter__(self):
-        for node in self.array:
-            if node:
-                for k, v in node:
-                    yield (k, v)
-
-    def __init__(self, count, array):
-        self.array = array
-        self.count = count
-
-    def assoc(self, shift, key, val, added_leaf):
-        hash_value = hash(key)
-        idx = mask(hash_value, shift)
-        node = self.array[idx]
-
-        if node is None:
-            return ArrayNode(self.count + 1,
-                             clone_and_set(self.array, idx,
-                                           BitmapIndexedNode.EMPTY.assoc(shift + SHIFT, key, val, added_leaf)))
-
-        n = node.assoc(shift + SHIFT, key, val, added_leaf)
-        if n is node:
-            return self
-
-        return ArrayNode(self.count, clone_and_set(self.array, idx, n))
-
-    def find(self, shift, key):
-        hash_value = hash(key)
-        idx = mask(hash_value, shift)
-        node = self.array[idx]
-        if node is None:
-            raise KeyError
-
-        return node.find(shift + SHIFT, key)
-
-    def without(self, shift, key):
-        key_hash = hash(key)
-        idx = mask(key_hash, shift)
-        node = self.array[idx]
-        if node is None:
-            return self
-
-        n = node.without(shift + SHIFT, key)
-        if n is node:
-            return self
-        elif n is None:
-            # TODO: Removed packing optimization if size <= 8 here temporarily...
-            return ArrayNode(self.count - 1, clone_and_set(self.array, idx, n))
-        else:
-            return ArrayNode(self.count, clone_and_set(self.array, idx, n))
-
-
-class BitmapIndexedNode(object):
-    def __iter__(self):
-        for i in xrange(0, len(self.array), 2):
-            key_or_none = self.array[i]
-            val_or_node = self.array[i + 1]
-            if key_or_none is None:
-                for k, v in val_or_node:
-                    yield (k, v)
-            else:
-                yield (key_or_none, val_or_node)
-
-    def __init__(self, bitmap, array):
-        self.bitmap = bitmap
-        self.array = array
-
-    def index(self, bit):
-        return bitcount(self.bitmap & (bit - 1))
-
-    def assoc(self, shift, key, val, added_leaf):
-        hash_value = hash(key)
-        bit = bitpos(hash_value, shift)
-
-        idx = self.index(bit)
-        if self.bitmap & bit:
-            # Value with the same partial hash value already exists
-            key_or_none = self.array[2 * idx]
-            val_or_node = self.array[2 * idx + 1]
-            if key_or_none is None:
-                # Node
-                node = val_or_node.assoc(shift + SHIFT, key, val, added_leaf)
-                if node is val_or_node:
-                    return self
-                return BitmapIndexedNode(self.bitmap, clone_and_set(self.array, 2 * idx + 1, node))
-
-            if key == key_or_none:
-                # BitmapIndexedNode, replace existing value
-                if val is val_or_node:
-                    return self
-                return BitmapIndexedNode(self.bitmap, clone_and_set(self.array, 2 * idx + 1, val))
-
-            # BitmapIndexedNode, add new value
-            added_leaf.val = added_leaf
-            return BitmapIndexedNode(self.bitmap,
-                                     clone_and_set2(self.array,
-                                                    2 * idx, None,
-                                                    2 * idx + 1,
-                                                    create_node(shift + SHIFT, key_or_none, val_or_node, key, val)))
-        else:
-            # Unique hash_value value
-            n = bitcount(self.bitmap)
-            if n >= (BRANCH_FACTOR / 2):
-                # This node is full. Need to convert it into an ArrayNode.
-                nodes = empty_list(BRANCH_FACTOR)
-                jdx = mask(hash_value, shift)
-                nodes[jdx] = BitmapIndexedNode.EMPTY.assoc(shift + SHIFT, key, val, added_leaf)
-                # Copy all values
-                j = 0
-                for i in range(BRANCH_FACTOR):
-                    if (self.bitmap >> i) & 1: # >>>
-                        if self.array[j] is None:
-                            # Sub node
-                            nodes[i] = self.array[j + 1]
-                        else:
-                            # key - value pair
-                            nodes[i] = BitmapIndexedNode.EMPTY.assoc(shift + SHIFT, self.array[j], self.array[j + 1],
-                                                                     added_leaf)
-                        j += 2
-                return ArrayNode(n + 1, nodes)
-            else:
-                new_array = self.array[:2 * idx]
-                new_array.append(key)
-                new_array.append(val)
-                added_leaf.val = added_leaf
-                new_array.extend(self.array[2 * idx:])
-                return BitmapIndexedNode(self.bitmap | bit, new_array)
-
-    def find(self, shift, key):
-        bit = bitpos(hash(key), shift)
-        if (self.bitmap & bit) == 0:
-            raise KeyError
-
-        idx = self.index(bit)
-        key_or_none = self.array[2 * idx]
-        val_or_node = self.array[2 * idx + 1]
-        if key_or_none is None:
-            return val_or_node.find(shift + SHIFT, key)
-
-        if key == key_or_none:
-            return val_or_node
-
-        raise KeyError
-
-    def without(self, shift, key):
-        the_hash = hash(key)
-        bit = bitpos(the_hash, shift)
-
-        if (self.bitmap & bit) == 0:
-            return self
-
-        idx = self.index(bit)
-        key_or_none = self.array[2 * idx]
-        val_or_node = self.array[2 * idx + 1]
-        if key_or_none is None:
-            n = val_or_node.without(shift + SHIFT, key)
-            if n == val_or_node:
-                return self
-            if n is not None:
-                return BitmapIndexedNode(self.bitmap, clone_and_set(self.array, 2 * idx + 1, n))
-            if self.bitmap == bit:
-                # Last value in this node
-                return None
-            return BitmapIndexedNode(self.bitmap ^ bit, remove_pair(self.array, idx))
-
-        if key == key_or_none:
-            # TODO: collapse
-            return BitmapIndexedNode(self.bitmap ^ bit, remove_pair(self.array, idx))
-
-        return self
-
-
-BitmapIndexedNode.EMPTY = BitmapIndexedNode(0, [])
-
-
 class PMap(Mapping):
-    def __init__(self, count, root):
-        self.count = count
-        self.root = root
-
-    def __getitem__(self, key):
-        if self.root:
-            return self.root.find(0, key)
-
-        raise KeyError
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __iter__(self):
-        return self.iterkeys()
-
-    def iterkeys(self):
-        for k, _ in self.iteritems():
-            yield k
-
-    # These are more efficient implementations compared to the original
-    # methods that is based on the keys iterator and then calls the
-    # accessor functions to access the value for the corresponding key
-    def itervalues(self):
-        for _, v in self.iteritems():
-            yield v
-
-    def iteritems(self):
-        return iter(self.root if self.root else [])
-
-    def values(self):
-        return list(self.itervalues())
-
-    def keys(self):
-        return list(self.iterkeys())
-
-    def items(self):
-        return list(self.iteritems())
-
-    def __len__(self):
-        return self.count
-
-    def assoc(self, key, val):
-        added_leaf = Box()
-        start_root = self.root if self.root else BitmapIndexedNode.EMPTY
-        new_root = start_root.assoc(0, key, val, added_leaf)
-
-        if new_root is self.root:
-            return self
-
-        return PMap(self.count + 1 if added_leaf.val else self.count, new_root)
-
-    def without(self, key):
-        if self.root is None:
-            return self
-
-        new_root = self.root.without(0, key)
-
-        if new_root is self.root:
-            return self
-
-        return PMap(self.count - 1, new_root)
-
-
-_EMPTY_MAP = PMap(0, None)
-
-# Idea, how about making a readonly class (by replacing __dict__) once the mapping
-# and vector have been built up? In order to force the "purity" of immutability.
-# Could also experiment with making the classes inner classes of the factory functions...
-
-# Which name to choose... ?
-def pmap(**kwargs):
-    return pmapping(kwargs)
-
-
-def pmapping(initial={}):
-    map = _EMPTY_MAP
-    for k, v in initial.iteritems():
-        map = map.assoc(k, v)
-
-    return map
-
-
-class PMap2(Mapping):
     def __init__(self, size, buckets):
         self._size = size
         self._buckets = buckets
@@ -651,19 +286,19 @@ class PMap2(Mapping):
                         return self
                     else:
                         new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
-                        return PMap2(self._size, self._buckets.assoc(index, new_bucket))
+                        return PMap(self._size, self._buckets.assoc(index, new_bucket))
 
             if len(self._buckets) < 0.67 * self._size:
-                return PMap2(self._size, self._reallocate(2 * len(self._buckets))).assoc(key, val)
+                return PMap(self._size, self._reallocate(2 * len(self._buckets))).assoc(key, val)
             else:
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
                 new_buckets = self._buckets.assoc(index, new_bucket)
 
-            return PMap2(self._size + 1, new_buckets)
+            return PMap(self._size + 1, new_buckets)
 
         # Skip reallocation check if there was no conflict
-        return PMap2(self._size + 1, self._buckets.assoc(index, [kv]))
+        return PMap(self._size + 1, self._buckets.assoc(index, [kv]))
 
     def without(self, key):
         # Should shrinking of the map ever be done if it becomes very small?
@@ -672,7 +307,7 @@ class PMap2(Mapping):
         if bucket:
             new_bucket = [(k, v) for (k, v) in bucket if k != key]
             if len(bucket) > len(new_bucket):
-                return PMap2(self._size - 1, self._buckets.assoc(index, new_bucket if new_bucket else None))
+                return PMap(self._size - 1, self._buckets.assoc(index, new_bucket if new_bucket else None))
 
         return self
 
@@ -692,8 +327,8 @@ class PMap2(Mapping):
         return pvector(self._reallocate_to_list(new_size))
 
 
-def pmap2(**kwargs):
-    return pmapping2(kwargs)
+def pmap(**kwargs):
+    return pmapping(kwargs)
 
 
 def _turbo_mapping(initial, pre_size):
@@ -716,10 +351,10 @@ def _turbo_mapping(initial, pre_size):
         else:
             buckets[index] = [(k, v)]
 
-    return PMap2(len(initial), pvector(buckets))
+    return PMap(len(initial), pvector(buckets))
 
 
-def pmapping2(initial={}, pre_size=0):
+def pmapping(initial={}, pre_size=0):
     return _turbo_mapping(initial, pre_size)
 
 
@@ -746,7 +381,7 @@ class PSet(Set):
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
-        return PSet(pmapping2({k: True for k in it}, pre_size=pre_size))
+        return PSet(pmapping({k: True for k in it}, pre_size=pre_size))
 
     def toset(self):
         return set(self._map)
