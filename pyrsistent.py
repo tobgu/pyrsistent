@@ -10,12 +10,11 @@ BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = bitcount(BIT_MASK)
 
-
 class PVector(Sequence):
     """
-    Persistant vector, persistant in the sense that it is immutable (if only accessing the public API)
+    Persistent vector, persistent in the sense that it is immutable (if only accessing the public API)
 
-    Heavily influenced by the persistant data structures available in Clojure. Initially this was more or
+    Heavily influenced by the persistent data structures available in Clojure. Initially this was more or
     less just a port of the Java code for the Clojure data structures. It has since been modified and to
     some extent optimized for usage in Python.
 
@@ -35,7 +34,7 @@ class PVector(Sequence):
         self._shift = s
         self._root = r
         self._tail = t
-        # TODO: Calculate tail offset?
+        self._tail_offset = self._count - len(self._tail)
 
     def __len__(self):
         return self._count
@@ -43,13 +42,24 @@ class PVector(Sequence):
     def __getitem__(self, index):
         if isinstance(index, slice):
             # This is a bit nasty realizing the whole structure as a list before
-            # slicing it but it is the fastest way I've found to date
+            # slicing it but it is the fastest way I've found to date, and it's easy :-)
             return pvector(self.tolist()[index])
 
         return self._list_for(index)[index & BIT_MASK]
 
     def __add__(self, other):
         return self.extend(other)
+
+    def __str__(self):
+        return str(self.tolist())
+
+    def __iter__(self):
+        # This is kind of lazy and will produce some memory overhead but it is the fasted method
+        # by far of those tried since it uses the speed of the built in python list directly.
+        return iter(self.tolist())
+
+    def tostr(self):
+        return str(self.tolist())
 
     def _fill_list(self, node, shift, the_list):
         if shift:
@@ -65,9 +75,12 @@ class PVector(Sequence):
         the_list.extend(self._tail)
         return the_list
 
+    def totuple(self):
+        return tuple(self.tolist())
+
     def assoc(self, i, val):
         if 0 <= i < self._count:
-            if i >= self._tail_offset():
+            if i >= self._tail_offset:
                 new_tail = list(self._tail)
                 new_tail[i & BIT_MASK] = val
                 return PVector(self._count, self._shift, self._root, new_tail)
@@ -89,15 +102,10 @@ class PVector(Sequence):
 
         return ret
 
-    # TODO: Consider rewriting this to remove the function call and calculate the tail offset once
-    #       to avoid overhead when accessing elements in the vector
-    def _tail_offset(self):
-        return self._count - len(self._tail)
-
     def _list_for(self, i):
         if 0 <= i < self._count:
 
-            if i >= self._tail_offset():
+            if i >= self._tail_offset:
                 return self._tail
 
             node = self._root
@@ -156,7 +164,7 @@ class PVector(Sequence):
             if len(self._tail) == BRANCH_FACTOR:
                 self._mutating_insert_tail()
 
-        # TODO: Set the tail offset here...
+        self._tail_offset = self._count - len(self._tail)
 
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
@@ -168,7 +176,6 @@ class PVector(Sequence):
             return new_vector
 
         return self
-
 
     def _push_tail(self, level, parent, tail_node):
         """
@@ -196,9 +203,11 @@ class PVector(Sequence):
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
+
 def pvector(elements=[]):
     vec = _EMPTY_VECTOR
     return vec.extend(elements)
+
 
 def pvec(*elements):
     return pvector(elements)
@@ -498,6 +507,9 @@ class PMap(Mapping):
 
         raise KeyError
 
+    def __getattr__(self, key):
+        return self[key]
+
     def __iter__(self):
         return self.iterkeys()
 
@@ -567,18 +579,16 @@ def pmapping(initial={}):
 
     return map
 
-# TODO: Rewrite the logic for hash collection detection to use two classes, one when there is a collision
-# that contains a list of key value pairs and one when one single element exists that uses straight
-# variables instead. Use __slots__ on these classes to minimize memory usage...
+
 class PMap2(Mapping):
     def __init__(self, size, buckets):
-        self.size = size
-        self.buckets = buckets
+        self._size = size
+        self._buckets = buckets
 
     def _get_bucket(self, key):
         h = hash(key)
-        index = h % len(self.buckets)
-        bucket = self.buckets[index]
+        index = h % len(self._buckets)
+        bucket = self._buckets[index]
         return index, bucket
 
     def __getitem__(self, key):
@@ -586,12 +596,15 @@ class PMap2(Mapping):
         if bucket:
             for k, v in bucket:
                 if k == key:
-                    return  v
+                    return v
 
         raise KeyError
 
     def __iter__(self):
         return self.iterkeys()
+
+    def __getattr__(self, key):
+        return self[key]
 
     def iterkeys(self):
         for k, _ in self.iteritems():
@@ -605,7 +618,7 @@ class PMap2(Mapping):
             yield v
 
     def iteritems(self):
-        for bucket in self.buckets:
+        for bucket in self._buckets:
             if bucket:
                 for k, v in bucket:
                     yield k, v
@@ -620,33 +633,37 @@ class PMap2(Mapping):
         return list(self.iteritems())
 
     def __len__(self):
-        return self.size
+        return self._size
+
+    def __str__(self):
+        return str(self.todict())
+
+    def todict(self):
+        return dict(self.iteritems())
 
     def assoc(self, key, val):
         kv = (key, val)
         index, bucket = self._get_bucket(key)
         if bucket:
-            # TODO: Break out handling of hash collisions to own classes
             for k, v in bucket:
                 if k == key:
-                    if v == val:
+                    if v is val:
                         return self
                     else:
                         new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
-                        return PMap2(self.size, self.buckets.assoc(index, new_bucket))
+                        return PMap2(self._size, self._buckets.assoc(index, new_bucket))
 
-            # TODO: Precalculate this value as an optimization?
-            if len(self.buckets) < 0.67 * self.size:
-                return PMap2(self.size, self._reallocate()).assoc(key, val)
+            if len(self._buckets) < 0.67 * self._size:
+                return PMap2(self._size, self._reallocate(2 * len(self._buckets))).assoc(key, val)
             else:
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
-                new_buckets = self.buckets.assoc(index, new_bucket)
+                new_buckets = self._buckets.assoc(index, new_bucket)
 
-            return PMap2(self.size + 1, new_buckets)
+            return PMap2(self._size + 1, new_buckets)
 
         # Skip reallocation check if there was no conflict
-        return PMap2(self.size + 1, self.buckets.assoc(index, [kv]))
+        return PMap2(self._size + 1, self._buckets.assoc(index, [kv]))
 
     def without(self, key):
         # Should shrinking of the map ever be done if it becomes very small?
@@ -655,71 +672,91 @@ class PMap2(Mapping):
         if bucket:
             new_bucket = [(k, v) for (k, v) in bucket if k != key]
             if len(bucket) > len(new_bucket):
-                return PMap2(self.size - 1, self.buckets.assoc(index, new_bucket if new_bucket else None))
+                return PMap2(self._size - 1, self._buckets.assoc(index, new_bucket if new_bucket else None))
 
         return self
 
-    def _reallocate(self):
-        new_list = 2 * len(self.buckets) * [None]
+    def _reallocate_to_list(self, new_size):
+        new_list = new_size * [None]
         new_len = len(new_list)
-        for k, v in chain.from_iterable(x for x in self.buckets if x):
+        for k, v in chain.from_iterable(x for x in self._buckets if x):
             index = hash(k) % new_len
             if new_list[index]:
                 new_list[index].append((k, v))
             else:
                 new_list[index] = [(k, v)]
 
-        return pvector(new_list)
+        return new_list
 
-# Start of with eight elements
-_EMPTY_MAP2 = PMap2(0, pvector(8*[None]))
+    def _reallocate(self, new_size):
+        return pvector(self._reallocate_to_list(new_size))
+
 
 def pmap2(**kwargs):
     return pmapping2(kwargs)
 
 
-def pmapping2(initial={}):
-    map = _EMPTY_MAP2
-    for k, v in initial.iteritems():
-        map = map.assoc(k, v)
+def _turbo_mapping(initial, pre_size):
+    size = pre_size or (2 * len(initial)) or 8
+    buckets = size * [None]
 
-    return map
+    if not isinstance(initial, Mapping):
+        # Make a dictionary of the initial data if it isn't already,
+        # that will save us some job further down since we can assume no
+        # key collisions
+        initial = dict(initial)
+
+    for k, v in initial.iteritems():
+        h = hash(k)
+        index = h % size
+        bucket = buckets[index]
+
+        if bucket:
+            bucket.append((k, v))
+        else:
+            buckets[index] = [(k, v)]
+
+    return PMap2(len(initial), pvector(buckets))
+
+
+def pmapping2(initial={}, pre_size=0):
+    return _turbo_mapping(initial, pre_size)
+
 
 ##################### Pset ########################
 
-
 class PSet(Set):
     def __init__(self, m):
-        self.map = m
+        self._map = m
 
     def __contains__(self, element):
-        return element in self.map
+        return element in self._map
 
     def __iter__(self):
-        return iter(self.map)
+        return iter(self._map)
 
-    def  __len__(self):
-        return len(self.map)
+    def __len__(self):
+        return len(self._map)
 
-    @classmethod
-    def _from_iterable(cls, it):
-        s = _EMPTY_SET
-        for x in it:
-            s = s.add(x)
-
-        return s
+    def __str__(self):
+        return str(self.toset())
 
     def toset(self):
-        return set(self.map)
+        return set(iter(self))
+
+    @classmethod
+    def _from_iterable(cls, it, pre_size=8):
+        return PSet(pmapping2({k: True for k in it}, pre_size=pre_size))
+
+    def toset(self):
+        return set(self._map)
 
     def add(self, element):
-        return PSet(self.map.assoc(element, True))
+        return PSet(self._map.assoc(element, True))
 
     def without(self, element):
-        return PSet(self.map.without(element))
-
-_EMPTY_SET = PSet(_EMPTY_MAP2)
+        return PSet(self._map.without(element))
 
 
-def pset(elements=[]):
-    return PSet._from_iterable(elements)
+def pset(elements=[], pre_size=0):
+    return PSet._from_iterable(elements, pre_size=pre_size)

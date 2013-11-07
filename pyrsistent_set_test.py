@@ -32,6 +32,7 @@ def test_contains():
     assert 2 in s
     assert 4 not in s
 
+
 def test_behaves_set_like():
     # This functionality should come "for free"
 
@@ -42,5 +43,9 @@ def test_behaves_set_like():
 
     assert sorted(s1 | s2) == [1, 2, 3, 4, 5]
     assert sorted(s1 & s2) == [3]
+
+
+def test_str():
+    assert str(pset([1, 2, 3])) == "set([1, 2, 3])"
 
 pytest.main()

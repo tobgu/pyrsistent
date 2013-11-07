@@ -1,6 +1,4 @@
 from pyrsistent import pmapping2 as pmapping, pmap2 as pmap
-#from pyrsistent import pmapping, pmap
-
 import pytest
 
     
@@ -13,6 +11,7 @@ def test_initialization_with_one_element():
     the_map = pmapping({'a': 2})
     assert len(the_map) == 1
     assert the_map['a'] == 2
+    assert the_map.a == 2
     assert 'a' in the_map
     
     assert the_map is the_map.without('b')
@@ -20,6 +19,7 @@ def test_initialization_with_one_element():
     empty_map = the_map.without('a')
     assert len(empty_map) == 0
     assert 'a' not in empty_map
+
 
 def test_various_iterations():
     assert set(['a', 'b']) == set(pmap(a=1, b=2))
@@ -30,6 +30,7 @@ def test_various_iterations():
 
     assert set([('a', 1), ('b', 2)]) == set(pmap(a=1, b=2).iteritems())
     assert set([('a', 1), ('b', 2)]) == set(pmap(a=1, b=2).items())
+
 
 def test_initialization_with_two_elements():
     map = pmapping({'a': 2, 'b': 3})
@@ -175,11 +176,16 @@ def test_iteration_with_many_elements():
         
     assert actual_keys == set(keys + [hash_dummy1, hash_dummy2])
     assert actual_values == set(values + [12345, 54321])
-        
-     
+
+
+def test_str():
+    assert str(pmapping({1: 2, 3: 4})) == "{1: 2, 3: 4}"
+
 pytest.main()
     
 # TODO:
-# - Code coverage and more tests
 # - todict
-# - To string
+# - str for all three types
+# - sorting, reverse (test with the reverse slice operation...)
+# - Documentation
+# - Release!

@@ -121,7 +121,7 @@ def test_set_performance():
     print "Big set from list: " + str(time.time() - before)
 
     before = time.time()
-    s2 = pset(l)
+    s2 = pset(l, pre_size=2*len(l))
     print "Big pset from list: " + str(time.time() - before)
 
     before = time.time()
@@ -131,6 +131,33 @@ def test_set_performance():
     before = time.time()
     random_access(s2)
     print "Random access pset: " + str(time.time() - before)
+
+def test_string_from_objects():
+    p = pvector(range(100000))
+
+    before = time.time()
+    s1 = str(p)
+    print "Str 1: " + str(time.time() - before)
+
+    before = time.time()
+    s2 = p.tostr()
+    print "Str 2: " + str(time.time() - before)
+
+def test_to_list():
+    p = pvector(range(100000))
+
+    before = time.time()
+    l1 = p.tolist()
+    print "Tolist: " + str(time.time() - before)
+
+    before = time.time()
+    l2 = list(p)
+    print "Iterator: " + str(time.time() - before)
+
+    before = time.time()
+    t1 = p.totuple()
+    print "Tuple: " + str(time.time() - before)
+
 
 def random_access(s):
     testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]
@@ -147,3 +174,5 @@ if __name__ == "__main__":
 #    test_slicing_performance()
 #    test_create_many_small_vectors()
     test_set_performance()
+    test_string_from_objects()
+    test_to_list()
