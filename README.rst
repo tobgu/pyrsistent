@@ -40,4 +40,10 @@ Pyrsistent is greatly influenced by the persistent data structures that are part
 
 Installation
 -------------
-    pip install pyrsistent
+
+pip install pyrsistent
+
+Documentation
+---------------
+
+Available at http://pyrsistent.readthedocs.org/
