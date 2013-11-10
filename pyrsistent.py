@@ -1,32 +1,3 @@
-"""
-A number of persistent collections. Persistent in the sense that they are immutable (if only accessing the public API).
-All manipulating methods return a new copy of the object with the containing the requested updates. The original
-structure remains as it was.
-This can simplify the reasoning about what a program does since no hidden side effects ever can take place. If you
-want to manipulate the structure in a function you will have to return the result.
-
-The following code snipped illustrated the difference between the built in, regular, list and the pvector which
-is part of this library
-
-
->>> from pyrsistent import pvec
->>> l = [1, 2, 3]
->>> l. append(4)
->>> print l
-[1, 2, 3, 4]
->>> p1 = pvec(1, 2, 3)
->>> p2 = p1.append(4)
->>> print p1
-[1, 2, 3]
->>> print p2
-[1, 2, 3, 4]
-
-Performance is generally in the range of 2 - 100 times slower than using the corresponding built in types in Python.
-In the cases where attempts at optimizations have been done, speed has generally been valued over space.
-
-Fully PyPy compatible, running it under PyPy speeds operations up considerably if the structures are used heavily
-(if JITed), for some cases the performance is almost on par with the built in counterparts.
-"""
 from collections import Sequence, Mapping, Set
 from itertools import chain
 
@@ -41,6 +12,9 @@ SHIFT = _bitcount(BIT_MASK)
 
 class PVector(Sequence):
     """
+    Do not instantiate directly, instead use the factory functions :py:func:`pvec` and :py:func:`pvector` to
+    create an instance.
+
     Heavily influenced by the persistent vector available in Clojure. Initially this was more or
     less just a port of the Java code for the Clojure data structures. It has since been modified and to
     some extent optimized for usage in Python.
@@ -71,9 +45,6 @@ class PVector(Sequence):
     >>>
     """
     def __init__(self, c, s, r, t):
-        """
-        Should never be created directly, use the pvector() / pvec() factory functions instead.
-        """
         self._count = c
         self._shift = s
         self._root = r
@@ -225,7 +196,8 @@ class PVector(Sequence):
 
     def extend(self, obj):
         """
-        Return a new vector with all values in obj appended to it.
+        Return a new vector with all values in obj appended to it. Obj may be another
+        PVector or any other iterable.
         """
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
@@ -279,6 +251,9 @@ def pvec(*elements):
 ####################### PMap #####################################
 class PMap(Mapping):
     """
+    Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
+    create an instance.
+
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
 
     Was originally written as a very close copy of the Clojure equivalent but was later rewritten to closer
@@ -301,9 +276,6 @@ class PMap(Mapping):
     >>>
     """
     def __init__(self, size, buckets):
-        """
-        Do not call directly, instead call the factory functions.
-        """
         self._size = size
         self._buckets = buckets
 
@@ -470,6 +442,8 @@ def pmapping(initial={}, pre_size=0):
 
 class PSet(Set):
     """
+    Do not instantiate directly, instead use the factory function :py:func:`pset` to create an instance.
+
     Persistent set implementation. Built on top of the persistent map.
 
     Some examples:

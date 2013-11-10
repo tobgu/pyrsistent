@@ -3,3 +3,5 @@
 *.so
 *~
 build/
+pyrsistent.egg-info/
+dist/
