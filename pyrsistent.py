@@ -1,20 +1,47 @@
+"""
+A number of persistent collections. Persistent in the sense that they are immutable (if only accessing the public API).
+All manipulating methods return a new copy of the object with the containing the requested updates. The original
+structure remains as it was.
+This can simplify the reasoning about what a program does since no hidden side effects ever can take place. If you
+want to manipulate the structure in a function you will have to return the result.
+
+The following code snipped illustrated the difference between the built in, regular, list and the pvector which
+is part of this library
+
+
+>>> from pyrsistent import pvec
+>>> l = [1, 2, 3]
+>>> l. append(4)
+>>> print l
+[1, 2, 3, 4]
+>>> p1 = pvec(1, 2, 3)
+>>> p2 = p1.append(4)
+>>> print p1
+[1, 2, 3]
+>>> print p2
+[1, 2, 3, 4]
+
+Performance is generally in the range of 2 - 100 times slower than using the corresponding built in types in Python.
+In the cases where attempts at optimizations have been done, speed has generally been valued over space.
+
+Fully PyPy compatible, running it under PyPy speeds operations up considerably if the structures are used heavily
+(if JITed), for some cases the performance is almost on par with the built in counterparts.
+"""
 from collections import Sequence, Mapping, Set
 from itertools import chain
 
 
-def bitcount(val):
+def _bitcount(val):
     return bin(val).count("1")
 
 
 BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
-SHIFT = bitcount(BIT_MASK)
+SHIFT = _bitcount(BIT_MASK)
 
 class PVector(Sequence):
     """
-    Persistent vector, persistent in the sense that it is immutable (if only accessing the public API)
-
-    Heavily influenced by the persistent data structures available in Clojure. Initially this was more or
+    Heavily influenced by the persistent vector available in Clojure. Initially this was more or
     less just a port of the Java code for the Clojure data structures. It has since been modified and to
     some extent optimized for usage in Python.
 
@@ -22,18 +49,37 @@ class PVector(Sequence):
     updates are done to the original vector. Structural sharing between vectors are applied where possible to save
     space and to avoid making complete copies.
 
-    Performance is generally in the range of 2 - 100 times slower than using the built in mutable list type in Python.
-    It may be better in some cases and worse in others. Fully PyPy compatible, running it under PyPy speeds operations
-    up considerably if the structure is used heavily (if JITed).
+    This structure corresponds most closely to the built in list type and is intended as a replacement. Where the
+    semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
+    for example assignments.
+
+    The following are examples of some common operations on persistent vectors
+
+    >>> p = pvec(1, 2, 3)
+    >>> p2 = p.append(4)
+    >>> p3 = p2.extend([5, 6, 7])
+    >>> p
+    [1, 2, 3]
+    >>> p2
+    [1, 2, 3, 4]
+    >>> p3
+    [1, 2, 3, 4, 5, 6, 7]
+    >>> p3[5]
+    6
+    >>> p.assoc(1, 99)
+    [1, 99, 3]
+    >>>
     """
     def __init__(self, c, s, r, t):
         """
-        Should never be created directly, use the pvector() / pvec() factory function instead.
+        Should never be created directly, use the pvector() / pvec() factory functions instead.
         """
         self._count = c
         self._shift = s
         self._root = r
         self._tail = t
+
+        # Derived attribute stored for performance
         self._tail_offset = self._count - len(self._tail)
 
     def __len__(self):
@@ -50,16 +96,15 @@ class PVector(Sequence):
     def __add__(self, other):
         return self.extend(other)
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.tolist())
+
+    __str__ = __repr__
 
     def __iter__(self):
         # This is kind of lazy and will produce some memory overhead but it is the fasted method
         # by far of those tried since it uses the speed of the built in python list directly.
         return iter(self.tolist())
-
-    def tostr(self):
-        return str(self.tolist())
 
     def _fill_list(self, node, shift, the_list):
         if shift:
@@ -70,15 +115,24 @@ class PVector(Sequence):
             the_list.extend(node)
 
     def tolist(self):
+        """
+        The fastest way to convert the vector into a python list.
+        """
         the_list = []
         self._fill_list(self._root, self._shift, the_list)
         the_list.extend(self._tail)
         return the_list
 
     def totuple(self):
+        """
+        Returns the content as a python tuple.
+        """
         return tuple(self.tolist())
 
     def assoc(self, i, val):
+        """
+        Return a new vector with element at position i replaced with val.
+        """
         if 0 <= i < self._count:
             if i >= self._tail_offset:
                 new_tail = list(self._tail)
@@ -129,6 +183,9 @@ class PVector(Sequence):
         return new_root, new_shift
 
     def append(self, val):
+        """
+        Return a new vector with val appended.
+        """
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
             new_tail.append(val)
@@ -167,6 +224,9 @@ class PVector(Sequence):
         self._tail_offset = self._count - len(self._tail)
 
     def extend(self, obj):
+        """
+        Return a new vector with all values in obj appended to it.
+        """
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
         l = obj.tolist() if isinstance(obj, PVector) else list(obj)
@@ -203,26 +263,52 @@ class PVector(Sequence):
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
-
 def pvector(elements=[]):
-    vec = _EMPTY_VECTOR
-    return vec.extend(elements)
+    """
+    Factory function, returns a new PVector object containing the elements in elements.
+    """
+    return _EMPTY_VECTOR.extend(elements)
 
 
 def pvec(*elements):
+    """
+    Factory function, returns a new PVector object containing all parameters.
+    """
     return pvector(elements)
 
 ####################### PMap #####################################
-
-
 class PMap(Mapping):
+    """
+    Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
+
+    Was originally written as a very close copy of the Clojure equivalent but was later rewritten to closer
+    re-assemble the python dict. This means that a sparse vector (a PVector) of buckets is used. The keys are
+    hashed and the elements inserted at position hash % len(bucket_vector). Whenever the map size exceeds 2/3 of
+    the containing vectors size the map is reallocated to a vector of double the size. This is done to avoid
+    excessive hash collisions.
+
+    The following are examples of some common operations on persistent maps
+
+    >>> m = pmap(a=1, b=3)
+    >>> m2 = m.assoc('c', 3)
+    >>> m3 = m2.without('a')
+    >>> m
+    {'a': 1, 'b': 3}
+    >>> m2
+    {'a': 1, 'c': 3, 'b': 3}
+    >>> m3
+    {'c': 3, 'b': 3}
+    >>>
+    """
     def __init__(self, size, buckets):
+        """
+        Do not call directly, instead call the factory functions.
+        """
         self._size = size
         self._buckets = buckets
 
     def _get_bucket(self, key):
-        h = hash(key)
-        index = h % len(self._buckets)
+        index = hash(key) % len(self._buckets)
         bucket = self._buckets[index]
         return index, bucket
 
@@ -270,13 +356,21 @@ class PMap(Mapping):
     def __len__(self):
         return self._size
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.todict())
 
+    __str__ = __repr__
+
     def todict(self):
+        """
+        Return built in dictionary representation of this map.
+        """
         return dict(self.iteritems())
 
     def assoc(self, key, val):
+        """
+        Return a new map with key and val inserted.
+        """
         kv = (key, val)
         index, bucket = self._get_bucket(key)
         if bucket:
@@ -301,6 +395,10 @@ class PMap(Mapping):
         return PMap(self._size + 1, self._buckets.assoc(index, [kv]))
 
     def without(self, key):
+        """
+        Return a new map without the element specified by key.
+        """
+
         # Should shrinking of the map ever be done if it becomes very small?
         index, bucket = self._get_bucket(key)
 
@@ -327,10 +425,6 @@ class PMap(Mapping):
         return pvector(self._reallocate_to_list(new_size))
 
 
-def pmap(**kwargs):
-    return pmapping(kwargs)
-
-
 def _turbo_mapping(initial, pre_size):
     size = pre_size or (2 * len(initial)) or 8
     buckets = size * [None]
@@ -354,13 +448,43 @@ def _turbo_mapping(initial, pre_size):
     return PMap(len(initial), pvector(buckets))
 
 
+def pmap(**kwargs):
+    """
+    Factory function, inserts all key value arguments into the newly created map.
+    """
+    return pmapping(kwargs)
+
+
 def pmapping(initial={}, pre_size=0):
+    """
+    Factory function, inserts all elements in initial into the newly created map.
+    The optional argument pre_size may be used to specify an initial size of the underlying bucket vector. This
+    may have a positive performance impact in the cases where you know beforehand that a large number of elements
+    will be inserted into the map eventually since it will reduce the number of reallocations required.
+
+    """
     return _turbo_mapping(initial, pre_size)
 
 
 ##################### Pset ########################
 
 class PSet(Set):
+    """
+    Persistent set implementation. Built on top of the persistent map.
+
+    Some examples:
+
+    >>> s = pset([1, 2, 3, 1])
+    >>> s2 = s.add(4)
+    >>> s3 = s2.without(2)
+    >>> s
+    set([1, 2, 3])
+    >>> s2
+    set([1, 2, 3, 4])
+    >>> s3
+    set([1, 3, 4])
+    >>>
+    """
     def __init__(self, m):
         self._map = m
 
@@ -373,18 +497,20 @@ class PSet(Set):
     def __len__(self):
         return len(self._map)
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.toset())
 
+    __str__ = __repr__
+
     def toset(self):
-        return set(iter(self))
+        """
+        Returns a built in set with the contents of this set.
+        """
+        return set(self)
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
         return PSet(pmapping({k: True for k in it}, pre_size=pre_size))
-
-    def toset(self):
-        return set(self._map)
 
     def add(self, element):
         return PSet(self._map.assoc(element, True))
@@ -393,5 +519,9 @@ class PSet(Set):
         return PSet(self._map.without(element))
 
 
-def pset(elements=[], pre_size=0):
+def pset(elements=[], pre_size=8):
+    """
+    Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
+    used for pmapping().
+    """
     return PSet._from_iterable(elements, pre_size=pre_size)

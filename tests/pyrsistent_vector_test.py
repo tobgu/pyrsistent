@@ -173,4 +173,25 @@ def test_to_string():
     seq = pvector(range(2000))
 
     assert str(seq) == str(range(2000))
-    assert seq.tostr() == str(range(2000))
+
+
+def test_sorted():
+    seq = pvec(5, 2, 3, 1)
+    assert [1, 2, 3, 5] == sorted(seq)
+
+
+def test_extend():
+    seq = pvec(5, 2, 3, 1)
+    seq2 = pvec(5, 6)
+
+    seq3 = seq.extend(seq2)
+    assert seq3.tolist() == [5, 2, 3, 1, 5, 6]
+
+    empty = pvec()
+    seq4 = seq.extend(empty)
+    assert seq4 is seq
+
+
+def test_boolean_conversion():
+    assert not bool(pvec())
+    assert bool(pvec(1))

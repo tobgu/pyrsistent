@@ -161,7 +161,7 @@ def test_iteration_with_many_elements():
     hash_dummy1 = HashDummy()
     hash_dummy2 = HashDummy()
     
-    # Throw in a couple of hash collision nodes to test
+    # Throw in a couple of hash collision nodes to tests
     # those properly as well
     init_dict[hash_dummy1] = 12345
     init_dict[hash_dummy2] = 54321
@@ -182,8 +182,3 @@ def test_str():
     assert str(pmapping({1: 2, 3: 4})) == "{1: 2, 3: 4}"
 
 pytest.main()
-    
-# TODO:
-# - sorting, reverse (test with the reverse slice operation...)
-# - Documentation
-# - Release!

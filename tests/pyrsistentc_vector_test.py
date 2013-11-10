@@ -61,7 +61,7 @@ class TestPyVec(unittest.TestCase):
 #        x = pvec(range(200))
 
     def xtest_infinity(self):
-        print "Starting to test infinity"
+        print "Starting to tests infinity"
 
 #        while True:
         x = pvec()
