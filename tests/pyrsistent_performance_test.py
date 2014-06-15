@@ -3,7 +3,7 @@ from pyrsistent import pvector, pset
 #import pytest
 import time
 
-def test_big_iterator_initialization():
+def run_big_iterator_initialization():
     """
     The results are comparable to those of doing it with a list since most of the
     code is shared.
@@ -17,7 +17,7 @@ def test_big_iterator_initialization():
     print "Big vector from iterator: " + str(time.time() - before)
 
 
-def test_big_list_initialization():
+def run_big_list_initialization():
     """
     Some example results, these are some of the fastest I've seen, it tends to vary...
 
@@ -40,7 +40,7 @@ def test_big_list_initialization():
     print "Big vector from list: " + str(time.time() - before)
 
 
-def test_slicing_performance():
+def run_slicing_performance():
     """
     Again, the fastest, large variations exist...
 
@@ -66,7 +66,7 @@ def test_slicing_performance():
     print "Pvec slicing: " + str(time.time() - before)
 
 
-def test_create_many_small_vectors():
+def run_create_many_small_vectors():
     """
     == PyPy ==
     Single element: 0.149819135666
@@ -100,7 +100,7 @@ def test_create_many_small_vectors():
     print "Ten elements: " + str(time.time() - before)
 
 
-def test_set_performance():
+def run_set_performance():
     """
     == PyPy ==
     Big set from list: 0.0152490139008
@@ -132,7 +132,7 @@ def test_set_performance():
     random_access(s2)
     print "Random access pset: " + str(time.time() - before)
 
-def test_string_from_objects():
+def run_string_from_objects():
     p = pvector(range(100000))
 
     before = time.time()
@@ -143,7 +143,7 @@ def test_string_from_objects():
     s2 = p.tostr()
     print "Str 2: " + str(time.time() - before)
 
-def test_to_list():
+def run_to_list():
     p = pvector(range(100000))
 
     before = time.time()
@@ -169,10 +169,10 @@ def random_access(s):
     return result
 
 if __name__ == "__main__":
-#    test_big_list_initialization()
-#    test_big_iterator_initialization()
-#    test_slicing_performance()
-#    test_create_many_small_vectors()
-    test_set_performance()
-    test_string_from_objects()
-    test_to_list()
+#    run_big_list_initialization()
+#    run_big_iterator_initialization()
+#    run_slicing_performance()
+#    run_create_many_small_vectors()
+    run_set_performance()
+    run_string_from_objects()
+    run_to_list()
