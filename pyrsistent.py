@@ -1,6 +1,7 @@
-from collections import Sequence, Mapping, Set
+from collections import Sequence, Mapping, Set, Hashable
 from itertools import chain
-
+from traceback import extract_stack
+from functools import wraps
 
 def _bitcount(val):
     return bin(val).count("1")
@@ -10,7 +11,15 @@ BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = _bitcount(BIT_MASK)
 
-class PVector(Sequence):
+def _comparator(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        if isinstance(args[0], PVector) and isinstance(args[1], PVector): 
+            return f(*args, **kwds)
+        return NotImplemented
+    return wrapper
+
+class PVector(Sequence, Hashable):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pvec` and :py:func:`pvector` to
     create an instance.
@@ -58,17 +67,30 @@ class PVector(Sequence):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
+            # There are more condintions than the below where it would be OK to
+            # return ourself, implement those...
+            if index.start is None and index.stop is None and index.step is None:
+                return self
+
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date, and it's easy :-)
             return pvector(self.tolist()[index])
 
-        return self._list_for(index)[index & BIT_MASK]
+        if index < 0:
+            index += self._count
+
+        return self._node_for(index)[index & BIT_MASK]
 
     def __add__(self, other):
         return self.extend(other)
 
+    def __pvector_repr_with_recur_lock(self):
+        if len([f for f in extract_stack() if '__pvector_repr_with_recur_lock' in f[2]]) > 1:
+            return '(...)'
+        return str(self.totuple())
+
     def __repr__(self):
-        return str(self.tolist())
+        return self.__pvector_repr_with_recur_lock()
 
     __str__ = __repr__
 
@@ -76,6 +98,40 @@ class PVector(Sequence):
         # This is kind of lazy and will produce some memory overhead but it is the fasted method
         # by far of those tried since it uses the speed of the built in python list directly.
         return iter(self.tolist())
+
+    @_comparator
+    def __ne__(self, other):
+        return self.tolist() != other.tolist()
+
+    @_comparator
+    def __eq__(self, other):
+        return self is other or self.tolist() == other.tolist()
+
+    @_comparator
+    def __gt__(self, other):
+        return self.tolist() > other.tolist()
+
+    @_comparator
+    def __lt__(self, other):
+        return self.tolist() < other.tolist()
+
+    @_comparator
+    def __ge__(self, other):
+        return self.tolist() >= other.tolist()
+
+    @_comparator
+    def __le__(self, other):
+        return self.tolist() <= other.tolist()
+
+    def __mul__(self, times):
+        if times <= 0 or self is _EMPTY_VECTOR:
+            return _EMPTY_VECTOR
+        elif times == 1:
+            return self
+        else:
+            return pvector(times * self.tolist())
+
+    __rmul__ = __mul__
 
     def _fill_list(self, node, shift, the_list):
         if shift:
@@ -99,6 +155,10 @@ class PVector(Sequence):
         Returns the content as a python tuple.
         """
         return tuple(self.tolist())
+
+    def __hash__(self):
+        # Taking the easy way out again...
+        return hash(self.totuple())
 
     def assoc(self, i, val):
         """
@@ -127,9 +187,8 @@ class PVector(Sequence):
 
         return ret
 
-    def _list_for(self, i):
+    def _node_for(self, i):
         if 0 <= i < self._count:
-
             if i >= self._tail_offset:
                 return self._tail
 
