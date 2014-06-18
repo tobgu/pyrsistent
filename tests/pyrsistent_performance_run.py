@@ -147,7 +147,7 @@ def run_to_list():
     p = pvector(range(100000))
 
     before = time.time()
-    l1 = p.tolist()
+    l1 = p._tolist()
     print "Tolist: " + str(time.time() - before)
 
     before = time.time()
@@ -155,7 +155,7 @@ def run_to_list():
     print "Iterator: " + str(time.time() - before)
 
     before = time.time()
-    t1 = p.totuple()
+    t1 = p._totuple()
     print "Tuple: " + str(time.time() - before)
 
 

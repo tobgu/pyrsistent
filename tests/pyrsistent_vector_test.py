@@ -1,9 +1,12 @@
-from pyrsistent import pvector, pvec
-
 import pytest
 
+@pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
+def pvector(request):
+    m = pytest.importorskip(request.param)
+    return m._pvector
 
-def test_empty_initialization():
+
+def test_empty_initialization(pvector):
     seq = pvector()
     assert len(seq) == 0
 
@@ -11,13 +14,13 @@ def test_empty_initialization():
         x = seq[0]
 
 
-def test_initialization_with_one_element():
+def test_initialization_with_one_element(pvector):
     seq = pvector([3])
     assert len(seq) == 1
     assert seq[0] == 3
 
 
-def test_append_works_and_does_not_affect_original_within_tail():
+def test_append_works_and_does_not_affect_original_within_tail(pvector):
     seq1 = pvector([3])
     seq2 = seq1.append(2)
 
@@ -29,7 +32,7 @@ def test_append_works_and_does_not_affect_original_within_tail():
     assert seq2[1] == 2
 
 
-def test_append_works_and_does_not_affect_original_outside_tail():
+def test_append_works_and_does_not_affect_original_outside_tail(pvector):
     original = pvector([])
     seq = original
 
@@ -44,7 +47,7 @@ def test_append_works_and_does_not_affect_original_outside_tail():
     assert len(original) == 0
 
 
-def test_append_when_root_overflows():
+def test_append_when_root_overflows(pvector):
     seq = pvector([])
 
     for x in range(32 * 33):
@@ -58,7 +61,7 @@ def test_append_when_root_overflows():
     assert seq[32 * 33] == 10001
 
 
-def test_multi_level_sequence():
+def test_multi_level_sequence(pvector):
     seq = pvector(range(8000))
     seq2 = seq.append(11)
 
@@ -67,7 +70,7 @@ def test_multi_level_sequence():
     assert seq2[8000] == 11
 
 
-def test_multi_level_sequence_from_iterator():
+def test_multi_level_sequence_from_iterator(pvector):
     seq = pvector(iter(range(8000)))
     seq2 = seq.append(11)
 
@@ -76,15 +79,7 @@ def test_multi_level_sequence_from_iterator():
     assert seq2[8000] == 11
 
 
-# Special case
-def test_vector_to_list():
-    l = range(2000)
-    seq = pvector(l)
-
-    assert seq.tolist() == l
-
-
-def test_random_insert_within_tail():
+def test_random_insert_within_tail(pvector):
     seq = pvector([1, 2, 3])
 
     seq2 = seq.assoc(1, 4)
@@ -93,7 +88,7 @@ def test_random_insert_within_tail():
     assert seq[1] == 2
 
 
-def test_random_insert_outside_tail():
+def test_random_insert_outside_tail(pvector):
     seq = pvector(range(20000))
 
     seq2 = seq.assoc(19000, 4)
@@ -102,7 +97,7 @@ def test_random_insert_outside_tail():
     assert seq[19000] == 19000
 
 
-def test_insert_beyond_end():
+def test_insert_beyond_end(pvector):
     seq = pvector(range(2))
     seq2 = seq.assoc(2, 50)    
     assert seq2[2] == 50
@@ -111,7 +106,7 @@ def test_insert_beyond_end():
         seq2.assoc(19, 4)
 
 
-def test_iteration():
+def test_iteration(pvector):
     y = 0
     seq = pvector(range(2000))
     for x in seq:
@@ -121,14 +116,14 @@ def test_iteration():
     assert y == 2000
 
 
-def test_zero_extend():
+def test_zero_extend(pvector):
     the_list = []
     seq = pvector()
     seq2 = seq.extend(the_list)
     assert seq == seq2
 
 
-def test_short_extend():
+def test_short_extend(pvector):
     # Extend within tail length
     the_list = [1, 2]
     seq = pvector()
@@ -139,7 +134,7 @@ def test_short_extend():
     assert seq2[1] == the_list[1]
 
 
-def test_long_extend():
+def test_long_extend(pvector):
     # Multi level extend
     seq = pvector()
     length = 2137
@@ -162,42 +157,42 @@ def test_long_extend():
         assert seq2[i] == i
 
 
-def test_slicing_zero_length_range():
+def test_slicing_zero_length_range(pvector):
     seq = pvector(range(10))
     seq2 = seq[2:2]
 
     assert len(seq2) == 0
 
 
-def test_slicing_range():
+def test_slicing_range(pvector):
     seq = pvector(range(10))
     seq2 = seq[2:4]
 
     assert list(seq2) == [2, 3]
 
 
-def test_slice_identity():
+def test_slice_identity(pvector):
     # Pvector is immutable, no need to make a copy!
     seq = pvector(range(10))
 
     assert seq is seq[::]
 
 
-def test_slicing_range_with_step():
+def test_slicing_range_with_step(pvector):
     seq = pvector(range(100))
     seq2 = seq[2:12:3]
 
     assert list(seq2) == [2, 5, 8, 11]
 
 
-def test_slicing_no_range_but_step():
+def test_slicing_no_range_but_step(pvector):
     seq = pvector(range(10))
     seq2 = seq[::2]
 
     assert list(seq2) == [0, 2, 4, 6, 8]
 
 
-def test_slicing_reverse():
+def test_slicing_reverse(pvector):
     seq = pvector(range(10))
     seq2 = seq[::-1]
 
@@ -211,20 +206,13 @@ def test_slicing_reverse():
     assert len(seq3) == 4
 
 
-def test_to_list():
-    l = list(range(32*32 + 64 + 7))
-    v = pvector(l)
-
-    assert l == v.tolist()
-
-
-def test_addition():
-    v = pvec(1, 2) + pvec(3, 4)
+def test_addition(pvector):
+    v = pvector([1, 2]) + pvector([3, 4])
 
     assert list(v) == [1, 2, 3, 4]
 
 
-def test_slicing_reverse():
+def test_slicing_reverse(pvector):
     seq = pvector(range(10))
     seq2 = seq[::-1]
 
@@ -238,45 +226,45 @@ def test_slicing_reverse():
     assert len(seq3) == 4
 
 
-def test_sorted():
-    seq = pvec(5, 2, 3, 1)
+def test_sorted(pvector):
+    seq = pvector([5, 2, 3, 1])
     assert [1, 2, 3, 5] == sorted(seq)
 
 
-def test_boolean_conversion():
-    assert not bool(pvec())
-    assert bool(pvec(1))
+def test_boolean_conversion(pvector):
+    assert not bool(pvector())
+    assert bool(pvector([1]))
 
 
-def test_access_with_negative_index():
+def test_access_with_negative_index(pvector):
     seq = pvector([1, 2, 3, 4])
 
     assert seq[-1] == 4
     assert seq[-4] == 1
 
 
-def test_index_error_positive():
+def test_index_error_positive(pvector):
     with pytest.raises(IndexError):
-        x = pvec(1, 2, 3)[3]
+        x = pvector([1, 2, 3])[3]
 
 
-def test_index_error_negative():
+def test_index_error_negative(pvector):
     with pytest.raises(IndexError):
-        x = pvec(1, 2, 3)[-4]
+        x = pvector([1, 2, 3])[-4]
 
 
-def test_is_sequence():
+def test_is_sequence(pvector):
     from collections import Sequence
     assert isinstance(list(), Sequence)
-    assert isinstance(pvec(), Sequence)
+    assert isinstance(pvector(), Sequence)
 
 
-def test_empty_repr():
-    assert str(pvec()) == "()"
+def test_empty_repr(pvector):
+    assert str(pvector()) == "()"
 
 
-def test_non_empty_repr():
-    v = pvec(1, 2, 3)
+def test_non_empty_repr(pvector):
+    v = pvector([1, 2, 3])
     assert str(v) == "(1, 2, 3)"
 
     # There's some state that needs to be reset between calls in the native version,
@@ -284,7 +272,7 @@ def test_non_empty_repr():
     assert str(v) == "(1, 2, 3)"
 
 
-def test_repr_when_contained_object_contains_reference_to_self():
+def test_repr_when_contained_object_contains_reference_to_self(pvector):
     x = [1, 2, 3]
     v = pvector([1, 2, x])
     x.append(v)
@@ -295,61 +283,61 @@ def test_repr_when_contained_object_contains_reference_to_self():
     gc.collect()
 
 
-def test_is_hashable():
-    v = pvec(1, 2, 3)
-    v2 = pvec(1, 2, 3)
+def test_is_hashable(pvector):
+    v = pvector([1, 2, 3])
+    v2 = pvector([1, 2, 3])
 
     assert hash(v) == hash(v2)
 
 
-def test_refuses_to_hash_when_members_are_unhashable():
-    v = pvec(1, 2, [1, 2])
+def test_refuses_to_hash_when_members_are_unhashable(pvector):
+    v = pvector([1, 2, [1, 2]])
 
     with pytest.raises(TypeError):
         hash(v)
 
 
-def test_compare_same_vectors():
+def test_compare_same_vectors(pvector):
     v = pvector([1, 2])
     assert v == v
     assert pvector() == pvector()
 
 
-def test_compare_with_other_type_of_object():
+def test_compare_with_other_type_of_object(pvector):
     assert pvector([1, 2]) != 'foo'
 
 
-def test_compare_equal_vectors():
-    v1 = pvec(1, 2)
-    v2 = pvec(1, 2)
+def test_compare_equal_vectors(pvector):
+    v1 = pvector([1, 2])
+    v2 = pvector([1, 2])
     assert v1 == v2
     assert v1 >= v2
     assert v1 <= v2
 
 
-def test_compare_different_vectors_same_size():
-    v1 = pvec(1, 2)
-    v2 = pvec(1, 3)
+def test_compare_different_vectors_same_size(pvector):
+    v1 = pvector([1, 2])
+    v2 = pvector([1, 3])
     assert v1 != v2
 
 
-def test_compare_different_vectors_different_sizes():
-    v1 = pvec(1, 2)
-    v2 = pvec(1, 2, 3)
+def test_compare_different_vectors_different_sizes(pvector):
+    v1 = pvector([1, 2])
+    v2 = pvector([1, 2, 3])
     assert v1 != v2
 
 
-def test_compare_lt_gt():
-    v1 = pvec(1, 2)
-    v2 = pvec(1, 2, 3)
+def test_compare_lt_gt(pvector):
+    v1 = pvector([1, 2])
+    v2 = pvector([1, 2, 3])
     assert v1 < v2
     assert v2 > v1
 
 
-def test_repeat():
-    v = pvec(1, 2)
-    assert 5 * pvec() is pvec()
+def test_repeat(pvector):
+    v = pvector([1, 2])
+    assert 5 * pvector() is pvector()
     assert v is 1 * v
-    assert 0 * v is pvec()
-    assert 2 * pvec(1, 2) == pvec(1, 2, 1, 2)
-    assert -3 * pvec(1, 2) is pvec()
+    assert 0 * v is pvector()
+    assert 2 * pvector([1, 2]) == pvector([1, 2, 1, 2])
+    assert -3 * pvector([1, 2]) is pvector()

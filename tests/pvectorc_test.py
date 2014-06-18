@@ -1,5 +1,5 @@
 from collections import Sequence
-from pvectorc import pvec as pvector
+from pvectorc import _pvector as pvector
 import pytest
 import time
 

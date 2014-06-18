@@ -9,6 +9,7 @@ TODO:
 - Fix automated memory leak tests (eg. check memory usage, run for a while and check it again)
 - Test to optimize by creating a node pool and reuse deallocated nodes instead of allocating new ones
 - Create optimized function for replacing multiple elements in the same function call
+- Register with Hashable
 
 Persistant/Immutable data structures. Unfortunately I have not been able to come
 up with an implementation that is 100% immutable due to the ref counts used by
@@ -754,7 +755,7 @@ static PyObject* PVector_assoc(PVector *self, PyObject *args) {
 
 
 static PyMethodDef PyrsistentMethods[] = {
-  {"pvec", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
+  {"_pvector", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
   {NULL, NULL, 0, NULL}
 };
 

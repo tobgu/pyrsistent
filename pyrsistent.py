@@ -6,10 +6,10 @@ from functools import wraps
 def _bitcount(val):
     return bin(val).count("1")
 
-
 BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = _bitcount(BIT_MASK)
+
 
 def _comparator(f):
     @wraps(f)
@@ -18,6 +18,7 @@ def _comparator(f):
             return f(*args, **kwds)
         return NotImplemented
     return wrapper
+
 
 class PVector(Sequence, Hashable):
     """
@@ -74,7 +75,7 @@ class PVector(Sequence, Hashable):
 
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date, and it's easy :-)
-            return pvector(self.tolist()[index])
+            return _pvector(self._tolist()[index])
 
         if index < 0:
             index += self._count
@@ -87,7 +88,7 @@ class PVector(Sequence, Hashable):
     def __pvector_repr_with_recur_lock(self):
         if len([f for f in extract_stack() if '__pvector_repr_with_recur_lock' in f[2]]) > 1:
             return '(...)'
-        return str(self.totuple())
+        return str(self._totuple())
 
     def __repr__(self):
         return self.__pvector_repr_with_recur_lock()
@@ -97,31 +98,31 @@ class PVector(Sequence, Hashable):
     def __iter__(self):
         # This is kind of lazy and will produce some memory overhead but it is the fasted method
         # by far of those tried since it uses the speed of the built in python list directly.
-        return iter(self.tolist())
+        return iter(self._tolist())
 
     @_comparator
     def __ne__(self, other):
-        return self.tolist() != other.tolist()
+        return self._tolist() != other._tolist()
 
     @_comparator
     def __eq__(self, other):
-        return self is other or self.tolist() == other.tolist()
+        return self is other or self._tolist() == other._tolist()
 
     @_comparator
     def __gt__(self, other):
-        return self.tolist() > other.tolist()
+        return self._tolist() > other._tolist()
 
     @_comparator
     def __lt__(self, other):
-        return self.tolist() < other.tolist()
+        return self._tolist() < other._tolist()
 
     @_comparator
     def __ge__(self, other):
-        return self.tolist() >= other.tolist()
+        return self._tolist() >= other._tolist()
 
     @_comparator
     def __le__(self, other):
-        return self.tolist() <= other.tolist()
+        return self._tolist() <= other._tolist()
 
     def __mul__(self, times):
         if times <= 0 or self is _EMPTY_VECTOR:
@@ -129,7 +130,7 @@ class PVector(Sequence, Hashable):
         elif times == 1:
             return self
         else:
-            return pvector(times * self.tolist())
+            return _pvector(times * self._tolist())
 
     __rmul__ = __mul__
 
@@ -141,7 +142,7 @@ class PVector(Sequence, Hashable):
         else:
             the_list.extend(node)
 
-    def tolist(self):
+    def _tolist(self):
         """
         The fastest way to convert the vector into a python list.
         """
@@ -150,15 +151,15 @@ class PVector(Sequence, Hashable):
         the_list.extend(self._tail)
         return the_list
 
-    def totuple(self):
+    def _totuple(self):
         """
         Returns the content as a python tuple.
         """
-        return tuple(self.tolist())
+        return tuple(self._tolist())
 
     def __hash__(self):
         # Taking the easy way out again...
-        return hash(self.totuple())
+        return hash(self._totuple())
 
     def assoc(self, i, val):
         """
@@ -260,7 +261,7 @@ class PVector(Sequence, Hashable):
         """
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
-        l = obj.tolist() if isinstance(obj, PVector) else list(obj)
+        l = obj._tolist() if isinstance(obj, PVector) else list(obj)
         if l:
             new_vector = self.append(l[0])
             new_vector._mutating_extend(l[1:])
@@ -294,11 +295,19 @@ class PVector(Sequence, Hashable):
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
-def pvector(elements=[]):
+def _pvector(elements=[]):
     """
     Factory function, returns a new PVector object containing the elements in elements.
     """
     return _EMPTY_VECTOR.extend(elements)
+
+pvector = _pvector
+
+try:
+    from pvectorc import _pvector as _pvectorc
+    pvector = _pvectorc
+except:
+    pass
 
 
 def pvec(*elements):
