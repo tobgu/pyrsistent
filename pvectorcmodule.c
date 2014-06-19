@@ -35,8 +35,8 @@ static PyTypeObject PVectorType;
 int SHIFT = 0;
 
 typedef struct {
-  unsigned int refCount;
   void *items[BRANCH_FACTOR];
+  unsigned int refCount;
 } VNode;
 
 typedef struct {
