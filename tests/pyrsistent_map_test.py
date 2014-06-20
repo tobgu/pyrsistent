@@ -1,14 +1,18 @@
-from pyrsistent import pmapping, pmap
+from pyrsistent import pmap, m
 import pytest
 
-    
+
+def test_literalish_works():
+    assert m() is pmap()
+    assert m(a=1, b=2) == pmap({'a': 1, 'b': 2})
+
 def test_empty_initialization():
-    map = pmapping()
+    map = pmap()
     assert len(map) == 0
 
 
 def test_initialization_with_one_element():
-    the_map = pmapping({'a': 2})
+    the_map = pmap({'a': 2})
     assert len(the_map) == 1
     assert the_map['a'] == 2
     assert the_map.a == 2
@@ -22,18 +26,18 @@ def test_initialization_with_one_element():
 
 
 def test_various_iterations():
-    assert set(['a', 'b']) == set(pmap(a=1, b=2))
-    assert ['a', 'b'] == sorted(pmap(a=1, b=2).keys())
+    assert set(['a', 'b']) == set(m(a=1, b=2))
+    assert ['a', 'b'] == sorted(m(a=1, b=2).keys())
 
-    assert set([1, 2]) == set(pmap(a=1, b=2).itervalues())
-    assert [1, 2] == sorted(pmap(a=1, b=2).values())
+    assert set([1, 2]) == set(m(a=1, b=2).itervalues())
+    assert [1, 2] == sorted(m(a=1, b=2).values())
 
-    assert set([('a', 1), ('b', 2)]) == set(pmap(a=1, b=2).iteritems())
-    assert set([('a', 1), ('b', 2)]) == set(pmap(a=1, b=2).items())
+    assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).iteritems())
+    assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).items())
 
 
 def test_initialization_with_two_elements():
-    map = pmapping({'a': 2, 'b': 3})
+    map = pmap({'a': 2, 'b': 3})
     assert len(map) == 2
     assert map['a'] == 2
     assert map['b'] == 3
@@ -45,7 +49,7 @@ def test_initialization_with_two_elements():
 
 def test_initialization_with_many_elements():
     init_dict = dict([(str(x), x) for x in range(1700)])
-    the_map = pmapping(init_dict)
+    the_map = pmap(init_dict)
 
     assert len(the_map) == 1700
     assert the_map['16'] == 16
@@ -65,7 +69,7 @@ def test_initialization_with_many_elements():
 
 
 def test_access_non_existing_element():
-    map1 = pmapping()
+    map1 = pmap()
     assert len(map1) == 0
     
     map2 = map1.assoc('1', 1)
@@ -75,7 +79,7 @@ def test_access_non_existing_element():
     
 
 def test_overwrite_existing_element():
-    map1 = pmapping({'a': 2})
+    map1 = pmap({'a': 2})
     map2 = map1.assoc('a', 3)
 
     assert len(map2) == 1
@@ -97,7 +101,7 @@ def test_hash_collision_is_correctly_resolved():
     dummy3 = HashDummy()
     dummy4 = HashDummy()
 
-    map = pmapping({dummy1: 1, dummy2: 2, dummy3: 3})
+    map = pmap({dummy1: 1, dummy2: 2, dummy3: 3})
     assert map[dummy1] == 1
     assert map[dummy2] == 2
     assert map[dummy3] == 3
@@ -138,7 +142,7 @@ def test_hash_collision_is_correctly_resolved():
     
 
 def test_bitmap_indexed_iteration():
-    map = pmapping({'a': 2, 'b': 1})
+    map = pmap({'a': 2, 'b': 1})
     keys = set()
     values = set()
     
@@ -165,7 +169,7 @@ def test_iteration_with_many_elements():
     # those properly as well
     init_dict[hash_dummy1] = 12345
     init_dict[hash_dummy2] = 54321
-    map = pmapping(init_dict)
+    map = pmap(init_dict)
 
     actual_values = set()
     actual_keys = set()
@@ -179,6 +183,6 @@ def test_iteration_with_many_elements():
 
 
 def test_str():
-    assert str(pmapping({1: 2, 3: 4})) == "{1: 2, 3: 4}"
+    assert str(pmap({1: 2, 3: 4})) == "{1: 2, 3: 4}"
 
 pytest.main()

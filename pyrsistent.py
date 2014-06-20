@@ -39,7 +39,7 @@ class PVector(Sequence, Hashable):
 
     The following are examples of some common operations on persistent vectors
 
-    >>> p = pvec(1, 2, 3)
+    >>> p = v(1, 2, 3)
     >>> p2 = p.append(4)
     >>> p3 = p2.extend([5, 6, 7])
     >>> p
@@ -295,11 +295,11 @@ class PVector(Sequence, Hashable):
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
-def _pvector(elements=[]):
+def _pvector(sequence=[]):
     """
     Factory function, returns a new PVector object containing the elements in elements.
     """
-    return _EMPTY_VECTOR.extend(elements)
+    return _EMPTY_VECTOR.extend(sequence)
 
 pvector = _pvector
 
@@ -310,7 +310,7 @@ except:
     pass
 
 
-def pvec(*elements):
+def v(*elements):
     """
     Factory function, returns a new PVector object containing all parameters.
     """
@@ -332,7 +332,7 @@ class PMap(Mapping):
 
     The following are examples of some common operations on persistent maps
 
-    >>> m = pmap(a=1, b=3)
+    >>> m = v(a=1, b=3)
     >>> m2 = m.assoc('c', 3)
     >>> m3 = m2.without('a')
     >>> m
@@ -451,9 +451,8 @@ class PMap(Mapping):
 
     def _reallocate_to_list(self, new_size):
         new_list = new_size * [None]
-        new_len = len(new_list)
         for k, v in chain.from_iterable(x for x in self._buckets if x):
-            index = hash(k) % new_len
+            index = hash(k) % new_size
             if new_list[index]:
                 new_list[index].append((k, v))
             else:
@@ -488,14 +487,16 @@ def _turbo_mapping(initial, pre_size):
     return PMap(len(initial), pvector(buckets))
 
 
-def pmap(**kwargs):
+_EMPTY_PMAP = _turbo_mapping({}, 0)
+
+def m(**kwargs):
     """
     Factory function, inserts all key value arguments into the newly created map.
     """
-    return pmapping(kwargs)
+    return pmap(kwargs)
 
 
-def pmapping(initial={}, pre_size=0):
+def pmap(initial={}, pre_size=0):
     """
     Factory function, inserts all elements in initial into the newly created map.
     The optional argument pre_size may be used to specify an initial size of the underlying bucket vector. This
@@ -503,6 +504,9 @@ def pmapping(initial={}, pre_size=0):
     will be inserted into the map eventually since it will reduce the number of reallocations required.
 
     """
+    if not initial:
+        return _EMPTY_PMAP
+
     return _turbo_mapping(initial, pre_size)
 
 
@@ -552,7 +556,7 @@ class PSet(Set):
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
-        return PSet(pmapping({k: True for k in it}, pre_size=pre_size))
+        return PSet(pmap({k: True for k in it}, pre_size=pre_size))
 
     def add(self, element):
         return PSet(self._map.assoc(element, True))
@@ -561,9 +565,18 @@ class PSet(Set):
         return PSet(self._map.without(element))
 
 
-def pset(elements=[], pre_size=8):
+_EMPTY_PSET = PSet(_EMPTY_PMAP)
+
+def s(*args):
+    return pset(args)
+
+
+def pset(sequence=[], pre_size=8):
     """
     Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
-    used for pmapping().
+    used for pmap().
     """
-    return PSet._from_iterable(elements, pre_size=pre_size)
+    if not sequence:
+        return _EMPTY_PSET
+
+    return PSet._from_iterable(sequence, pre_size=pre_size)

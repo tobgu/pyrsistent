@@ -6,6 +6,12 @@ def pvector(request):
     return m._pvector
 
 
+def test_literalish_works():
+    from pyrsistent import pvector, v
+    assert v() is pvector()
+    assert v(1, 2) == pvector([1, 2])
+
+
 def test_empty_initialization(pvector):
     seq = pvector()
     assert len(seq) == 0

@@ -1,5 +1,10 @@
-from pyrsistent import pset
+from pyrsistent import pset, s
 import pytest
+
+
+def test_literalish_works():
+    assert s() is pset()
+    assert s(1, 2) == pset([1, 2])
 
 
 def test_contains_elements_that_it_was_initialized_with():
