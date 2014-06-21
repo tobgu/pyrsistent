@@ -3,13 +3,6 @@
 
 /*
 TODO: 
-- Python 3 compatibility?
-- PyPy compatibility
-- contains, count
-- Fix automated memory leak tests (eg. check memory usage, run for a while and check it again)
-- Test to optimize by creating a node pool and reuse deallocated nodes instead of allocating new ones
-- Create optimized function for replacing multiple elements in the same function call
-- Register with Hashable
 
 Persistant/Immutable data structures. Unfortunately I have not been able to come
 up with an implementation that is 100% immutable due to the ref counts used by
