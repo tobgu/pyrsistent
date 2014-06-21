@@ -43,15 +43,15 @@ class PVector(Sequence, Hashable):
     >>> p2 = p.append(4)
     >>> p3 = p2.extend([5, 6, 7])
     >>> p
-    [1, 2, 3]
+    (1, 2, 3)
     >>> p2
-    [1, 2, 3, 4]
+    (1, 2, 3, 4)
     >>> p3
-    [1, 2, 3, 4, 5, 6, 7]
+    (1, 2, 3, 4, 5, 6, 7)
     >>> p3[5]
     6
     >>> p.assoc(1, 99)
-    [1, 99, 3]
+    (1, 99, 3)
     >>>
     """
     def __init__(self, c, s, r, t):
@@ -397,15 +397,9 @@ class PMap(Mapping):
         return self._size
 
     def __repr__(self):
-        return str(self.todict())
+        return str(dict(self))
 
     __str__ = __repr__
-
-    def todict(self):
-        """
-        Return built in dictionary representation of this map.
-        """
-        return dict(self.iteritems())
 
     def assoc(self, key, val):
         """
@@ -524,11 +518,11 @@ class PSet(Set):
     >>> s2 = s.add(4)
     >>> s3 = s2.without(2)
     >>> s
-    set([1, 2, 3])
+    pset([1, 2, 3])
     >>> s2
-    set([1, 2, 3, 4])
+    pset([1, 2, 3, 4])
     >>> s3
-    set([1, 3, 4])
+    pset([1, 3, 4])
     >>>
     """
     def __init__(self, m):
@@ -544,15 +538,9 @@ class PSet(Set):
         return len(self._map)
 
     def __repr__(self):
-        return str(self.toset())
+        return 'p' + str(set(self))
 
     __str__ = __repr__
-
-    def toset(self):
-        """
-        Returns a built in set with the contents of this set.
-        """
-        return set(self)
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
