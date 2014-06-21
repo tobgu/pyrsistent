@@ -285,8 +285,8 @@ static PyObject* PVector_richcompare(PyObject *v, PyObject *w, int op) {
     wlen = wt->count;
 
     /* Search for the first index where items are different. */
-    PyObject *left;
-    PyObject *right;
+    PyObject *left = NULL;
+    PyObject *right = NULL;
     for (i = 0; i < vlen && i < wlen; i++) {
         left = _get_item(vt, i);
         right = _get_item(wt, i);
