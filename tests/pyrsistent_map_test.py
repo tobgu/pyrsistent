@@ -109,6 +109,28 @@ def test_merge_no_arguments():
 
     assert x.merge() is x
 
+def test_assoc_in_base_case():
+    # Works as assoc when called with only one key
+    x = m(a=1, b=2)
+    
+    assert x.assoc_in(['a'], 3) == m(a=3, b=2)
+
+def test_assoc_in_base_case():
+    # Works as assoc when called with only one key
+    x = m(a=1, b=2)
+    
+    assert x.assoc_in(['a'], 3) == m(a=3, b=2)
+
+def test_assoc_in_nested_maps():
+    x = m(a=1, b=m(c=3, d=m(e=6, f=7)))
+    
+    assert x.assoc_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
+    
+def test_assoc_in_levels_missing():
+    x = m(a=1, b=m(c=3))
+    
+    assert x.assoc_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
+
 
 class HashDummy(object):
     def __hash__(self):

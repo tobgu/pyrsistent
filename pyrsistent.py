@@ -317,6 +317,8 @@ def v(*elements):
     return pvector(elements)
 
 ####################### PMap #####################################
+_EMPTY_PMAP_TOKEN = object()
+
 class PMap(Mapping, Hashable):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
@@ -360,6 +362,15 @@ class PMap(Mapping, Hashable):
                     return v
 
         raise KeyError
+
+    def get(self, key, default=_EMPTY_PMAP_TOKEN):
+        try:
+            return self[key]
+        except KeyError:
+            if default is not _EMPTY_PMAP_TOKEN:
+                return default
+            
+            return _EMPTY_PMAP
 
     def __iter__(self):
         return self.iterkeys()
@@ -462,6 +473,14 @@ class PMap(Mapping, Hashable):
             result = result.assoc(k, v)
         
         return result
+
+    def assoc_in(self, keys, val):
+        if not keys:
+            return self
+        elif len(keys) == 1:
+            return self.assoc(keys[0], val)
+        else:
+            return self.assoc(keys[0], self.get(keys[0]).assoc_in(keys[1:], val))
 
     def _reallocate_to_list(self, new_size):
         new_list = new_size * [None]
