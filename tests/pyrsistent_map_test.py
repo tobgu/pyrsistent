@@ -18,9 +18,9 @@ def test_initialization_with_one_element():
     assert the_map.a == 2
     assert 'a' in the_map
     
-    assert the_map is the_map.without('b')
+    assert the_map is the_map.dissoc('b')
     
-    empty_map = the_map.without('a')
+    empty_map = the_map.dissoc('a')
     assert len(empty_map) == 0
     assert 'a' not in empty_map
 
@@ -42,7 +42,7 @@ def test_initialization_with_two_elements():
     assert map['a'] == 2
     assert map['b'] == 3
 
-    map2 = map.without('a')
+    map2 = map.dissoc('a')
     assert 'a' not in map2
     assert map2['b'] == 3
 
@@ -56,13 +56,13 @@ def test_initialization_with_many_elements():
     assert the_map['1699'] == 1699
     assert the_map.assoc('256', 256) is the_map
  
-    new_map = the_map.without('1600')
+    new_map = the_map.dissoc('1600')
     assert len(new_map) == 1699
     assert '1600' not in new_map
     assert new_map['1601'] == 1601
     
     # Some NOP properties
-    assert new_map.without('18888') is new_map
+    assert new_map.dissoc('18888') is new_map
     assert '19999' not in new_map
     assert new_map['1500'] == 1500  
     assert new_map.assoc('1500', new_map['1500']) is new_map
@@ -84,6 +84,30 @@ def test_overwrite_existing_element():
 
     assert len(map2) == 1
     assert map2['a'] == 3
+
+def test_supports_hash_and_equals():
+    x = m(a=1, b=2, c=3)
+    y = m(a=1, b=2, c=3)
+    
+    assert hash(x) == hash(y)
+    assert x == y
+
+def test_merge_with_multiple_arguments():
+    # If same value is present in multiple sources, the rightmost is used.
+    x = m(a=1, b=2, c=3)    
+    y = x.merge(m(b=4, c=5), {'c': 6})
+
+    assert y == m(a=1, b=4, c=6)
+
+def test_merge_one_argument():
+    x = m(a=1)
+
+    assert x.merge(m(b=2)) == m(a=1, b=2)
+
+def test_merge_no_arguments():
+    x = m(a=1)
+
+    assert x.merge() is x
 
 
 class HashDummy(object):
@@ -127,18 +151,18 @@ def test_hash_collision_is_correctly_resolved():
     assert map3[dummy3] == 3
     
     # Remove elements
-    map4 = map.without(dummy2)
+    map4 = map.dissoc(dummy2)
     assert len(map4) == 2
     assert map4[dummy1] == 1
     assert dummy2 not in map4
     assert map4[dummy3] == 3
     
-    assert map.without(dummy4) == map
+    assert map.dissoc(dummy4) == map
     
     # Empty map handling
-    empty_map = map4.without(dummy1).without(dummy3)
+    empty_map = map4.dissoc(dummy1).dissoc(dummy3)
     assert len(empty_map) == 0
-    assert empty_map.without(dummy1) == empty_map
+    assert empty_map.dissoc(dummy1) == empty_map
     
 
 def test_bitmap_indexed_iteration():

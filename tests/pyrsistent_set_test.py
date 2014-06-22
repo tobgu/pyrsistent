@@ -6,6 +6,9 @@ def test_literalish_works():
     assert s() is pset()
     assert s(1, 2) == pset([1, 2])
 
+def test_supports_hash():
+    assert hash(s(1, 2)) == hash(s(1, 2))
+
 
 def test_contains_elements_that_it_was_initialized_with():
     initial = [1, 2, 3]
@@ -19,12 +22,12 @@ def test_is_immutable():
     s1 = pset([1])
     s2 = s1.add(2)
 
-    assert set(s1) == set([1])
-    assert set(s2) == set([1, 2])
+    assert s1 == pset([1])
+    assert s2 == pset([1, 2])
 
-    s3 = s2.without(1)
-    assert set(s2) == set([1, 2])
-    assert set(s3) == set([2])
+    s3 = s2.dissoc(1)
+    assert s2 == pset([1, 2])
+    assert s3 == pset([2])
 
 
 def test_is_iterable():

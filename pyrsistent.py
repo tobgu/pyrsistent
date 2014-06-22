@@ -317,7 +317,7 @@ def v(*elements):
     return pvector(elements)
 
 ####################### PMap #####################################
-class PMap(Mapping):
+class PMap(Mapping, Hashable):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
     create an instance.
@@ -334,7 +334,7 @@ class PMap(Mapping):
 
     >>> m = v(a=1, b=3)
     >>> m2 = m.assoc('c', 3)
-    >>> m3 = m2.without('a')
+    >>> m3 = m2.dissoc('a')
     >>> m
     {'a': 1, 'b': 3}
     >>> m2
@@ -401,6 +401,9 @@ class PMap(Mapping):
 
     __str__ = __repr__
 
+    def __hash__(self):
+        return hash(tuple(self.iteritems()))
+
     def assoc(self, key, val):
         """
         Return a new map with key and val inserted.
@@ -428,7 +431,7 @@ class PMap(Mapping):
         # Skip reallocation check if there was no conflict
         return PMap(self._size + 1, self._buckets.assoc(index, [kv]))
 
-    def without(self, key):
+    def dissoc(self, key):
         """
         Return a new map without the element specified by key.
         """
@@ -442,6 +445,23 @@ class PMap(Mapping):
                 return PMap(self._size - 1, self._buckets.assoc(index, new_bucket if new_bucket else None))
 
         return self
+
+    def merge(self, *maps):
+        # Optimization opportunities here
+        if not maps:
+            return self
+        elif len(maps) > 1:
+            merge_map = dict(maps[0])
+            for m in maps[1:]:
+                merge_map.update(m)
+        else:
+            merge_map = maps[0]
+
+        result = self
+        for k, v in merge_map.items():
+            result = result.assoc(k, v)
+        
+        return result
 
     def _reallocate_to_list(self, new_size):
         new_list = new_size * [None]
@@ -506,7 +526,7 @@ def pmap(initial={}, pre_size=0):
 
 ##################### Pset ########################
 
-class PSet(Set):
+class PSet(Set, Hashable):
     """
     Do not instantiate directly, instead use the factory function :py:func:`pset` to create an instance.
 
@@ -516,7 +536,7 @@ class PSet(Set):
 
     >>> s = pset([1, 2, 3, 1])
     >>> s2 = s.add(4)
-    >>> s3 = s2.without(2)
+    >>> s3 = s2.dissoc(2)
     >>> s
     pset([1, 2, 3])
     >>> s2
@@ -542,6 +562,9 @@ class PSet(Set):
 
     __str__ = __repr__
 
+    def __hash__(self):
+        return hash(self._map)
+
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
         return PSet(pmap({k: True for k in it}, pre_size=pre_size))
@@ -549,8 +572,8 @@ class PSet(Set):
     def add(self, element):
         return PSet(self._map.assoc(element, True))
 
-    def without(self, element):
-        return PSet(self._map.without(element))
+    def dissoc(self, element):
+        return PSet(self._map.dissoc(element))
 
 
 _EMPTY_PSET = PSet(_EMPTY_PMAP)
