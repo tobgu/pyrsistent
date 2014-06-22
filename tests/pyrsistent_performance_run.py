@@ -99,6 +99,17 @@ def run_create_many_small_vectors():
         vec = pvector(ten)
     print "Many small Ten elements: " + str(time.time() - before)
 
+    before = time.time()
+    x = range(32)
+    for _ in iterations:
+        vec = pvector(x)
+    print "Many small 32 elements: " + str(time.time() - before)
+
+    before = time.time()
+    x = range(33)
+    for _ in iterations:
+        vec = pvector(x)
+    print "Many small 33 elements: " + str(time.time() - before)
 
 def run_set_performance():
     """

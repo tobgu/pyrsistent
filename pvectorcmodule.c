@@ -32,6 +32,15 @@ typedef struct {
   unsigned int refCount;
 } VNode;
 
+#define NODE_CACHE_MAX_SIZE 1024
+
+typedef struct {
+  unsigned int size;
+  VNode* nodes[NODE_CACHE_MAX_SIZE];
+} vNodeCache;
+
+static vNodeCache nodeCache;
+
 typedef struct {
   PyObject_HEAD
   unsigned int count;   // Perhaps ditch this one in favor of ob_size/Py_SIZE()
@@ -47,12 +56,29 @@ static PyMemberDef PVector_members[] = {
 	{NULL}  /* Sentinel */
 };
 
-
 #define debug(...)
 // #define debug printf
 
+static VNode* allocNode(void) {
+  if(nodeCache.size > 0) {
+    nodeCache.size--;
+    return nodeCache.nodes[nodeCache.size];
+  }
+
+  return PyMem_Malloc(sizeof(VNode));
+}
+
+static void freeNode(VNode *node) {
+  if(nodeCache.size < NODE_CACHE_MAX_SIZE) {
+    nodeCache.nodes[nodeCache.size] = node;
+    nodeCache.size++;
+  } else {
+    PyMem_Free(node);
+  }
+}
+
 static VNode* newNode(void) {
-  VNode* result = malloc(sizeof(VNode));
+  VNode* result = allocNode();
   memset(result, 0x0, sizeof(VNode));
   result->refCount = 1;
   debug("newNode() %p\n", result);
@@ -63,7 +89,7 @@ static VNode* copyNode(VNode* source) {
   /* NB: Only to be used for internal nodes, eg. nodes that do not
          hold direct references to python objects but only to other nodes. */
   int i;
-  VNode* result = malloc(sizeof(VNode));
+  VNode* result = allocNode();
   debug("copyNode() %p\n", result);
   memcpy(result->items, source->items, sizeof(source->items));
   
@@ -80,11 +106,6 @@ static VNode* copyNode(VNode* source) {
 static PVector* emptyNewPvec(void);
 static PVector* copyPVector(PVector *original);
 static void extend_with_item(PVector *newVec, PyObject *item);
-
-static void freeNode(VNode* node) {
-  free(node);
-}
-
 
 static Py_ssize_t PVector_len(PVector *self) {
   return self->count;
@@ -794,6 +815,8 @@ PyMODINIT_FUNC initpvectorc(void) {
     EMPTY_VECTOR = emptyNewPvec();
   }
 
+  nodeCache.size = 0;
+
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
 }
@@ -879,8 +902,9 @@ static int PVectorIter_traverse(PVectorIter *it, visitproc visit, void *arg) {
 static PyObject *PVectorIter_next(PVectorIter *it) {
     assert(it != NULL);
     PVector *seq = it->it_seq;
-    if (seq == NULL)
+    if (seq == NULL) {
         return NULL;
+    }
 
     if (it->it_index < seq->count) {
         PyObject *item = _get_item(seq, it->it_index);
