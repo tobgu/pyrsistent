@@ -20,7 +20,7 @@ def _comparator(f):
     return wrapper
 
 
-class PVector(Sequence, Hashable):
+class PVector(object):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pvec` and :py:func:`pvector` to
     create an instance.
@@ -54,6 +54,8 @@ class PVector(Sequence, Hashable):
     (1, 99, 3)
     >>>
     """
+    __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
+
     def __init__(self, c, s, r, t):
         self._count = c
         self._shift = s
@@ -292,6 +294,8 @@ class PVector(Sequence, Hashable):
         ret.append(self._new_path(level - SHIFT, tail_node))
         return ret
 
+Sequence.register(PVector)
+Hashable.register(PVector)
 
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
@@ -319,7 +323,8 @@ def v(*elements):
 ####################### PMap #####################################
 _EMPTY_PMAP_TOKEN = object()
 
-class PMap(Mapping, Hashable):
+
+class PMap(object):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
     create an instance.
@@ -345,6 +350,8 @@ class PMap(Mapping, Hashable):
     {'c': 3, 'b': 3}
     >>>
     """
+    __slots__ = ('_size', '_buckets')
+
     def __init__(self, size, buckets):
         self._size = size
         self._buckets = buckets
@@ -409,6 +416,9 @@ class PMap(Mapping, Hashable):
 
     def __repr__(self):
         return str(dict(self))
+
+    __eq__ = Mapping.__eq__
+    __ne__ = Mapping.__ne__
 
     __str__ = __repr__
 
@@ -496,6 +506,9 @@ class PMap(Mapping, Hashable):
     def _reallocate(self, new_size):
         return pvector(self._reallocate_to_list(new_size))
 
+Mapping.register(PMap)
+Hashable.register(PMap)
+
 
 def _turbo_mapping(initial, pre_size):
     size = pre_size or (2 * len(initial)) or 8
@@ -545,7 +558,7 @@ def pmap(initial={}, pre_size=0):
 
 ##################### Pset ########################
 
-class PSet(Set, Hashable):
+class PSet(object):
     """
     Do not instantiate directly, instead use the factory function :py:func:`pset` to create an instance.
 
@@ -564,6 +577,8 @@ class PSet(Set, Hashable):
     pset([1, 3, 4])
     >>>
     """
+    __slots__ = ('_map',)
+
     def __init__(self, m):
         self._map = m
 
@@ -594,6 +609,22 @@ class PSet(Set, Hashable):
     def dissoc(self, element):
         return PSet(self._map.dissoc(element))
 
+    # This is not very beautiful. If we avoid inheriting from PSet we can use the
+    # __slots__ concepts (which requires a new style class) and hopefully save some memory.
+    __le__ = Set.__le__
+    __lt__ = Set.__lt__
+    __gt__ = Set.__gt__
+    __ge__ = Set.__ge__
+    __eq__ = Set.__eq__
+    __ne__ = Set.__ne__
+
+    __and__ = Set.__and__
+    __or__ = Set.__or__
+    __sub__ = Set.__sub__
+    __xor__ = Set.__xor__
+
+Set.register(PSet)
+Hashable.register(PSet)
 
 _EMPTY_PSET = PSet(_EMPTY_PMAP)
 

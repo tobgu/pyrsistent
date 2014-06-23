@@ -1,10 +1,20 @@
+from collections import Mapping, Hashable
 from pyrsistent import pmap, m
 import pytest
+
+
+def test_instance_of_hashable():
+    assert isinstance(m(), Hashable)
+
+
+def test_instance_of_map():
+    assert isinstance(m(), Mapping)
 
 
 def test_literalish_works():
     assert m() is pmap()
     assert m(a=1, b=2) == pmap({'a': 1, 'b': 2})
+
 
 def test_empty_initialization():
     map = pmap()

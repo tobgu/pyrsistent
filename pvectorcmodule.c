@@ -2,7 +2,7 @@
 #include <structmember.h>
 
 /*
-TODO: 
+TODO:
 
 Persistant/Immutable data structures. Unfortunately I have not been able to come
 up with an implementation that is 100% immutable due to the ref counts used by
@@ -414,7 +414,7 @@ static PyObject * PVectorIter_iter(PyObject *seq);
 static PyTypeObject PVectorType = {
   PyObject_HEAD_INIT(NULL)
   0,
-  "pyrsistent.PVector",                       /* tp_name        */
+  "pvectorc.PVector",                       /* tp_name        */
   sizeof(PVector),                            /* tp_basicsize   */
   0,		                              /* tp_itemsize    */
   (destructor)PVector_dealloc,                /* tp_dealloc     */
