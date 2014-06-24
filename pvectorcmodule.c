@@ -4,7 +4,7 @@
 /*
 TODO:
 
-Persistant/Immutable data structures. Unfortunately I have not been able to come
+Persistent/Immutable data structures. Unfortunately I have not been able to come
 up with an implementation that is 100% immutable due to the ref counts used by
 Python internally so the GIL must still be at work...
 
@@ -50,6 +50,8 @@ typedef struct {
 } PVector;
 
 static PVector* EMPTY_VECTOR = NULL;
+static PyObject* pmap_factory_fn;
+static PyObject* assoc_in_fn_name;
 
 // No access to internal members
 static PyMemberDef PVector_members[] = {
@@ -375,6 +377,8 @@ static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
 
 static PyObject* PVector_append(PVector *self, PyObject *obj);
 
+static PyObject* PVector_assoc_in(PVector *self, PyObject *obj);
+
 static PyObject* PVector_assoc(PVector *self, PyObject *obj);
 
 static PyObject* PVector_subscript(PVector* self, PyObject* item);
@@ -403,9 +407,10 @@ static PyMappingMethods PVector_mapping_methods = {
 
 static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
-	{"assoc",       (PyCFunction)PVector_assoc,  METH_VARARGS, "Inserts an element at the specified position"},
+	{"assoc",       (PyCFunction)PVector_assoc, METH_VARARGS, "Inserts an element at the specified position"},
 	{"__getitem__", (PyCFunction)PVector_subscript, METH_O|METH_COEXIST, "Subscript"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
+	{"assoc_in",    (PyCFunction)PVector_assoc_in, METH_VARARGS, "Insert an element in a nested structure"},
 	{NULL}
 };
 
@@ -727,18 +732,8 @@ static VNode* doAssoc(VNode* node, unsigned int level, unsigned int position, Py
   }
 }
 
-
-/*
- Steals a reference to the object that is inserted in the vector.
-*/
-static PyObject* PVector_assoc(PVector *self, PyObject *args) {
-  PyObject *argObj = NULL;  /* list of arguments */
-  Py_ssize_t position;
-
-  /* The n parses for size, the O parses for a Python object */
-  if(!PyArg_ParseTuple(args, "nO", &position, &argObj)) {
-    return NULL;
-  }
+static PyObject* internalAssoc(PVector *self, Py_ssize_t position, PyObject *argObj) {
+  // TODO: Probably want to check for < 0 here similar to the get_item
 
   if((0 <= position) && (position < self->count)) {
     if(position >= TAIL_OFF(self)) {
@@ -767,9 +762,79 @@ static PyObject* PVector_assoc(PVector *self, PyObject *args) {
   }
 }
 
+static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
+  PyObject *keySequence = NULL;
+  PyObject *value = NULL;
+
+  if(!PyArg_ParseTuple(args, "OO", &keySequence, &value)) {
+    return NULL;
+  }
+
+  Py_ssize_t keySize = PySequence_Size(keySequence);
+  if(keySize == 0) {
+    Py_INCREF(self);
+    return (PyObject*)self;
+  } else {
+    PyObject *index = PySequence_GetItem(keySequence, 0);
+    Py_ssize_t keyIndex = PyNumber_AsSsize_t(index, NULL);
+    Py_DECREF(index);
+    if(keySize == 1) {
+      return internalAssoc(self, keyIndex, value);
+    } else if(keyIndex == self->count) {
+      PyObject* emptyMap = PyObject_CallFunctionObjArgs(pmap_factory_fn, NULL);
+      PyObject* newMap = PyObject_CallMethodObjArgs(emptyMap,
+      						    assoc_in_fn_name,
+      						    PySequence_GetSlice(keySequence, 1, keySize),
+      						    value,
+      						    NULL);
+      Py_DECREF(emptyMap);
+      if(newMap == NULL) {
+      	return NULL;
+      }
+
+      PyObject* newVector = PVector_append(self, newMap);
+      Py_DECREF(newMap);
+      return newVector;
+    } else {
+      PyObject* currentItem = PVector_get_item(self, keyIndex);
+      if(currentItem == NULL) {
+	return NULL;
+      }
+      Py_DECREF(currentItem);
+      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem,
+						     assoc_in_fn_name,
+						     PySequence_GetSlice(keySequence, 1, keySize),
+						     value,
+						     NULL);
+      if(newItem == NULL) {
+	return NULL;
+      }
+      
+      PyObject* newVector = internalAssoc(self, keyIndex, newItem);
+      Py_DECREF(newItem);
+      return newVector;
+    }
+  }
+}
+
+/*
+ Steals a reference to the object that is inserted in the vector.
+*/
+static PyObject* PVector_assoc(PVector *self, PyObject *args) {
+  PyObject *argObj = NULL;  /* argument to insert */
+  Py_ssize_t position;
+
+  /* The n parses for size, the O parses for a Python object */
+  if(!PyArg_ParseTuple(args, "nO", &position, &argObj)) {
+    return NULL;
+  }
+
+  return internalAssoc(self, position, argObj);
+}
+
 
 static PyMethodDef PyrsistentMethods[] = {
-  {"_pvector", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
+  {"pvector", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
   {NULL, NULL, 0, NULL}
 };
 
@@ -780,18 +845,11 @@ PyMODINIT_FUNC initpvectorc(void) {
   PVectorType.tp_init = NULL;
   PVectorType.tp_new = NULL;
 
-  // TODO: Perhaps make it use a proper constructor instead of a factory method
-  //       and name the type pvector so that testing with instanceof or type becomes
-  //       more straight forward?
-
-
   if (PyType_Ready(&PVectorType) < 0)
     return;
 
   // Register with Sequence to appear as a proper sequence to the outside world
-  PyObject* module = PyImport_ImportModule("collections");
-  PyObject* moduleDict = PyModule_GetDict(module);
-  PyObject* c = PyDict_GetItemString(moduleDict, "Sequence");
+  PyObject* c = PyObject_GetAttrString(PyImport_ImportModule("collections"), "Sequence");
 
   if (PyType_Ready(c->ob_type) < 0) {
     printf("Failed to initialize Sequence!\n");
@@ -805,9 +863,9 @@ PyMODINIT_FUNC initpvectorc(void) {
   PyObject_CallMethod(c, "register", "O", &PVectorType);
 
   m = Py_InitModule("pvectorc", PyrsistentMethods);
-
-  if (m == NULL)
+  if (m == NULL) {
     return;
+  }
 
   SHIFT = __builtin_popcount(BIT_MASK);
   
@@ -819,6 +877,10 @@ PyMODINIT_FUNC initpvectorc(void) {
 
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
+
+  // Need to create PMaps under some circumstances so we save a ref to the factory function
+  pmap_factory_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent_types"), "pmap");
+  assoc_in_fn_name = PyString_FromString("assoc_in");
 }
 
 

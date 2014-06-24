@@ -1,9 +1,9 @@
 import pytest
 
-@pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
+@pytest.fixture(scope='session', params=['pyrsistent_types', 'pvectorc'])
 def pvector(request):
     m = pytest.importorskip(request.param)
-    return m._pvector
+    return m.pvector
 
 
 def test_literalish_works():
@@ -347,3 +347,49 @@ def test_repeat(pvector):
     assert 0 * v is pvector()
     assert 2 * pvector([1, 2]) == pvector([1, 2, 1, 2])
     assert -3 * pvector([1, 2]) is pvector()
+
+
+def test_assoc_zero_key_length(pvector):
+    x = pvector([1, 2])
+
+    assert x.assoc_in([], 3) is x
+
+
+def test_assoc_in_base_case(pvector):
+    x = pvector([1, 2])
+
+    assert x.assoc_in([1], 3) == pvector([1, 3])
+
+
+def test_assoc_in_nested_vectors(pvector):
+    x = pvector([1, 2, pvector([3, 4]), 5])
+
+    assert x.assoc_in([2, 0], 999) == pvector([1, 2, pvector([999, 4]), 5])
+
+
+def test_assoc_in_when_appending(pvector):
+    from pyrsistent import m
+    x = pvector([1, 2])
+
+    assert x.assoc_in([2, 'd'], 999) == pvector([1, 2, m(d=999)])
+
+
+def test_assoc_in_index_error_out_range(pvector):
+    x = pvector([1, 2, pvector([3, 4]), 5])
+
+    with pytest.raises(IndexError):
+        x.assoc_in([2, 10], 999)
+
+
+def test_assoc_in_index_error_wrong_type(pvector):
+    x = pvector([1, 2, pvector([3, 4]), 5])
+
+    with pytest.raises(IndexError):
+        x.assoc_in([2, 'foo'], 999)
+
+
+def test_assoc_in_non_assocable_type(pvector):
+    x = pvector([1, 2, 5])
+
+    with pytest.raises(AttributeError):
+        x.assoc_in([2, 3], 999)
