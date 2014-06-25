@@ -2,8 +2,6 @@
 #include <structmember.h>
 
 /*
-TODO:
-
 Persistent/Immutable data structures. Unfortunately I have not been able to come
 up with an implementation that is 100% immutable due to the ref counts used by
 Python internally so the GIL must still be at work...
@@ -50,8 +48,26 @@ typedef struct {
 } PVector;
 
 static PVector* EMPTY_VECTOR = NULL;
-static PyObject* pmap_factory_fn;
-static PyObject* assoc_in_fn_name;
+static PyObject* pmap_factory_fn = NULL;
+static PyObject* assoc_in_fn_name = NULL;
+
+static PyObject* assocInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject* value) {
+  if(pmap_factory_fn == NULL) {
+    // Lazy import pmap factory to avoid circular import problems
+    pmap_factory_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent"), "pmap");
+  }
+
+  PyObject* emptyMap = PyObject_CallFunctionObjArgs(pmap_factory_fn, NULL);
+  PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
+  PyObject* newMap = PyObject_CallMethodObjArgs(emptyMap,
+						assoc_in_fn_name,
+						newSequence,
+						value,
+						NULL);
+  Py_DECREF(emptyMap);
+  Py_DECREF(newSequence);
+  return newMap;
+}
 
 // No access to internal members
 static PyMemberDef PVector_members[] = {
@@ -781,13 +797,7 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
     if(keySize == 1) {
       return internalAssoc(self, keyIndex, value);
     } else if(keyIndex == self->count) {
-      PyObject* emptyMap = PyObject_CallFunctionObjArgs(pmap_factory_fn, NULL);
-      PyObject* newMap = PyObject_CallMethodObjArgs(emptyMap,
-      						    assoc_in_fn_name,
-      						    PySequence_GetSlice(keySequence, 1, keySize),
-      						    value,
-      						    NULL);
-      Py_DECREF(emptyMap);
+      PyObject* newMap = assocInPmap(keySequence, keySize, value);
       if(newMap == NULL) {
       	return NULL;
       }
@@ -800,12 +810,11 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
       if(currentItem == NULL) {
 	return NULL;
       }
+
+      PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
+      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem, assoc_in_fn_name, newSequence, value, NULL);
       Py_DECREF(currentItem);
-      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem,
-						     assoc_in_fn_name,
-						     PySequence_GetSlice(keySequence, 1, keySize),
-						     value,
-						     NULL);
+      Py_DECREF(newSequence);
       if(newItem == NULL) {
 	return NULL;
       }
@@ -878,8 +887,6 @@ PyMODINIT_FUNC initpvectorc(void) {
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
 
-  // Need to create PMaps under some circumstances so we save a ref to the factory function
-  pmap_factory_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent_types"), "pmap");
   assoc_in_fn_name = PyString_FromString("assoc_in");
 }
 
