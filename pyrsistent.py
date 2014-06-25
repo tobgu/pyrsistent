@@ -336,9 +336,6 @@ def v(*elements):
 
 
 ####################### PMap #####################################
-_EMPTY_PMAP_TOKEN = object()
-
-
 class PMap(object):
     """
     Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
@@ -385,14 +382,18 @@ class PMap(object):
 
         raise KeyError
 
-    def get(self, key, default=_EMPTY_PMAP_TOKEN):
-        try:
-            return self[key]
-        except KeyError:
-            if default is not _EMPTY_PMAP_TOKEN:
-                return default
-            
-            return _EMPTY_PMAP
+    def __contains__(self, key):
+        _, bucket = self._get_bucket(key)
+        if bucket:
+            for k, _ in bucket:
+                if k == key:
+                    return True
+
+            return False
+
+        return False
+
+    get = Mapping.get
 
     def __iter__(self):
         return self.iterkeys()
@@ -434,7 +435,6 @@ class PMap(object):
 
     __eq__ = Mapping.__eq__
     __ne__ = Mapping.__ne__
-    __contains__ = Mapping.__contains__
     __str__ = __repr__
 
     def __hash__(self):
@@ -505,7 +505,7 @@ class PMap(object):
         elif len(keys) == 1:
             return self.assoc(keys[0], val)
         else:
-            return self.assoc(keys[0], self.get(keys[0]).assoc_in(keys[1:], val))
+            return self.assoc(keys[0], self.get(keys[0], _EMPTY_PMAP).assoc_in(keys[1:], val))
 
     def _reallocate_to_list(self, new_size):
         new_list = new_size * [None]
