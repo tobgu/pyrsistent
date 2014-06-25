@@ -416,7 +416,7 @@ class PMap(object):
 
     __eq__ = Mapping.__eq__
     __ne__ = Mapping.__ne__
-
+    __contains__ = Mapping.__contains__
     __str__ = __repr__
 
     def __hash__(self):
