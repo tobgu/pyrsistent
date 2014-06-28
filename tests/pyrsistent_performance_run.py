@@ -33,7 +33,7 @@ def run_big_list_initialization():
     """
     before = time.time()
     l = [x for x in range(1000000)]
-    print "Big list: " + str(time.time() - before)
+    print "Big list from list comprehension: " + str(time.time() - before)
 
     before = time.time()
     seq = pvector(l)

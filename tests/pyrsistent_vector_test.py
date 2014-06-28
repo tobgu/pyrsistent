@@ -1,8 +1,10 @@
 import pytest
 
-@pytest.fixture(scope='session', params=['pyrsistent_types', 'pvectorc'])
+@pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
 def pvector(request):
     m = pytest.importorskip(request.param)
+    if request.param == 'pyrsistent':
+        return m._pvector
     return m.pvector
 
 
@@ -393,3 +395,36 @@ def test_assoc_in_non_assocable_type(pvector):
 
     with pytest.raises(AttributeError):
         x.assoc_in([2, 3], 999)
+
+
+def test_reverse(pvector):
+    x = pvector([1, 2, 5])
+
+    assert list(reversed(x)) == [5, 2, 1]
+
+
+def test_contains(pvector):
+    x = pvector([1, 2, 5])
+
+    assert 2 in x
+    assert 3 not in x
+
+
+def test_index(pvector):
+    x = pvector([1, 2, 5])
+
+    assert x.index(5) == 2
+
+
+def test_index_not_found(pvector):
+    x = pvector([1, 2, 5])
+
+    with pytest.raises(ValueError):
+        x.index(7)
+
+
+def test_index_not_found_with_limits(pvector):
+    x = pvector([1, 2, 5, 1])
+
+    with pytest.raises(ValueError):
+        x.index(1, 1, 3)

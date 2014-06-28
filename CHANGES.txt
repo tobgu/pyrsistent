@@ -8,7 +8,7 @@ TODO (in no particular order)
 -----------------------------
 - Python 3 compatibility
 - More convinience methods to simplify work with these data structures.
-- PVector contains, count
+- PVector contains, count (fully support Sequence protocol)
 - Create automated memory leak tests (eg. check memory usage, run for a while and check it again)
 - Create optimized function for replacing multiple elements in the same function call (massoc) that can
   also be used by the PMap, "merge into".
@@ -17,3 +17,4 @@ TODO (in no particular order)
 - Versioned data structure where the different versions can be accessed by index?
 - Improve documentation + add doctests
 - TUX + Travis for multi platform continuous test?
+- Recursive instantiation from nested lists/tuples/sets/maps

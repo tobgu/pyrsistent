@@ -386,6 +386,45 @@ static int PVector_traverse(PVector *o, visitproc visit, void *arg) {
 }
 
 
+static PyObject* PVector_index(PVector *self, PyObject *args)
+{
+  // A direct rip-off of the tuple version
+  Py_ssize_t i, start=0, stop=self->count;
+  PyObject *value;
+  
+  if (!PyArg_ParseTuple(args, "O|O&O&:index", &value,
+			_PyEval_SliceIndex, &start,
+			_PyEval_SliceIndex, &stop)) {
+    return NULL;
+  }
+  
+  if (start < 0) {
+    start += self->count;
+    if (start < 0) {
+      start = 0;
+    }
+  }
+  
+  if (stop < 0) {
+    stop += self->count;
+      if (stop < 0) {
+	stop = 0;
+      }
+  }
+  
+  for (i = start; i < stop && i < self->count; i++) {
+    int cmp = PyObject_RichCompareBool(_get_item(self, i), value, Py_EQ);
+    if (cmp > 0) {
+      return PyInt_FromSsize_t(i);
+    } else if (cmp < 0) {
+      return NULL;
+    }
+  }
+  PyErr_SetString(PyExc_ValueError, "PVector.index(x): x not in vector");
+  return NULL;
+}
+
+
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
   memcpy(dest, src, BRANCH_FACTOR * sizeof(void*));
   dest[pos] = obj;
@@ -420,6 +459,12 @@ static PyMappingMethods PVector_mapping_methods = {
     NULL
 };
 
+PyDoc_STRVAR(index_doc,
+"V.index(value, [start, [stop]]) -> integer -- return first index of value.\n"
+"Raises ValueError if the value is not present."
+);
+PyDoc_STRVAR(count_doc,
+"V.count(value) -> integer -- return number of occurrences of value");
 
 static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
@@ -427,6 +472,7 @@ static PyMethodDef PVector_methods[] = {
 	{"__getitem__", (PyCFunction)PVector_subscript, METH_O|METH_COEXIST, "Subscript"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
 	{"assoc_in",    (PyCFunction)PVector_assoc_in, METH_VARARGS, "Insert an element in a nested structure"},
+	{"index",       (PyCFunction)PVector_index,  METH_VARARGS, index_doc},
 	{NULL}
 };
 
@@ -944,7 +990,6 @@ PyTypeObject PVectorIterType = {
     PVectorIter_methods,                        /* tp_methods */
     0,                                          /* tp_members */
 };
-
 
 static PyObject * PVectorIter_iter(PyObject *seq) {
     PVectorIter *it = PyObject_GC_New(PVectorIter, &PVectorIterType);

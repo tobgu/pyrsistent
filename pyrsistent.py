@@ -72,7 +72,7 @@ class PVector(object):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            # There are more condintions than the below where it would be OK to
+            # There are more conditions than the below where it would be OK to
             # return ourself, implement those...
             if index.start is None and index.stop is None and index.step is None:
                 return self
@@ -306,6 +306,9 @@ class PVector(object):
         else:
             return self.assoc(keys[0], self[keys[0]].assoc_in(keys[1:], val))
 
+    def index(self, value, *args, **kwargs):
+        return self._tolist().index(value, *args, **kwargs)
+
 Sequence.register(PVector)
 Hashable.register(PVector)
 
@@ -406,7 +409,7 @@ class PMap(object):
             yield k
 
     # These are more efficient implementations compared to the original
-    # methods that is based on the keys iterator and then calls the
+    # methods that are based on the keys iterator and then calls the
     # accessor functions to access the value for the corresponding key
     def itervalues(self):
         for _, v in self.iteritems():
