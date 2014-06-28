@@ -386,8 +386,7 @@ static int PVector_traverse(PVector *o, visitproc visit, void *arg) {
 }
 
 
-static PyObject* PVector_index(PVector *self, PyObject *args)
-{
+static PyObject* PVector_index(PVector *self, PyObject *args) {
   // A direct rip-off of the tuple version
   Py_ssize_t i, start=0, stop=self->count;
   PyObject *value;
@@ -420,10 +419,26 @@ static PyObject* PVector_index(PVector *self, PyObject *args)
       return NULL;
     }
   }
+
   PyErr_SetString(PyExc_ValueError, "PVector.index(x): x not in vector");
   return NULL;
 }
 
+static PyObject* PVector_count(PVector *self, PyObject *value) {
+  Py_ssize_t count = 0;
+  Py_ssize_t i;
+
+  for (i = 0; i < self->count; i++) {
+    int cmp = PyObject_RichCompareBool(_get_item(self, i), value, Py_EQ);
+    if (cmp > 0) {
+      count++;
+    } else if (cmp < 0) {
+      return NULL;
+    }
+  }
+
+  return PyInt_FromSsize_t(count);
+}
 
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
   memcpy(dest, src, BRANCH_FACTOR * sizeof(void*));
@@ -473,6 +488,7 @@ static PyMethodDef PVector_methods[] = {
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
 	{"assoc_in",    (PyCFunction)PVector_assoc_in, METH_VARARGS, "Insert an element in a nested structure"},
 	{"index",       (PyCFunction)PVector_index,  METH_VARARGS, index_doc},
+	{"count",       (PyCFunction)PVector_count,  METH_O, count_doc},
 	{NULL}
 };
 

@@ -309,6 +309,9 @@ class PVector(object):
     def index(self, value, *args, **kwargs):
         return self._tolist().index(value, *args, **kwargs)
 
+    def count(self, value):
+        return self._tolist().count(value)
+
 Sequence.register(PVector)
 Hashable.register(PVector)
 

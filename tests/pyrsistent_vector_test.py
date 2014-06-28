@@ -428,3 +428,10 @@ def test_index_not_found_with_limits(pvector):
 
     with pytest.raises(ValueError):
         x.index(1, 1, 3)
+
+
+def test_count(pvector):
+    x = pvector([1, 2, 5, 1])
+
+    assert x.count(1) == 2
+    assert x.count(4) == 0
