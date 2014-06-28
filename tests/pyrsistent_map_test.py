@@ -101,6 +101,7 @@ def test_supports_hash_and_equals():
     
     assert hash(x) == hash(y)
     assert x == y
+    assert not (x != y)
 
 def test_merge_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.

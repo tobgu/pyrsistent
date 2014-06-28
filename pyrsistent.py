@@ -594,7 +594,7 @@ class PSet(object):
     Some examples:
 
     >>> s = pset([1, 2, 3, 1])
-    >>> s2 = s.add(4)
+    >>> s2 = s.assoc(4)
     >>> s3 = s2.dissoc(2)
     >>> s
     pset([1, 2, 3])
@@ -630,7 +630,7 @@ class PSet(object):
     def _from_iterable(cls, it, pre_size=8):
         return PSet(pmap({k: True for k in it}, pre_size=pre_size))
 
-    def add(self, element):
+    def assoc(self, element):
         return PSet(self._map.assoc(element, True))
 
     def dissoc(self, element):
@@ -649,6 +649,8 @@ class PSet(object):
     __or__ = Set.__or__
     __sub__ = Set.__sub__
     __xor__ = Set.__xor__
+
+    isdisjoint = Set.isdisjoint
 
 Set.register(PSet)
 Hashable.register(PSet)

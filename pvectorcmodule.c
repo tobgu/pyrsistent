@@ -750,7 +750,6 @@ static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
 
 /*
  Steals a reference to the object that is appended to the list.
- Haven't really decided if this is the right thing to do yet...
 */
 static PyObject* PVector_append(PVector *self, PyObject *obj) {
   assert (obj != NULL);

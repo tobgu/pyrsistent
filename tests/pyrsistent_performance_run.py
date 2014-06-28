@@ -1,6 +1,5 @@
 from pyrsistent import pvector, pset
 
-#import pytest
 import time
 
 def run_big_iterator_initialization():

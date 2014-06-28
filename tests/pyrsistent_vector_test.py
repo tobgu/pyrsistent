@@ -276,7 +276,6 @@ def test_index_error_negative(pvector):
 
 def test_is_sequence(pvector):
     from collections import Sequence
-    assert isinstance(list(), Sequence)
     assert isinstance(pvector(), Sequence)
 
 
@@ -305,10 +304,13 @@ def test_repr_when_contained_object_contains_reference_to_self(pvector):
 
 
 def test_is_hashable(pvector):
+    from collections import Hashable
     v = pvector([1, 2, 3])
     v2 = pvector([1, 2, 3])
 
     assert hash(v) == hash(v2)
+    assert isinstance(pvector(), Hashable)
+
 
 
 def test_refuses_to_hash_when_members_are_unhashable(pvector):
