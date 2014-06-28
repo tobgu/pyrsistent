@@ -154,9 +154,6 @@ static VNode* nodeFor(PVector *self, int i){
   return NULL;
 }
 
-/*
- Returns a new reference as specified by the PySequence_GetItem function.
-*/
 static PyObject* _get_item(PVector *self, Py_ssize_t pos) {
   VNode* node = nodeFor((PVector*)self, pos);
 
@@ -167,7 +164,9 @@ static PyObject* _get_item(PVector *self, Py_ssize_t pos) {
   return NULL;
 }
 
-
+/*
+ Returns a new reference as specified by the PySequence_GetItem function.
+*/
 static PyObject* PVector_get_item(PVector *self, Py_ssize_t pos) {
   if (pos < 0) {
     pos += self->count;
@@ -715,11 +714,13 @@ static PyObject *PVector_subscript(PVector* self, PyObject* item) {
 
    These are some optimizations that could be done to this function,
    these are not considered important enough yet though.
+   - Use the PySequence_Fast ops if the iterable is a list or a tuple (which it
+     whould probably often be)
    - Only copy the original tail if it is not full
    - No need to try to increment ref count in tail for the whole tail
 */
 static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
-    PyObject *it;      /* iter(v) */
+    PyObject *it;
     PyObject *(*iternext)(PyObject *);
 
     it = PyObject_GetIter(iterable);
@@ -811,7 +812,9 @@ static VNode* doAssoc(VNode* node, unsigned int level, unsigned int position, Py
 }
 
 static PyObject* internalAssoc(PVector *self, Py_ssize_t position, PyObject *argObj) {
-  // TODO: Probably want to check for < 0 here similar to the get_item
+  if(position < 0) {
+    position += self->count;
+  }
 
   if((0 <= position) && (position < self->count)) {
     if(position >= TAIL_OFF(self)) {
@@ -854,8 +857,12 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
     return (PyObject*)self;
   } else {
     PyObject *index = PySequence_GetItem(keySequence, 0);
-    Py_ssize_t keyIndex = PyNumber_AsSsize_t(index, NULL);
     Py_DECREF(index);
+    Py_ssize_t keyIndex = PyNumber_AsSsize_t(index, NULL);
+    if (keyIndex == -1 && PyErr_Occurred()) {
+      return NULL;
+    }
+
     if(keySize == 1) {
       return internalAssoc(self, keyIndex, value);
     } else if(keyIndex == self->count) {

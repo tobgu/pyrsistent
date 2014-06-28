@@ -114,6 +114,19 @@ def test_insert_beyond_end(pvector):
         seq2.assoc(19, 4)
 
 
+def test_insert_with_index_from_the_end(pvector):
+    x = pvector([1, 2, 3, 4])
+
+    assert x.assoc(-2, 5) == pvector([1, 2, 5, 4])
+
+
+def test_insert_with_too_negative_index(pvector):
+    x = pvector([1, 2, 3, 4])
+
+    with pytest.raises(IndexError):
+        x.assoc(-5, 17)
+
+
 def test_iteration(pvector):
     y = 0
     seq = pvector(range(2000))
@@ -253,12 +266,12 @@ def test_access_with_negative_index(pvector):
 
 def test_index_error_positive(pvector):
     with pytest.raises(IndexError):
-        x = pvector([1, 2, 3])[3]
+        pvector([1, 2, 3])[3]
 
 
 def test_index_error_negative(pvector):
     with pytest.raises(IndexError):
-        x = pvector([1, 2, 3])[-4]
+        pvector([1, 2, 3])[-4]
 
 
 def test_is_sequence(pvector):
@@ -386,7 +399,7 @@ def test_assoc_in_index_error_out_range(pvector):
 def test_assoc_in_index_error_wrong_type(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
-    with pytest.raises(IndexError):
+    with pytest.raises(TypeError):
         x.assoc_in([2, 'foo'], 999)
 
 

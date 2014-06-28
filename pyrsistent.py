@@ -169,6 +169,12 @@ class PVector(object):
         """
         Return a new vector with element at position i replaced with val.
         """
+        if not isinstance(i, (int, long)):
+            raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
+
+        if i < 0:
+            i += self._count
+
         if 0 <= i < self._count:
             if i >= self._tail_offset:
                 new_tail = list(self._tail)
