@@ -1,18 +1,20 @@
-v0.1.0, 2013-11-10 -- Initial release.
-v0.2.0, 2014-06-21 -- * New C extension with an optimized version of the persistent vector 
-                      * Updated API slightly
+v0.3.0, 2014-06-28 -- * Full Sequence protocol support for PVector
+                      * Full Mapping protocol support for PMap
+                      * Full Set protocol support for PSet
+                      * assoc_in() support for both PMap and PVector
+                      * merge() support for PMap
+                      * Performance improvements to the PVector C extension speed up allocation
 v0.2.1, 2014-06-21 -- Supply the tests with the distribution
-
+v0.2.0, 2014-06-21 -- * New C extension with an optimized version of the persistent vector
+                      * Updated API slightly
+v0.1.0, 2013-11-10 -- Initial release.
 
 TODO (in no particular order)
 -----------------------------
 - Python 3 compatibility
 - More convinience methods to simplify work with these data structures.
-- PVector contains, count (fully support Sequence protocol)
-- Create automated memory leak tests (eg. check memory usage, run for a while and check it again)
 - Create optimized function for replacing multiple elements in the same function call (massoc) that can
   also be used by the PMap, "merge into".
-- Register pvectorc with Hashable
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
 - Improve documentation + add doctests
