@@ -1,3 +1,4 @@
+v0.3.1, 2014-06-29 -- * assoc() on Pset renamed back to add()
 v0.3.0, 2014-06-28 -- * Full Sequence protocol support for PVector
                       * Full Mapping protocol support for PMap
                       * Full Set protocol support for PSet

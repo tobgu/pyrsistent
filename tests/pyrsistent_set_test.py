@@ -20,7 +20,7 @@ def test_contains_elements_that_it_was_initialized_with():
 
 def test_is_immutable():
     s1 = pset([1])
-    s2 = s1.assoc(2)
+    s2 = s1.add(2)
 
     assert s1 == pset([1])
     assert s2 == pset([1, 2])

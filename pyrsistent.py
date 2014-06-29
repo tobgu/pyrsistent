@@ -630,7 +630,7 @@ class PSet(object):
     def _from_iterable(cls, it, pre_size=8):
         return PSet(pmap({k: True for k in it}, pre_size=pre_size))
 
-    def assoc(self, element):
+    def add(self, element):
         return PSet(self._map.assoc(element, True))
 
     def dissoc(self, element):
