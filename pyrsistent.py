@@ -673,3 +673,59 @@ def pset(sequence=[], pre_size=8):
 
 def s(*args):
     return pset(args)
+
+
+######################################## Immutable object ##############################################
+
+
+def immutable(*members, **kwargs):
+    """
+    Produces a class that either can be used standalone or as a base class for immutable classes.
+
+    A thin wrapper around a named tuple.
+    """
+
+    def frozen_member_test():
+        frozen_members = ["'%s'" % f for f in members if f.endswith('_')]
+        if frozen_members:
+            return """
+        frozen_fields = fields_to_modify & {{{frozen_members}}}
+        if frozen_fields:
+            raise AttributeError('Cannot set frozen fields %s' % ', '.join(frozen_fields))
+            """.format(frozen_members=', '.join(frozen_members))
+
+        return ''
+
+    verbose = kwargs.get('verbose', False)
+    quoted_members = ', '.join("'%s'" % m for m in members)
+    template = """
+class Immutable(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose})):
+    __slots__ = tuple()
+
+    def set(self, **kwargs):
+        if not kwargs:
+            return self
+
+        fields_to_modify = set(kwargs.keys())
+        if not fields_to_modify <= {memberset}:
+            raise AttributeError("'%s' is not a member" % ', '.join(fields_to_modify - {memberset}))
+
+        {frozen_member_test}
+
+        return self.__class__.__new__(self.__class__, *map(kwargs.pop, [{quoted_members}], self))
+    """.format(quoted_members=quoted_members,
+               memberset="{%s}" % quoted_members if quoted_members else 'set()',
+               frozen_member_test=frozen_member_test(),
+               verbose=verbose)
+
+    from collections import namedtuple
+    namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_immutable')
+    try:
+        exec template in namespace
+    except SyntaxError, e:
+        raise SyntaxError(e.message + ':\n' + template)
+
+    if verbose:
+        print template
+
+    return namespace['Immutable']
