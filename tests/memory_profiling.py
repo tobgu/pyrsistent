@@ -5,7 +5,7 @@ import inspect
 import sys
 import time
 import memory_profiler
-import pyrsistent_vector_test
+import vector_test
 
 try:
     from pvectorc import pvector
@@ -27,7 +27,7 @@ def detect_memory_leak(samples):
     return not samples.count(samples[0]) == len(samples)
 
 def profile_tests():
-    test_functions = [fn for fn in inspect.getmembers(pyrsistent_vector_test, inspect.isfunction)
+    test_functions = [fn for fn in inspect.getmembers(vector_test, inspect.isfunction)
                       if fn[0].startswith('test_')]
 
     for name, fn in test_functions:

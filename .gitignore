@@ -6,3 +6,4 @@ build/
 pyrsistent.egg-info/
 dist/
 .idea
+.tox

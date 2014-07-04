@@ -364,10 +364,10 @@ class PMap(object):
 
     The following are examples of some common operations on persistent maps
 
-    >>> m = v(a=1, b=3)
-    >>> m2 = m.assoc('c', 3)
+    >>> m1 = m(a=1, b=3)
+    >>> m2 = m1.assoc('c', 3)
     >>> m3 = m2.dissoc('a')
-    >>> m
+    >>> m1
     {'a': 1, 'b': 3}
     >>> m2
     {'a': 1, 'c': 3, 'b': 3}
@@ -596,7 +596,7 @@ class PSet(object):
     Some examples:
 
     >>> s = pset([1, 2, 3, 1])
-    >>> s2 = s.assoc(4)
+    >>> s2 = s.add(4)
     >>> s3 = s2.dissoc(2)
     >>> s
     pset([1, 2, 3])
