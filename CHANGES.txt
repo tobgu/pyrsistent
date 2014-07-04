@@ -1,4 +1,4 @@
-v0.3.1, 2014-06-29 -- * assoc() on Pset renamed back to add()
+v0.3.1, 2014-06-29 -- * assoc() on PSet renamed back to add()
 v0.3.0, 2014-06-28 -- * Full Sequence protocol support for PVector
                       * Full Mapping protocol support for PMap
                       * Full Set protocol support for PSet
@@ -13,7 +13,7 @@ v0.1.0, 2013-11-10 -- Initial release.
 TODO (in no particular order)
 -----------------------------
 - Python 3 compatibility
-- More convinience methods to simplify work with these data structures.
+- More convenience methods to simplify work with these data structures.
 - Create optimized function for replacing multiple elements in the same function call (massoc) that can
   also be used by the PMap, "merge into".
 - Implement persistent linked list (cons, cdr, ...)
@@ -21,3 +21,6 @@ TODO (in no particular order)
 - Improve documentation + add doctests
 - TUX + Travis for multi platform continuous test?
 - Recursive instantiation from nested lists/tuples/sets/maps
+- Check pickling
+- Full Set support
+- Immutable object

@@ -2,6 +2,7 @@ from collections import Sequence, Mapping, Set, Hashable
 from itertools import chain
 from traceback import extract_stack
 from functools import wraps
+from numbers import Integral
 
 def _bitcount(val):
     return bin(val).count("1")
@@ -169,7 +170,7 @@ class PVector(object):
         """
         Return a new vector with element at position i replaced with val.
         """
-        if not isinstance(i, (int, long)):
+        if not isinstance(i, Integral):
             raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
 
         if i < 0:
@@ -450,7 +451,8 @@ class PMap(object):
     __str__ = __repr__
 
     def __hash__(self):
-        return hash(tuple(self.iteritems()))
+        # This hashing algorithm is probably not the speediest
+        return hash(frozenset(self.iteritems()))
 
     def assoc(self, key, val):
         """

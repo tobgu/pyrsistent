@@ -103,6 +103,17 @@ def test_supports_hash_and_equals():
     assert x == y
     assert not (x != y)
 
+def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
+    x = pmap({x: x for x in range(1000)})
+    y = pmap({10: 10, 200: 200, 700: 700})
+
+    for z in x:
+        if z not in y:
+            x = x.dissoc(z)
+
+    assert x == y
+    assert hash(x) == hash(y)
+
 def test_merge_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.
     x = m(a=1, b=2, c=3)    
