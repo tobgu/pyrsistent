@@ -23,7 +23,7 @@ def _comparator(f):
 
 class PVector(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`pvec` and :py:func:`pvector` to
+    Do not instantiate directly, instead use the factory functions :py:func:`v` and :py:func:`pvector` to
     create an instance.
 
     Heavily influenced by the persistent vector available in Clojure. Initially this was more or
@@ -37,6 +37,8 @@ class PVector(object):
     This structure corresponds most closely to the built in list type and is intended as a replacement. Where the
     semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
     for example assignments.
+
+    The PVector implements the Sequence protocol and is Hashable.
 
     The following are examples of some common operations on persistent vectors
 
@@ -69,9 +71,22 @@ class PVector(object):
         return self
 
     def __len__(self):
+        """
+        >>> len(v(1, 2, 3))
+        3
+        """
         return self._count
 
     def __getitem__(self, index):
+        """
+        Get value at index. Full slicing support.
+
+        >>> v1 = v(5, 6, 7, 8)
+        >>> v1[2]
+        7
+        >>> v1[1:3]
+        (6, 7)
+        """
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
             # return ourself, implement those...
@@ -88,9 +103,18 @@ class PVector(object):
         return self._node_for(index)[index & BIT_MASK]
 
     def __add__(self, other):
+        """
+        >>> v1 = v(1, 2)
+        >>> v2 = v(3, 4)
+        >>> v1 + v2
+        (1, 2, 3, 4)
+        """
         return self.extend(other)
 
     def __pvector_repr_with_recur_lock(self):
+        # Avoid infinite recursion in case of circular references.
+        # TODO: Update this to check against calls only from the same object. As it is right
+        #       now it prevents and repr of vectors within vectors.
         if len([f for f in extract_stack() if '__pvector_repr_with_recur_lock' in f[2]]) > 1:
             return '(...)'
         return str(self._totuple())
@@ -130,6 +154,11 @@ class PVector(object):
         return self._tolist() <= other._tolist()
 
     def __mul__(self, times):
+        """
+        >>> v1 = v(1, 2)
+        >>> 3 * v1
+        (1, 2, 1, 2, 1, 2)
+        """
         if times <= 0 or self is _EMPTY_VECTOR:
             return _EMPTY_VECTOR
         elif times == 1:
@@ -163,12 +192,29 @@ class PVector(object):
         return tuple(self._tolist())
 
     def __hash__(self):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 3)
+        >>> hash(v1) == hash(v2)
+        True
+        """
         # Taking the easy way out again...
         return hash(self._totuple())
 
     def assoc(self, i, val):
         """
-        Return a new vector with element at position i replaced with val.
+        Return a new vector with element at position i replaced with val. The first vector remains unchanged.
+
+        Associng a value one step beyond the end of the vector is equal to appending. Associng beyond that will
+        result in an IndexError.
+
+        >>> v1 = v(1, 2, 3)
+        >>> v1.assoc(1, 4)
+        (1, 4, 3)
+        >>> v1.assoc(3, 4)
+        (1, 2, 3, 4)
+        >>> v1.assoc(-1, 4)
+        (1, 2, 4)
         """
         if not isinstance(i, Integral):
             raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
@@ -227,6 +273,10 @@ class PVector(object):
     def append(self, val):
         """
         Return a new vector with val appended.
+
+        >>> v1 = v(1, 2)
+        >>> v1.append(3)
+        (1, 2, 3)
         """
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
@@ -268,7 +318,11 @@ class PVector(object):
     def extend(self, obj):
         """
         Return a new vector with all values in obj appended to it. Obj may be another
-        PVector or any other iterable.
+        PVector or any other Iterable.
+
+        >>> v1 = v(1, 2, 3)
+        >>> v1.extend([4, 5])
+        (1, 2, 3, 4, 5)
         """
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
@@ -304,6 +358,16 @@ class PVector(object):
         return ret
 
     def assoc_in(self, keys, val):
+        """
+        Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
+        do not exist will be inserted as new PMaps.
+
+        >>> v1 = v(1, 2, m(a=5, b=6))
+        >>> v1.assoc_in((2, 'b'), 17)
+        (1, 2, {'a': 5, 'b': 17})
+        >>> v1.assoc_in((2, 'c', 'd'), 17)
+        (1, 2, {'a': 5, 'c': {'d': 17}, 'b': 6})
+        """
         if not keys:
             return self
         elif len(keys) == 1:
@@ -314,9 +378,26 @@ class PVector(object):
             return self.assoc(keys[0], self[keys[0]].assoc_in(keys[1:], val))
 
     def index(self, value, *args, **kwargs):
+        """
+        Return first index of value. Additional indexes may be supplied to limit the search to a
+        subrange of the vector.
+        
+        >>> v1 = v(1, 2, 3, 4, 3)
+        >>> v1.index(3)
+        2
+        >>> v1.index(3, 3, 5)
+        4
+        """
         return self._tolist().index(value, *args, **kwargs)
 
     def count(self, value):
+        """
+        Return the number of times that value appears in the vector.
+
+        >>> v1 = v(1, 4, 3, 4)
+        >>> v1.count(4)
+        2
+        """
         return self._tolist().count(value)
 
 Sequence.register(PVector)
@@ -344,6 +425,9 @@ except ImportError:
 def v(*elements):
     """
     Factory function, returns a new PVector object containing all parameters.
+    >>> v1 = v(1, 2, 3)
+    >>> v1
+    (1, 2, 3)
     """
     return pvector(elements)
 
