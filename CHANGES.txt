@@ -18,8 +18,7 @@ TODO (in no particular order)
   also be used by the PMap, "merge into".
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
-- Improve documentation + add doctests
-- TUX + Travis for multi platform continuous test?
+- Improve documentation
 - Recursive instantiation from nested lists/tuples/sets/maps
 - Check pickling
 - Full Set support
