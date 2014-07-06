@@ -408,7 +408,11 @@ _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
 def _pvector(sequence=[]):
     """
-    Factory function, returns a new PVector object containing the elements in elements.
+    Factory function, returns a new PVector object containing the elements in sequence.
+
+    >>> v1 = pvector([1, 2, 3])
+    >>> v1
+    (1, 2, 3)
     """
     return _EMPTY_VECTOR.extend(sequence)
 
@@ -425,6 +429,7 @@ except ImportError:
 def v(*elements):
     """
     Factory function, returns a new PVector object containing all parameters.
+
     >>> v1 = v(1, 2, 3)
     >>> v1
     (1, 2, 3)
@@ -435,7 +440,7 @@ def v(*elements):
 ####################### PMap #####################################
 class PMap(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`pmap` and :py:func:`pmapping` to
+    Do not instantiate directly, instead use the factory functions :py:func:`m` and :py:func:`pmap` to
     create an instance.
 
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
@@ -688,7 +693,6 @@ class PSet(object):
     pset([1, 2, 3, 4])
     >>> s3
     pset([1, 3, 4])
-    >>>
     """
     __slots__ = ('_map',)
 
@@ -720,6 +724,7 @@ class PSet(object):
         return PSet(self._map.assoc(element, True))
 
     def dissoc(self, element):
+        # TODO: Change name to 'remove'
         return PSet(self._map.dissoc(element))
 
     # This is not very beautiful. If we avoid inheriting from PSet we can use the
@@ -767,6 +772,14 @@ def immutable(*members, **kwargs):
     Produces a class that either can be used standalone or as a base class for immutable classes.
 
     A thin wrapper around a named tuple.
+
+    >>> Point = immutable('x', 'y')
+    >>> p = Point(1, 2)
+    >>> p2 = p.set(x=3)
+    >>> p.x
+    1
+    >>> p2.x
+    3
     """
 
     def frozen_member_test():
