@@ -111,16 +111,8 @@ class PVector(object):
         """
         return self.extend(other)
 
-    def __pvector_repr_with_recur_lock(self):
-        # Avoid infinite recursion in case of circular references.
-        # TODO: Update this to check against calls only from the same object. As it is right
-        #       now it prevents and repr of vectors within vectors.
-        if len([f for f in extract_stack() if '__pvector_repr_with_recur_lock' in f[2]]) > 1:
-            return '(...)'
-        return str(self._totuple())
-
     def __repr__(self):
-        return self.__pvector_repr_with_recur_lock()
+        return str(self._totuple())
 
     __str__ = __repr__
 

@@ -296,7 +296,7 @@ def test_repr_when_contained_object_contains_reference_to_self(pvector):
     x = [1, 2, 3]
     v = pvector([1, 2, x])
     x.append(v)
-    assert str(v) == '(1, 2, [1, 2, 3, (...)])'
+    assert str(v) == '(1, 2, [1, 2, 3, (1, 2, [...])])'
 
     # Run a GC to provoke any potential misbehavior
     import gc

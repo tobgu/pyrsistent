@@ -228,11 +228,6 @@ static void PVector_dealloc(PVector *self) {
 static PyObject *PVector_repr(PVector *self) {
   // Reuse the tuple repr code, a bit less efficient but saves some code
   Py_ssize_t i;
-  i = Py_ReprEnter((PyObject *)self);
-  if (i != 0) {
-    return i > 0 ? PyString_FromString("(...)") : NULL;
-  }
-
   PyObject *tuple = PyTuple_New(self->count);
   for (i = 0; i < self->count; ++i) {
     PyObject *o = _get_item(self, i);
@@ -243,7 +238,6 @@ static PyObject *PVector_repr(PVector *self) {
   PyObject *result = PyObject_Repr(tuple);
 
   Py_DECREF(tuple);
-  Py_ReprLeave((PyObject *)self);
   return result;
 }
 
