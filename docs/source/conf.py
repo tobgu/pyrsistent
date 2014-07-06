@@ -55,19 +55,8 @@ copyright = u'2014, Tobias Gustafsson'
 # built documents.
 #
 
-import pkg_resources
-try:
-    release = pkg_resources.get_distribution('pyrsistent').version
-except pkg_resources.DistributionNotFound:
-    print 'To build the documentation, The distribution information of pyrsistent'
-    print 'has to be available.  Either install the package into your'
-    print 'development environment or run "setup.py develop" to setup the'
-    print 'metadata. A virtualenv is recommended!'
-    sys.exit(1)
-del pkg_resources
-
 # The short X.Y version.
-version = '.'.join(release.split('.')[:2])
+version = "0.X.Y (moving target)"
 
 # The full version, including alpha/beta/rc tags.
 release = version

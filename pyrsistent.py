@@ -1,6 +1,5 @@
 from collections import Sequence, Mapping, Set, Hashable
 from itertools import chain
-from traceback import extract_stack
 from functools import wraps
 from numbers import Integral
 
@@ -23,7 +22,7 @@ def _comparator(f):
 
 class PVector(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`v` and :py:func:`pvector` to
+    Do not instantiate directly, instead use the factory functions :py:func:`v` and pvector to
     create an instance.
 
     Heavily influenced by the persistent vector available in Clojure. Initially this was more or
