@@ -744,6 +744,9 @@ def pset(sequence=[], pre_size=8):
     """
     Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
     used for pmap().
+    >>> s1 = pset([1, 2, 3, 2])
+    >>> s1
+    pset([1, 2, 3])
     """
     if not sequence:
         return _EMPTY_PSET
@@ -752,26 +755,36 @@ def pset(sequence=[], pre_size=8):
 
 
 def s(*args):
+    """
+    Factory function.
+
+    >>> s1 = s(1, 2, 3, 2)
+    >>> s1
+    pset([1, 2, 3])
+    """
     return pset(args)
 
 
 ######################################## Immutable object ##############################################
 
 
-def immutable(*members, **kwargs):
+def immutable(members='', name='Immutable', verbose=False):
     """
     Produces a class that either can be used standalone or as a base class for immutable classes.
 
     A thin wrapper around a named tuple.
 
-    >>> Point = immutable('x', 'y')
+    >>> Point = immutable('x, y', name='Point')
     >>> p = Point(1, 2)
     >>> p2 = p.set(x=3)
-    >>> p.x
-    1
-    >>> p2.x
-    3
+    >>> p
+    Point(x=1, y=2)
+    >>> p2
+    Point(x=3, y=2)
     """
+
+    if isinstance(members, basestring):
+        members = members.replace(',', ' ').split()
 
     def frozen_member_test():
         frozen_members = ["'%s'" % f for f in members if f.endswith('_')]
@@ -784,11 +797,13 @@ def immutable(*members, **kwargs):
 
         return ''
 
-    verbose = kwargs.get('verbose', False)
     quoted_members = ', '.join("'%s'" % m for m in members)
     template = """
-class Immutable(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose})):
+class {class_name}(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose})):
     __slots__ = tuple()
+
+    def __repr__(self):
+        return super({class_name}, self).__repr__().replace('ImmutableBase', self.__class__.__name__)
 
     def set(self, **kwargs):
         if not kwargs:
@@ -804,7 +819,11 @@ class Immutable(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose
     """.format(quoted_members=quoted_members,
                memberset="{%s}" % quoted_members if quoted_members else 'set()',
                frozen_member_test=frozen_member_test(),
-               verbose=verbose)
+               verbose=verbose,
+               class_name=name)
+
+    if verbose:
+        print template
 
     from collections import namedtuple
     namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_immutable')
@@ -813,7 +832,4 @@ class Immutable(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose
     except SyntaxError, e:
         raise SyntaxError(e.message + ':\n' + template)
 
-    if verbose:
-        print template
-
-    return namespace['Immutable']
+    return namespace[name]
