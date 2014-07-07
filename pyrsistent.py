@@ -88,7 +88,7 @@ class PVector(object):
         """
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
-            # return ourself, implement those...
+            # return ourselves, implement those...
             if index.start is None and index.stop is None and index.step is None:
                 return self
 
@@ -371,7 +371,7 @@ class PVector(object):
     def index(self, value, *args, **kwargs):
         """
         Return first index of value. Additional indexes may be supplied to limit the search to a
-        subrange of the vector.
+        sub range of the vector.
         
         >>> v1 = v(1, 2, 3, 4, 3)
         >>> v1.index(3)
@@ -397,7 +397,7 @@ Hashable.register(PVector)
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
 
-def _pvector(sequence=[]):
+def _pvector(sequence=()):
     """
     Factory function, returns a new PVector object containing the elements in sequence.
 
@@ -665,7 +665,7 @@ def m(**kwargs):
     """
     return pmap(kwargs)
 
-##################### Pset ########################
+##################### PSet ########################
 
 class PSet(object):
     """
@@ -740,10 +740,11 @@ Hashable.register(PSet)
 _EMPTY_PSET = PSet(_EMPTY_PMAP)
 
 
-def pset(sequence=[], pre_size=8):
+def pset(sequence=(), pre_size=8):
     """
     Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
     used for pmap().
+
     >>> s1 = pset([1, 2, 3, 2])
     >>> s1
     pset([1, 2, 3])
@@ -756,7 +757,7 @@ def pset(sequence=[], pre_size=8):
 
 def s(*args):
     """
-    Factory function.
+    Factory function for persistent sets.
 
     >>> s1 = s(1, 2, 3, 2)
     >>> s1
@@ -810,14 +811,14 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}], verbose={verb
             return self
 
         fields_to_modify = set(kwargs.keys())
-        if not fields_to_modify <= {memberset}:
-            raise AttributeError("'%s' is not a member" % ', '.join(fields_to_modify - {memberset}))
+        if not fields_to_modify <= {member_set}:
+            raise AttributeError("'%s' is not a member" % ', '.join(fields_to_modify - {member_set}))
 
         {frozen_member_test}
 
         return self.__class__.__new__(self.__class__, *map(kwargs.pop, [{quoted_members}], self))
     """.format(quoted_members=quoted_members,
-               memberset="{%s}" % quoted_members if quoted_members else 'set()',
+               member_set="{%s}" % quoted_members if quoted_members else 'set()',
                frozen_member_test=frozen_member_test(),
                verbose=verbose,
                class_name=name)
