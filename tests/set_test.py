@@ -25,9 +25,19 @@ def test_is_immutable():
     assert s1 == pset([1])
     assert s2 == pset([1, 2])
 
-    s3 = s2.dissoc(1)
+    s3 = s2.remove(1)
     assert s2 == pset([1, 2])
     assert s3 == pset([2])
+
+def test_remove_when_not_present():
+    s1 = s(1, 2, 3)
+    with pytest.raises(KeyError):
+        s1.remove(4)
+
+def test_discard():
+    s1 = s(1, 2, 3)
+    assert s1.discard(3) == s(1, 2)
+    assert s1.discard(4) is s1
 
 
 def test_is_iterable():
@@ -41,16 +51,38 @@ def test_contains():
     assert 4 not in s
 
 
-def test_behaves_set_like():
-    # This functionality should come "for free"
-
+def test_supports_set_operations():
     s1 = pset([1, 2, 3])
     s2 = pset([3, 4, 5])
 
-    assert sorted(pset([1, 2, 3, 3, 5])) == [1, 2, 3, 5]
+    assert s1 | s2 == s(1, 2, 3, 4, 5)
+    assert s1.union(s2) == s1 | s2
 
-    assert sorted(s1 | s2) == [1, 2, 3, 4, 5]
-    assert sorted(s1 & s2) == [3]
+    assert s1 & s2 == s(3)
+    assert s1.intersection(s2) == s1 & s2
+
+    assert s1 - s2 == s(1, 2)
+    assert s1.difference(s2) == s1 - s2
+
+    assert s1 ^ s2 == s(1, 2, 4, 5)
+    assert s1.symmetric_difference(s2) == s1 ^ s2
+
+
+def test_supports_set_comparisons():
+    s1 = s(1, 2, 3)
+    s3 = s(1, 2)
+    s4 = s(1, 2, 3)
+
+    assert s(1, 2, 3, 3, 5) == s(1, 2, 3, 5)
+    assert s1 != s3
+
+    assert s3 < s1
+    assert s3 <= s1
+    assert s3 <= s4
+
+    assert s1 > s3
+    assert s1 >= s3
+    assert s4 >= s3
 
 
 def test_str():
@@ -63,7 +95,5 @@ def test_is_disjoint():
 
     assert not s1.isdisjoint(s2)
     assert s1.isdisjoint(s3)
-
-
 
 pytest.main()

@@ -431,7 +431,7 @@ def v(*elements):
 ####################### PMap #####################################
 class PMap(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`m` and :py:func:`pmap` to
+    Do not instantiate directly, instead use the factory functions :py:func:`m` or :py:func:`pmap` to
     create an instance.
 
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
@@ -580,11 +580,14 @@ class PMap(object):
 
     def dissoc(self, key):
         """
-        Return a new PMap without the element specified by key.
+        Return a new PMap without the element specified by key. Returns reference to itself
+        if element is not present.
 
         >>> m1 = m(a=1, b=2)
         >>> m1.dissoc('a')
         {'b': 2}
+        >>> m1 is m1.dissoc('c')
+        True
         """
 
         # Should shrinking of the map ever be done if it becomes very small?
@@ -711,15 +714,17 @@ def m(**kwargs):
 
 class PSet(object):
     """
-    Do not instantiate directly, instead use the factory function :py:func:`pset` to create an instance.
+    Do not instantiate directly, instead use the factory functions :py:func:`s` or :py:func:`pset`
+    to create an instance.
 
-    Persistent set implementation. Built on top of the persistent map.
+    Persistent set implementation. Built on top of the persistent map. The set supports all operations
+    in the Set protocol and is Hashable.
 
     Some examples:
 
     >>> s = pset([1, 2, 3, 1])
     >>> s2 = s.add(4)
-    >>> s3 = s2.dissoc(2)
+    >>> s3 = s2.remove(2)
     >>> s
     pset([1, 2, 3])
     >>> s2
@@ -754,12 +759,39 @@ class PSet(object):
         return PSet(pmap({k: True for k in it}, pre_size=pre_size))
 
     def add(self, element):
+        """
+        Return a new PSet with element added
+
+        >>> s1 = s(1, 2)
+        >>> s1.add(3)
+        pset([1, 2, 3])
+        """
         return PSet(self._map.assoc(element, True))
 
-    def dissoc(self, element):
-        # TODO: Change name to 'remove'
-        return PSet(self._map.dissoc(element))
+    def remove(self, element):
+        """
+        Return a new PSet with element removed. Raises KeyError if element is not present.
 
+        >>> s1 = s(1, 2)
+        >>> s1.remove(2)
+        pset([1])
+        """
+        if element in self._map:
+            return PSet(self._map.dissoc(element))
+
+        raise KeyError("Element '%s' not present in PSet" % element)
+
+    def discard(self, element):
+        """
+        Return a new PSet with element removed. Returns itself if element is not present.
+        """
+        if element in self._map:
+            return PSet(self._map.dissoc(element))
+
+        return self
+
+    # All the operations and comparisons you would expect on a set.
+    #
     # This is not very beautiful. If we avoid inheriting from PSet we can use the
     # __slots__ concepts (which requires a new style class) and hopefully save some memory.
     __le__ = Set.__le__
@@ -773,6 +805,13 @@ class PSet(object):
     __or__ = Set.__or__
     __sub__ = Set.__sub__
     __xor__ = Set.__xor__
+
+    issubset = __le__
+    issuperset = __ge__
+    union = __or__
+    intersection = __and__
+    difference = __sub__
+    symmetric_difference = __xor__
 
     isdisjoint = Set.isdisjoint
 
