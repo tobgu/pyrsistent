@@ -22,7 +22,7 @@ def _comparator(f):
 
 class PVector(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`v` and pvector to
+    Do not instantiate directly, instead use the factory functions :py:func:`v` and :func:`pvector` to
     create an instance.
 
     Heavily influenced by the persistent vector available in Clojure. Initially this was more or
@@ -39,7 +39,7 @@ class PVector(object):
 
     The PVector implements the Sequence protocol and is Hashable.
 
-    The following are examples of some common operations on persistent vectors
+    The following are examples of some common operations on persistent vectors:
 
     >>> p = v(1, 2, 3)
     >>> p2 = p.append(4)
@@ -412,7 +412,7 @@ pvector = _pvector
 try:
     # Use the C extension as underlying implementation if it is available
     from pvectorc import pvector as pvector_c
-    pvector = pvector_c
+    pvector = pvector
 except ImportError:
     pass
 
@@ -442,6 +442,12 @@ class PMap(object):
     the containing vectors size the map is reallocated to a vector of double the size. This is done to avoid
     excessive hash collisions.
 
+    This structure corresponds most closely to the built in dict type and is intended as a replacement. Where the
+    semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
+    for example assignments and deletion of values.
+
+    PMap implements the Mapping protocol and is Hashable.
+
     The following are examples of some common operations on persistent maps
 
     >>> m1 = m(a=1, b=3)
@@ -453,7 +459,8 @@ class PMap(object):
     {'a': 1, 'c': 3, 'b': 3}
     >>> m3
     {'c': 3, 'b': 3}
-    >>>
+    >>> m3['c']
+    3
     """
     __slots__ = ('_size', '_buckets')
 
@@ -536,7 +543,17 @@ class PMap(object):
 
     def assoc(self, key, val):
         """
-        Return a new map with key and val inserted.
+        Return a new PMap with key and val inserted.
+
+        >>> m1 = m(a=1, b=2)
+        >>> m2 = m1.assoc('a', 3)
+        >>> m3 = m1.assoc('c' ,4)
+        >>> m1
+        {'a': 1, 'b': 2}
+        >>> m2
+        {'a': 3, 'b': 2}
+        >>> m3
+        {'a': 1, 'c': 4, 'b': 2}
         """
         kv = (key, val)
         index, bucket = self._get_bucket(key)
@@ -563,7 +580,11 @@ class PMap(object):
 
     def dissoc(self, key):
         """
-        Return a new map without the element specified by key.
+        Return a new PMap without the element specified by key.
+
+        >>> m1 = m(a=1, b=2)
+        >>> m1.dissoc('a')
+        {'b': 2}
         """
 
         # Should shrinking of the map ever be done if it becomes very small?
@@ -577,6 +598,14 @@ class PMap(object):
         return self
 
     def merge(self, *maps):
+        """
+        Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
+        maps the rightmost (last) value is inserted.
+
+        >>> m1 = m(a=1, b=2)
+        >>> m1.merge(m(a=2, c=3), {'a': 17, 'd': 35})
+        {'a': 17, 'c': 3, 'b': 2, 'd': 35}
+        """
         # Optimization opportunities here
         if not maps:
             return self
@@ -594,6 +623,14 @@ class PMap(object):
         return result
 
     def assoc_in(self, keys, val):
+        """
+        Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
+        do not exist will be inserted as new PMaps.
+
+        >>> m1 = m(a=5, b=6, c=v(1, 2))
+        >>> m1.assoc_in(('c', 1), 17)
+        {'a': 5, 'c': (1, 17), 'b': 6}
+        """
         if not keys:
             return self
         elif len(keys) == 1:
@@ -652,6 +689,8 @@ def pmap(initial={}, pre_size=0):
     may have a positive performance impact in the cases where you know beforehand that a large number of elements
     will be inserted into the map eventually since it will reduce the number of reallocations required.
 
+    >>> pmap({'a': 13, 'b': '14'})
+    {'a': 13, 'b': '14'}
     """
     if not initial:
         return _EMPTY_PMAP
@@ -662,6 +701,9 @@ def pmap(initial={}, pre_size=0):
 def m(**kwargs):
     """
     Factory function, inserts all key value arguments into the newly created map.
+
+    >>> m(a=13, b=14)
+    {'a': 13, 'b': 14}
     """
     return pmap(kwargs)
 
@@ -743,7 +785,7 @@ _EMPTY_PSET = PSet(_EMPTY_PMAP)
 def pset(sequence=(), pre_size=8):
     """
     Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
-    used for pmap().
+    used for :py:func:`pmap`.
 
     >>> s1 = pset([1, 2, 3, 2])
     >>> s1
@@ -773,7 +815,9 @@ def immutable(members='', name='Immutable', verbose=False):
     """
     Produces a class that either can be used standalone or as a base class for immutable classes.
 
-    A thin wrapper around a named tuple.
+    This is a thin wrapper around a named tuple.
+
+    Constructing a type and using it to instantiate objects:
 
     >>> Point = immutable('x, y', name='Point')
     >>> p = Point(1, 2)
@@ -782,6 +826,34 @@ def immutable(members='', name='Immutable', verbose=False):
     Point(x=1, y=2)
     >>> p2
     Point(x=3, y=2)
+
+    Inheriting from a constructed type. In this case no type name needs to be supplied:
+
+    >>> class PositivePoint(immutable('x, y')):
+    ...     __slots__ = tuple()
+    ...     def __new__(cls, x, y):
+    ...         if x > 0 and y > 0:
+    ...             return super(PositivePoint, cls).__new__(cls, x, y)
+    ...         raise Exception('Coordinates must be positive!')
+    ...
+    >>> p = PositivePoint(1, 2)
+    >>> p.set(x=3)
+    PositivePoint(x=3, y=2)
+    >>> p.set(y=-3)
+    Traceback (most recent call last):
+    Exception: Coordinates must be positive!
+
+    The immutable class also supports the notion of frozen members. The value of a frozen members
+    cannot be updated. For example it could be used to implement an ID that should remain the same
+    over time. A frozen member is denoted by a trailing underscore.
+
+    >>> Point = immutable('x, y, id_', name='Point')
+    >>> p = Point(1, 2, id_=17)
+    >>> p.set(x=3)
+    Point(x=3, y=2, id_=17)
+    >>> p.set(id_=18)
+    Traceback (most recent call last):
+    AttributeError: Cannot set frozen members id_
     """
 
     if isinstance(members, basestring):
@@ -793,7 +865,7 @@ def immutable(members='', name='Immutable', verbose=False):
             return """
         frozen_fields = fields_to_modify & {{{frozen_members}}}
         if frozen_fields:
-            raise AttributeError('Cannot set frozen fields %s' % ', '.join(frozen_fields))
+            raise AttributeError('Cannot set frozen members %s' % ', '.join(frozen_fields))
             """.format(frozen_members=', '.join(frozen_members))
 
         return ''
