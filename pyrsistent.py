@@ -192,7 +192,16 @@ class PVector(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
-    def assoc(self, i, val):
+    @staticmethod
+    def _make_persistent(val):
+        if isinstance(val, list):
+            return _pvector(val, recur=True)
+        elif isinstance(val, dict):
+            return pmap(val, recur=True)
+        else:
+            return val
+
+    def assoc(self, i, val, recur=False):
         """
         Return a new vector with element at position i replaced with val. The first vector remains unchanged.
 
@@ -214,6 +223,9 @@ class PVector(object):
             i += self._count
 
         if 0 <= i < self._count:
+            if recur:
+                val = self._make_persistent(val)
+
             if i >= self._tail_offset:
                 new_tail = list(self._tail)
                 new_tail[i & BIT_MASK] = val
@@ -222,7 +234,7 @@ class PVector(object):
             return PVector(self._count, self._shift, self._do_assoc(self._shift, self._root, i, val), self._tail)
 
         if i == self._count:
-            return self.append(val)
+            return self.append(val, recur)
 
         raise IndexError()
 
@@ -261,7 +273,7 @@ class PVector(object):
 
         return new_root, new_shift
 
-    def append(self, val):
+    def append(self, val, recur=False):
         """
         Return a new vector with val appended.
 
@@ -269,6 +281,9 @@ class PVector(object):
         >>> v1.append(3)
         (1, 2, 3)
         """
+        if recur:
+            val = self._make_persistent(val)
+
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
             new_tail.append(val)
@@ -288,25 +303,28 @@ class PVector(object):
         self._root, self._shift = self._create_new_root()
         self._tail = []
 
-    def _mutating_fill_tail(self, offset, sequence):
+    def _mutating_fill_tail(self, offset, sequence, recur):
         max_delta_len = BRANCH_FACTOR - len(self._tail)
-        delta = sequence[offset:offset + max_delta_len]
+        if recur:
+            delta = [self._make_persistent(val) for val in sequence[offset:offset + max_delta_len]]
+        else:
+            delta = sequence[offset:offset + max_delta_len]
         self._tail.extend(delta)
         delta_len = len(delta)
         self._count += delta_len
         return offset + delta_len
 
-    def _mutating_extend(self, sequence):
+    def _mutating_extend(self, sequence, recur):
         offset = 0
         sequence_len = len(sequence)
         while offset < sequence_len:
-            offset = self._mutating_fill_tail(offset, sequence)
+            offset = self._mutating_fill_tail(offset, sequence, recur)
             if len(self._tail) == BRANCH_FACTOR:
                 self._mutating_insert_tail()
 
         self._tail_offset = self._count - len(self._tail)
 
-    def extend(self, obj):
+    def extend(self, obj, recur=False):
         """
         Return a new vector with all values in obj appended to it. Obj may be another
         PVector or any other Iterable.
@@ -319,8 +337,8 @@ class PVector(object):
         # implementation detail, once it is returned it should be considered immutable
         l = obj._tolist() if isinstance(obj, PVector) else list(obj)
         if l:
-            new_vector = self.append(l[0])
-            new_vector._mutating_extend(l[1:])
+            new_vector = self.append(l[0], recur=recur)
+            new_vector._mutating_extend(l[1:], recur=recur)
             return new_vector
 
         return self
@@ -397,7 +415,7 @@ Hashable.register(PVector)
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
 
-def _pvector(sequence=()):
+def _pvector(sequence=(), recur=False):
     """
     Factory function, returns a new PVector object containing the elements in sequence.
 
@@ -405,7 +423,7 @@ def _pvector(sequence=()):
     >>> v1
     (1, 2, 3)
     """
-    return _EMPTY_VECTOR.extend(sequence)
+    return _EMPTY_VECTOR.extend(sequence, recur)
 
 
 pvector = _pvector
@@ -685,7 +703,7 @@ def _turbo_mapping(initial, pre_size):
 _EMPTY_PMAP = _turbo_mapping({}, 0)
 
 
-def pmap(initial={}, pre_size=0):
+def pmap(initial={}, pre_size=0, recur=False):
     """
     Factory function, inserts all elements in initial into the newly created map.
     The optional argument pre_size may be used to specify an initial size of the underlying bucket vector. This

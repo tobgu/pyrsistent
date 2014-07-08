@@ -21,5 +21,4 @@ TODO (in no particular order)
 - Improve documentation
 - Recursive instantiation from nested lists/tuples/sets/maps
 - Check pickling
-- Full Set support
-- Immutable object
+- More features on immutable object
