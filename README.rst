@@ -32,7 +32,7 @@ Performance is generally in the range of 1 - 100 times slower than using the cor
 In the cases where attempts at optimizations have been done, speed has generally been valued over space.
 
 Pyrsistent comes with two API compatible flavors of PVector (on which PMap and PSet are based), one pure Python 
-implementation and one implemented as a C extension. The latter generally beeing 2 - 10 times faster then the former.
+implementation and one implemented as a C extension. The latter generally beeing 2 - 10 times faster than the former.
 The C extension will be used automatically when possible. It is currently only available for CPython 2.7 (and possibly
 2.5 and 2.6, but this has not been tested).
 
