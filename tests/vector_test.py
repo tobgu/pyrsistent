@@ -450,30 +450,3 @@ def test_count(pvector):
 
     assert x.count(1) == 2
     assert x.count(4) == 0
-
-
-def test_recursive_creation_single_list_in_list():
-    from pyrsistent import _pvector as pvector, v
-    assert pvector([[1, 2]], recur=True) == v(v(1, 2))
-
-
-def test_recursive_creation_various_combinations():
-    from pyrsistent import _pvector as pvector, v
-
-    assert pvector([[1, 2]], recur=True) == v(v(1, 2))
-    assert pvector([[1, 2], [3, 4]], recur=True) == v(v(1, 2), v(3, 4))
-    assert pvector([[1, 2], [3, 4, [5, 6]]], recur=True) == v(v(1, 2), v(3, 4, v(5, 6)))
-
-
-def test_recursive_assoc():
-    from pyrsistent import _pvector as pvector, v
-
-    assert pvector([1, 2]).assoc(1, [3, 4], recur=True) == v(1, v(3, 4))
-
-
-def test_recursive_creation_various_combinations():
-    from pyrsistent import _pvector as pvector, PMap, v, m
-
-    v1 = pvector([{'a': 1}], recur=True)
-    assert v1[0] == m(a=1)
-    assert isinstance(v1[0], PMap)
