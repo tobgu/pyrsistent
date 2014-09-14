@@ -76,4 +76,5 @@ setup(
     scripts=[],
     ext_modules=extensions,
     cmdclass={"build_ext": custom_build_ext},
+    install_requires=['six'],
 )

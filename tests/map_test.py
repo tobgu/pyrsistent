@@ -226,7 +226,7 @@ def test_bitmap_indexed_iteration():
 
 
 def test_iteration_with_many_elements():
-    values = range(0, 2000)
+    values = list(range(0, 2000))
     keys = [str(x) for x in values]
     init_dict = dict(zip(keys, values))
     

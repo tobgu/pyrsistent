@@ -3,6 +3,9 @@ from itertools import chain
 from functools import wraps
 from numbers import Integral
 
+import six
+
+
 def _bitcount(val):
     return bin(val).count("1")
 
@@ -669,7 +672,7 @@ def _turbo_mapping(initial, pre_size):
         # key collisions
         initial = dict(initial)
 
-    for k, v in initial.iteritems():
+    for k, v in six.iteritems(initial):
         h = hash(k)
         index = h % size
         bucket = buckets[index]
@@ -895,7 +898,7 @@ def immutable(members='', name='Immutable', verbose=False):
     AttributeError: Cannot set frozen members id_
     """
 
-    if isinstance(members, basestring):
+    if isinstance(members, six.string_types):
         members = members.replace(',', ' ').split()
 
     def frozen_member_test():
@@ -935,13 +938,13 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}], verbose={verb
                class_name=name)
 
     if verbose:
-        print template
+        print(template)
 
     from collections import namedtuple
     namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_immutable')
     try:
-        exec template in namespace
-    except SyntaxError, e:
+        six.exec_(template, namespace)
+    except SyntaxError as e:
         raise SyntaxError(e.message + ':\n' + template)
 
     return namespace[name]
