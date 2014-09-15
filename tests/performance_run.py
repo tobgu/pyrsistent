@@ -9,11 +9,11 @@ def run_big_iterator_initialization():
     """
     before = time.time()
     iterator = (x for x in range(1000000))
-    print "Big iterator: " + str(time.time() - before)
+    print("Big iterator: " + str(time.time() - before))
 
     before = time.time()
     seq = pvector(iterator)
-    print "Big vector from iterator: " + str(time.time() - before)
+    print("Big vector from iterator: " + str(time.time() - before))
 
 
 def run_big_list_initialization():
@@ -32,11 +32,11 @@ def run_big_list_initialization():
     """
     before = time.time()
     l = [x for x in range(1000000)]
-    print "Big list from list comprehension: " + str(time.time() - before)
+    print("Big list from list comprehension: " + str(time.time() - before))
 
     before = time.time()
     seq = pvector(l)
-    print "Big vector from list: " + str(time.time() - before)
+    print("Big vector from list: " + str(time.time() - before))
 
 
 def run_slicing_performance():
@@ -57,12 +57,12 @@ def run_slicing_performance():
 
     before = time.time()
     sublist = list[533:744444]
-    print "List slicing: " + str(time.time() - before)
+    print("List slicing: " + str(time.time() - before))
 
     vec = pvector(list)
     before = time.time()
     subvec = vec[533:744444]
-    print "Pvec slicing: " + str(time.time() - before)
+    print("Pvec slicing: " + str(time.time() - before))
 
 
 def run_create_many_small_vectors():
@@ -83,32 +83,32 @@ def run_create_many_small_vectors():
     single = [2]
     for _ in iterations:
         vec = pvector(single)
-    print "Many small Single element: " + str(time.time() - before)
+    print("Many small Single element: " + str(time.time() - before))
 
 
     before = time.time()
     double = [2, 3]
     for _ in iterations:
         vec = pvector(double)
-    print "Many small Double elements: " + str(time.time() - before)
+    print("Many small Double elements: " + str(time.time() - before))
 
     before = time.time()
     ten = range(10)
     for _ in iterations:
         vec = pvector(ten)
-    print "Many small Ten elements: " + str(time.time() - before)
+    print("Many small Ten elements: " + str(time.time() - before))
 
     before = time.time()
     x = range(32)
     for _ in iterations:
         vec = pvector(x)
-    print "Many small 32 elements: " + str(time.time() - before)
+    print("Many small 32 elements: " + str(time.time() - before))
 
     before = time.time()
     x = range(33)
     for _ in iterations:
         vec = pvector(x)
-    print "Many small 33 elements: " + str(time.time() - before)
+    print("Many small 33 elements: " + str(time.time() - before))
 
 def run_set_performance():
     """
@@ -128,19 +128,19 @@ def run_set_performance():
 
     before = time.time()
     s1 = set(l)
-    print "Big set from list: " + str(time.time() - before)
+    print("Big set from list: " + str(time.time() - before))
 
     before = time.time()
     s2 = pset(l, pre_size=2*len(l))
-    print "Big pset from list: " + str(time.time() - before)
+    print("Big pset from list: " + str(time.time() - before))
 
     before = time.time()
     random_access(s1)
-    print "Random access set: " + str(time.time() - before)
+    print("Random access set: " + str(time.time() - before))
 
     before = time.time()
     random_access(s2)
-    print "Random access pset: " + str(time.time() - before)
+    print("Random access pset: " + str(time.time() - before))
 
 def run_vector_random_access_performance():
     def random_access(o):
@@ -156,24 +156,24 @@ def run_vector_random_access_performance():
     
     before = time.time()
     random_access(l)
-    print "Random access large list: " + str(time.time() - before)
+    print("Random access large list: " + str(time.time() - before))
 
     v = pvector(l)
     before = time.time()
     random_access(v)
-    print "Random access large vector: " + str(time.time() - before)
+    print("Random access large vector: " + str(time.time() - before))
 
     testdata = [0, 4, 17, -2, 3, 7, 8, 11, 1, 13, 18, 10]
     l = range(20)
     
     before = time.time()
     random_access(l)
-    print "Random access small list: " + str(time.time() - before)
+    print("Random access small list: " + str(time.time() - before))
 
     v = pvector(l)
     before = time.time()
     random_access(v)
-    print "Random access small vector: " + str(time.time() - before)
+    print("Random access small vector: " + str(time.time() - before))
     
 
 def run_string_from_objects():
@@ -181,11 +181,11 @@ def run_string_from_objects():
 
     before = time.time()
     s1 = str(p)
-    print "Str 1: " + str(time.time() - before)
+    print("Str 1: " + str(time.time() - before))
 
     before = time.time()
     s2 = str(p)
-    print "Str 2: " + str(time.time() - before)
+    print("Str 2: " + str(time.time() - before))
 
 def run_to_list():
     p = pvector(range(1000000))
@@ -193,20 +193,20 @@ def run_to_list():
     try:
         before = time.time()
         l1 = p._tolist()
-        print "Tolist: " + str(time.time() - before)
+        print("Tolist: " + str(time.time() - before))
     except:
-        print "Tolist not implemented"
+        print("Tolist not implemented")
 
     before = time.time()
     l2 = list(p)
-    print "Iterator: " + str(time.time() - before)
+    print("Iterator: " + str(time.time() - before))
 
     try:
         before = time.time()
         l1 = p._totuple()
-        print "Totuple: " + str(time.time() - before)
+        print("Totuple: " + str(time.time() - before))
     except:
-        print "Totuple not implemented"
+        print("Totuple not implemented")
 
 def run_len():
     # This is quite close to the python function call overhead baseline since the function
@@ -218,14 +218,14 @@ def run_len():
     for _ in range(r):
         len(v)
     len_duration = time.time() - before
-    print "Len: %s s, per call %s s" % (len_duration, len_duration / r)
+    print("Len: %s s, per call %s s" % (len_duration, len_duration / r))
 
     before = time.time()
     for _ in range(r):
         pass
     empty_duration = time.time() - before
-    print "Empty loop: %s s, per call %s s" % (empty_duration, empty_duration / r)
-    print "Len estimate: %s, per call: %s" % (len_duration - empty_duration, (len_duration - empty_duration) / r)
+    print("Empty loop: %s s, per call %s s" % (empty_duration, empty_duration / r))
+    print("Len estimate: %s, per call: %s" % (len_duration - empty_duration, (len_duration - empty_duration) / r))
 
 def random_access(s):
     testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]

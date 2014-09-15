@@ -12,7 +12,7 @@ readme = f.read()
 f.close()
 
 extensions = []
-if platform.python_implementation() == 'CPython' and sys.version_info[0] == 2:
+if platform.python_implementation() == 'CPython':
     extensions = [Extension('pvectorc', sources=['pvectorcmodule.c'])]
 
 

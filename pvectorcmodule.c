@@ -407,7 +407,11 @@ static PyObject* PVector_index(PVector *self, PyObject *args) {
   for (i = start; i < stop && i < self->count; i++) {
     int cmp = PyObject_RichCompareBool(_get_item(self, i), value, Py_EQ);
     if (cmp > 0) {
+#if PY_MAJOR_VERSION >= 3
+      return PyLong_FromSsize_t(i);
+#else
       return PyInt_FromSsize_t(i);
+#endif
     } else if (cmp < 0) {
       return NULL;
     }
@@ -430,7 +434,11 @@ static PyObject* PVector_count(PVector *self, PyObject *value) {
     }
   }
 
-  return PyInt_FromSsize_t(count);
+#if PY_MAJOR_VERSION >= 3
+      return PyLong_FromSsize_t(count);
+#else
+      return PyInt_FromSsize_t(count);
+#endif
 }
 
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
@@ -488,9 +496,8 @@ static PyMethodDef PVector_methods[] = {
 static PyObject * PVectorIter_iter(PyObject *seq);
 
 static PyTypeObject PVectorType = {
-  PyObject_HEAD_INIT(NULL)
-  0,
-  "pvectorc.PVector",                       /* tp_name        */
+  PyVarObject_HEAD_INIT(NULL, 0)
+  "pvectorc.PVector",                         /* tp_name        */
   sizeof(PVector),                            /* tp_basicsize   */
   0,		                              /* tp_itemsize    */
   (destructor)PVector_dealloc,                /* tp_dealloc     */
@@ -685,7 +692,7 @@ static PyObject *PVector_subscript(PVector* self, PyObject* item) {
         return (PyObject*)newVec;
       }
     } else {
-      PyErr_Format(PyExc_TypeError, "pvector indices must be integers, not %.200s", item->ob_type->tp_name);
+      PyErr_Format(PyExc_TypeError, "pvector indices must be integers, not %.200s", Py_TYPE(item)->tp_name);
       return NULL;
     }
 } 
@@ -722,7 +729,7 @@ static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
         return NULL;
     }
     
-    iternext = *it->ob_type->tp_iternext;
+    iternext = *Py_TYPE(it)->tp_iternext;
     PyObject *item = iternext(it);
     if (item == NULL) {
       Py_DECREF(it);
@@ -909,7 +916,22 @@ static PyMethodDef PyrsistentMethods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC initpvectorc(void) {
+
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "pvectorc",          /* m_name */
+    "Persistent vector", /* m_doc */
+    -1,                  /* m_size */
+    PyrsistentMethods,   /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+  };
+#endif
+
+PyObject* moduleinit(void) {
   PyObject* m;
   
   // Only allow creation/initialization through factory method pvec
@@ -917,14 +939,14 @@ PyMODINIT_FUNC initpvectorc(void) {
   PVectorType.tp_new = NULL;
 
   if (PyType_Ready(&PVectorType) < 0)
-    return;
+    return NULL;
 
   // Register with Sequence to appear as a proper sequence to the outside world
   PyObject* c = PyObject_GetAttrString(PyImport_ImportModule("collections"), "Sequence");
 
-  if (PyType_Ready(c->ob_type) < 0) {
+  if (PyType_Ready(Py_TYPE(c)) < 0) {
     printf("Failed to initialize Sequence!\n");
-    return;
+    return NULL;
   }
 
   if(c == NULL) {
@@ -933,9 +955,14 @@ PyMODINIT_FUNC initpvectorc(void) {
   
   PyObject_CallMethod(c, "register", "O", &PVectorType);
 
-  m = Py_InitModule("pvectorc", PyrsistentMethods);
+#if PY_MAJOR_VERSION >= 3
+  m = PyModule_Create(&moduledef);
+#else
+  m = Py_InitModule3("pvectorc", PyrsistentMethods, "Persistent vector");  
+#endif
+
   if (m == NULL) {
-    return;
+    return NULL;
   }
 
   SHIFT = __builtin_popcount(BIT_MASK);
@@ -949,8 +976,21 @@ PyMODINIT_FUNC initpvectorc(void) {
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
 
-  assoc_in_fn_name = PyString_FromString("assoc_in");
+
+  assoc_in_fn_name = PyUnicode_FromString("assoc_in");
+
+  return m;
 }
+
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_pvectorc(void) {
+  return moduleinit();
+}
+#else
+PyMODINIT_FUNC initpvectorc(void) {
+  moduleinit();
+}
+#endif
 
 
 /*********************** PVector Iterator **************************/
