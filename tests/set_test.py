@@ -1,3 +1,5 @@
+import six
+
 from pyrsistent import pset, s
 import pytest
 
@@ -86,7 +88,11 @@ def test_supports_set_comparisons():
 
 
 def test_str():
-    assert str(pset([1, 2, 3])) == "pset([1, 2, 3])"
+    rep = str(pset([1, 2, 3]))
+    if six.PY2:
+        assert rep == "pset([1, 2, 3])"
+    else:
+        assert rep == "p{1, 2, 3}"
 
 def test_is_disjoint():
     s1 = pset([1, 2, 3])
