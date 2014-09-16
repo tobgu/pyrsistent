@@ -660,6 +660,13 @@ static void extend_with_item(PVector *newVec, PyObject *item) {
 }
 
 
+#if PY_MAJOR_VERSION >= 3
+// This was changed in 3.2 but we do not claim compatibility with any older version of python 3.
+#define SLICE_CAST
+#else
+#define SLICE_CAST (PySliceObject *)
+#endif
+
 static PyObject *PVector_subscript(PVector* self, PyObject* item) {
     if (PyIndex_Check(item)) {
       Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
@@ -670,7 +677,7 @@ static PyObject *PVector_subscript(PVector* self, PyObject* item) {
       return PVector_get_item(self, i);
     } else if (PySlice_Check(item)) {
       Py_ssize_t start, stop, step, slicelength, cur, i;
-      if (PySlice_GetIndicesEx((PySliceObject *)item, self->count,
+      if (PySlice_GetIndicesEx(SLICE_CAST item, self->count,
              &start, &stop, &step, &slicelength) < 0) {
          return NULL;
       }
