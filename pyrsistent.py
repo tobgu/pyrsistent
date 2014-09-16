@@ -750,7 +750,10 @@ class PSet(object):
         return len(self._map)
 
     def __repr__(self):
-        return 'p' + str(set(self))
+        if six.PY2 or not self:
+            return 'p' + str(set(self))
+
+        return 'pset([{}])'.format(str(set(self))[1:-1])
 
     __str__ = __repr__
 

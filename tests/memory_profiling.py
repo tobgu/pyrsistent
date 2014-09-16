@@ -24,7 +24,7 @@ def run_function(fn):
 def detect_memory_leak(samples):
     # Skip the first half to get rid of the build up period and the last since it seems
     # a little less precise
-    samples = samples[len(samples)/2:len(samples)-1]
+    samples = samples[int(len(samples)/2):len(samples)-1]
     return not samples.count(samples[0]) > len(samples) - 2
 
 def profile_tests():

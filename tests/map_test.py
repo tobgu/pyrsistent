@@ -253,4 +253,7 @@ def test_iteration_with_many_elements():
 def test_str():
     assert str(pmap({1: 2, 3: 4})) == "{1: 2, 3: 4}"
 
-pytest.main()
+
+def test_empty_truthiness():
+    assert m(a=1)
+    assert not m()

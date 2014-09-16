@@ -450,3 +450,7 @@ def test_count(pvector):
 
     assert x.count(1) == 2
     assert x.count(4) == 0
+
+def test_empty_truthiness(pvector):
+    assert pvector([1])
+    assert not pvector([])

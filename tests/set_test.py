@@ -12,6 +12,10 @@ def test_supports_hash():
     assert hash(s(1, 2)) == hash(s(1, 2))
 
 
+def test_empty_truthiness():
+    assert s(1)
+    assert not s()
+
 def test_contains_elements_that_it_was_initialized_with():
     initial = [1, 2, 3]
     s = pset(initial)
@@ -89,10 +93,7 @@ def test_supports_set_comparisons():
 
 def test_str():
     rep = str(pset([1, 2, 3]))
-    if six.PY2:
-        assert rep == "pset([1, 2, 3])"
-    else:
-        assert rep == "p{1, 2, 3}"
+    assert rep == "pset([1, 2, 3])"
 
 def test_is_disjoint():
     s1 = pset([1, 2, 3])
