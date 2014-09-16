@@ -5,7 +5,11 @@ install:
 
 script:
   - tox
+
 env:
   - TOXENV=py27
-  - TOXENV=doctest
-  - TOXENV=memory
+  - TOXENV=py32
+  - TOXENV=memorytest27
+  - TOXENV=memorytest32
+  - TOXENV=doctest27
+  - TOXENV=doctest32

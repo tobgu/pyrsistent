@@ -12,14 +12,12 @@ v0.1.0, 2013-11-10 -- Initial release.
 
 TODO (in no particular order)
 -----------------------------
-- Python 3 compatibility
 - More convenience methods to simplify work with these data structures.
 - Create optimized function for replacing multiple elements in the same function call (massoc) that can
   also be used by the PMap, "merge into".
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
+- Ordered sets and maps?
 - Improve documentation
-- Recursive instantiation from nested lists/tuples/sets/maps
+- Recursive instantiation from nested lists/tuples/sets/maps (is this a good or just messy idea?)
 - Check pickling
-- Full Set support
-- Immutable object
