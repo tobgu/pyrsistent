@@ -4,8 +4,8 @@ Pyrsistent is a number of persistent collections. Persistent in the sense that t
 the public API). The collection types currently implemented are PVector (similar to a python list), PMap (similar to
 a python dict) and PSet (similar to a python set).
 
-All methods on a data structure that manipulates it returns a new copy of the object with the containing the
-requested updates rather than manipulating the original.
+All methods on a data structure that would normally mutate it instead returns a new copy of the structure containing the
+requested updates. The original structure is left untouched.
 
 This will simplify the reasoning about what a program does since no hidden side effects ever can take place to these
 data structures. You can rest assured that the object you hold a reference to will remain the same throughout its
@@ -32,16 +32,18 @@ Performance is generally in the range of 1 - 100 times slower than using the cor
 In the cases where attempts at optimizations have been done, speed has generally been valued over space.
 
 Pyrsistent comes with two API compatible flavors of PVector (on which PMap and PSet are based), one pure Python 
-implementation and one implemented as a C extension. The latter generally beeing 2 - 10 times faster than the former.
-The C extension will be used automatically when possible. It is currently only available for CPython 2.7 (and possibly
-2.5 and 2.6, but this has not been tested).
+implementation and one implemented as a C extension. The latter generally being 2 - 10 times faster than the former.
+The C extension will be used automatically when possible.
 
 The pure python implementation is fully PyPy compatible. Running it under PyPy speeds operations up considerably if 
 the structures are used heavily (if JITed), for some cases the performance is almost on par with the built in counterparts.
 
-Pyrsistent has been developed on Python 2.7 and is not yet tested on Python 3.x.
+Pyrsistent has been developed and tested on Python 2.7 and Python 3.2. It will most likely work on any later versions
+of Python 3 as well but no guarantees are given. :)
 
-Pyrsistent is greatly influenced by the persistent data structures that are part Clojures standard library.
+Pyrsistent is influenced by persistent data structures such as those found in the standard library of Clojure. It
+aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
+program without hassle.
 
 Installation
 -------------
