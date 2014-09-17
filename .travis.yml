@@ -9,6 +9,8 @@ script:
 env:
   - TOXENV=py27
   - TOXENV=py32
+  - TOXENV=py35
+  - TOXENV=pypy
   - TOXENV=memorytest27
   - TOXENV=memorytest32
   - TOXENV=doctest27
