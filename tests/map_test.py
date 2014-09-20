@@ -28,9 +28,9 @@ def test_initialization_with_one_element():
     assert the_map.a == 2
     assert 'a' in the_map
     
-    assert the_map is the_map.dissoc('b')
+    assert the_map is the_map.remove('b')
     
-    empty_map = the_map.dissoc('a')
+    empty_map = the_map.remove('a')
     assert len(empty_map) == 0
     assert 'a' not in empty_map
 
@@ -52,7 +52,7 @@ def test_initialization_with_two_elements():
     assert map['a'] == 2
     assert map['b'] == 3
 
-    map2 = map.dissoc('a')
+    map2 = map.remove('a')
     assert 'a' not in map2
     assert map2['b'] == 3
 
@@ -64,25 +64,25 @@ def test_initialization_with_many_elements():
     assert len(the_map) == 1700
     assert the_map['16'] == 16
     assert the_map['1699'] == 1699
-    assert the_map.assoc('256', 256) is the_map
+    assert the_map.set('256', 256) is the_map
  
-    new_map = the_map.dissoc('1600')
+    new_map = the_map.remove('1600')
     assert len(new_map) == 1699
     assert '1600' not in new_map
     assert new_map['1601'] == 1601
     
     # Some NOP properties
-    assert new_map.dissoc('18888') is new_map
+    assert new_map.remove('18888') is new_map
     assert '19999' not in new_map
     assert new_map['1500'] == 1500  
-    assert new_map.assoc('1500', new_map['1500']) is new_map
+    assert new_map.set('1500', new_map['1500']) is new_map
 
 
 def test_access_non_existing_element():
     map1 = pmap()
     assert len(map1) == 0
     
-    map2 = map1.assoc('1', 1)
+    map2 = map1.set('1', 1)
     assert '1' not in map1
     assert map2['1'] == 1
     assert '2' not in map2
@@ -90,7 +90,7 @@ def test_access_non_existing_element():
 
 def test_overwrite_existing_element():
     map1 = pmap({'a': 2})
-    map2 = map1.assoc('a', 3)
+    map2 = map1.set('a', 3)
 
     assert len(map2) == 1
     assert map2['a'] == 3
@@ -109,7 +109,7 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
 
     for z in x:
         if z not in y:
-            x = x.dissoc(z)
+            x = x.remove(z)
 
     assert x == y
     assert hash(x) == hash(y)
@@ -131,27 +131,27 @@ def test_merge_no_arguments():
 
     assert x.merge() is x
 
-def test_assoc_in_base_case():
-    # Works as assoc when called with only one key
+def test_set_in_base_case():
+    # Works as set when called with only one key
     x = m(a=1, b=2)
     
-    assert x.assoc_in(['a'], 3) == m(a=3, b=2)
+    assert x.set_in(['a'], 3) == m(a=3, b=2)
 
-def test_assoc_in_base_case():
-    # Works as assoc when called with only one key
+def test_set_in_base_case():
+    # Works as set when called with only one key
     x = m(a=1, b=2)
     
-    assert x.assoc_in(['a'], 3) == m(a=3, b=2)
+    assert x.set_in(['a'], 3) == m(a=3, b=2)
 
-def test_assoc_in_nested_maps():
+def test_set_in_nested_maps():
     x = m(a=1, b=m(c=3, d=m(e=6, f=7)))
     
-    assert x.assoc_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
+    assert x.set_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
     
-def test_assoc_in_levels_missing():
+def test_set_in_levels_missing():
     x = m(a=1, b=m(c=3))
     
-    assert x.assoc_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
+    assert x.set_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
 
 
 class HashDummy(object):
@@ -184,29 +184,29 @@ def test_hash_collision_is_correctly_resolved():
     assert keys == set([dummy1, dummy2, dummy3])
     assert values == set([1, 2, 3])
 
-    map2 = map.assoc(dummy1, 11)
+    map2 = map.set(dummy1, 11)
     assert map2[dummy1] == 11
     
     # Re-use existing structure when inserted element is the same
-    assert map2.assoc(dummy1, 11) is map2
+    assert map2.set(dummy1, 11) is map2
     
-    map3 = map.assoc('a', 22)
+    map3 = map.set('a', 22)
     assert map3['a'] == 22
     assert map3[dummy3] == 3
     
     # Remove elements
-    map4 = map.dissoc(dummy2)
+    map4 = map.remove(dummy2)
     assert len(map4) == 2
     assert map4[dummy1] == 1
     assert dummy2 not in map4
     assert map4[dummy3] == 3
     
-    assert map.dissoc(dummy4) == map
+    assert map.remove(dummy4) == map
     
     # Empty map handling
-    empty_map = map4.dissoc(dummy1).dissoc(dummy3)
+    empty_map = map4.remove(dummy1).remove(dummy3)
     assert len(empty_map) == 0
-    assert empty_map.dissoc(dummy1) == empty_map
+    assert empty_map.remove(dummy1) == empty_map
     
 
 def test_bitmap_indexed_iteration():

@@ -55,7 +55,7 @@ class PVector(object):
     pvector([1, 2, 3, 4, 5, 6, 7])
     >>> p3[5]
     6
-    >>> p.assoc(1, 99)
+    >>> p.set(1, 99)
     pvector([1, 99, 3])
     >>>
     """
@@ -195,7 +195,7 @@ class PVector(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
-    def assoc(self, i, val):
+    def set(self, i, val):
         """
         Return a new vector with element at position i replaced with val. The first vector remains unchanged.
 
@@ -203,11 +203,11 @@ class PVector(object):
         result in an IndexError.
 
         >>> v1 = v(1, 2, 3)
-        >>> v1.assoc(1, 4)
+        >>> v1.set(1, 4)
         pvector([1, 4, 3])
-        >>> v1.assoc(3, 4)
+        >>> v1.set(3, 4)
         pvector([1, 2, 3, 4])
-        >>> v1.assoc(-1, 4)
+        >>> v1.set(-1, 4)
         pvector([1, 2, 4])
         """
         if not isinstance(i, Integral):
@@ -222,20 +222,20 @@ class PVector(object):
                 new_tail[i & BIT_MASK] = val
                 return PVector(self._count, self._shift, self._root, new_tail)
 
-            return PVector(self._count, self._shift, self._do_assoc(self._shift, self._root, i, val), self._tail)
+            return PVector(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
 
         if i == self._count:
             return self.append(val)
 
         raise IndexError()
 
-    def _do_assoc(self, level, node, i, val):
+    def _do_set(self, level, node, i, val):
         ret = list(node)
         if level == 0:
             ret[i & BIT_MASK] = val
         else:
             sub_index = (i >> level) & BIT_MASK  # >>>
-            ret[sub_index] = self._do_assoc(level - SHIFT, node[sub_index], i, val)
+            ret[sub_index] = self._do_set(level - SHIFT, node[sub_index], i, val)
 
         return ret
 
@@ -351,25 +351,25 @@ class PVector(object):
         ret.append(self._new_path(level - SHIFT, tail_node))
         return ret
 
-    def assoc_in(self, keys, val):
+    def set_in(self, keys, val):
         """
         Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
         do not exist will be inserted as new PMaps.
 
         >>> v1 = v(1, 2, m(a=5, b=6))
-        >>> v1.assoc_in((2, 'b'), 17)
+        >>> v1.set_in((2, 'b'), 17)
         pvector([1, 2, pmap({'a': 5, 'b': 17})])
-        >>> v1.assoc_in((2, 'c', 'd'), 17)
+        >>> v1.set_in((2, 'c', 'd'), 17)
         pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
         """
         if not keys:
             return self
         elif len(keys) == 1:
-            return self.assoc(keys[0], val)
+            return self.set(keys[0], val)
         elif keys[0] == self._count:
-            return self.append(pmap().assoc_in(keys[1:], val))
+            return self.append(pmap().set_in(keys[1:], val))
         else:
-            return self.assoc(keys[0], self[keys[0]].assoc_in(keys[1:], val))
+            return self.set(keys[0], self[keys[0]].set_in(keys[1:], val))
 
     def index(self, value, *args, **kwargs):
         """
@@ -454,8 +454,8 @@ class PMap(object):
     The following are examples of some common operations on persistent maps
 
     >>> m1 = m(a=1, b=3)
-    >>> m2 = m1.assoc('c', 3)
-    >>> m3 = m2.dissoc('a')
+    >>> m2 = m1.set('c', 3)
+    >>> m3 = m2.remove('a')
     >>> m1
     pmap({'a': 1, 'b': 3})
     >>> m2
@@ -544,13 +544,13 @@ class PMap(object):
         # This hashing algorithm is probably not the speediest
         return hash(frozenset(self.iteritems()))
 
-    def assoc(self, key, val):
+    def set(self, key, val):
         """
         Return a new PMap with key and val inserted.
 
         >>> m1 = m(a=1, b=2)
-        >>> m2 = m1.assoc('a', 3)
-        >>> m3 = m1.assoc('c' ,4)
+        >>> m2 = m1.set('a', 3)
+        >>> m3 = m1.set('c' ,4)
         >>> m1
         pmap({'a': 1, 'b': 2})
         >>> m2
@@ -567,29 +567,29 @@ class PMap(object):
                         return self
                     else:
                         new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
-                        return PMap(self._size, self._buckets.assoc(index, new_bucket))
+                        return PMap(self._size, self._buckets.set(index, new_bucket))
 
             if len(self._buckets) < 0.67 * self._size:
-                return PMap(self._size, self._reallocate(2 * len(self._buckets))).assoc(key, val)
+                return PMap(self._size, self._reallocate(2 * len(self._buckets))).set(key, val)
             else:
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
-                new_buckets = self._buckets.assoc(index, new_bucket)
+                new_buckets = self._buckets.set(index, new_bucket)
 
             return PMap(self._size + 1, new_buckets)
 
         # Skip reallocation check if there was no conflict
-        return PMap(self._size + 1, self._buckets.assoc(index, [kv]))
+        return PMap(self._size + 1, self._buckets.set(index, [kv]))
 
-    def dissoc(self, key):
+    def remove(self, key):
         """
         Return a new PMap without the element specified by key. Returns reference to itself
         if element is not present.
 
         >>> m1 = m(a=1, b=2)
-        >>> m1.dissoc('a')
+        >>> m1.remove('a')
         pmap({'b': 2})
-        >>> m1 is m1.dissoc('c')
+        >>> m1 is m1.remove('c')
         True
         """
 
@@ -599,7 +599,7 @@ class PMap(object):
         if bucket:
             new_bucket = [(k, v) for (k, v) in bucket if k != key]
             if len(bucket) > len(new_bucket):
-                return PMap(self._size - 1, self._buckets.assoc(index, new_bucket if new_bucket else None))
+                return PMap(self._size - 1, self._buckets.set(index, new_bucket if new_bucket else None))
 
         return self
 
@@ -624,25 +624,25 @@ class PMap(object):
 
         result = self
         for k, v in merge_map.items():
-            result = result.assoc(k, v)
-        
+            result = result.set(k, v)
+
         return result
 
-    def assoc_in(self, keys, val):
+    def set_in(self, keys, val):
         """
         Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
         do not exist will be inserted as new PMaps.
 
         >>> m1 = m(a=5, b=6, c=v(1, 2))
-        >>> m1.assoc_in(('c', 1), 17)
+        >>> m1.set_in(('c', 1), 17)
         pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
         """
         if not keys:
             return self
         elif len(keys) == 1:
-            return self.assoc(keys[0], val)
+            return self.set(keys[0], val)
         else:
-            return self.assoc(keys[0], self.get(keys[0], _EMPTY_PMAP).assoc_in(keys[1:], val))
+            return self.set(keys[0], self.get(keys[0], _EMPTY_PMAP).set_in(keys[1:], val))
 
     def _reallocate_to_list(self, new_size):
         new_list = new_size * [None]
@@ -772,7 +772,7 @@ class PSet(object):
         >>> s1.add(3)
         pset([1, 2, 3])
         """
-        return PSet(self._map.assoc(element, True))
+        return PSet(self._map.set(element, True))
 
     def remove(self, element):
         """
@@ -783,7 +783,7 @@ class PSet(object):
         pset([1])
         """
         if element in self._map:
-            return PSet(self._map.dissoc(element))
+            return PSet(self._map.remove(element))
 
         raise KeyError("Element '%s' not present in PSet" % element)
 
@@ -792,7 +792,7 @@ class PSet(object):
         Return a new PSet with element removed. Returns itself if element is not present.
         """
         if element in self._map:
-            return PSet(self._map.dissoc(element))
+            return PSet(self._map.remove(element))
 
         return self
 

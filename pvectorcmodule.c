@@ -49,9 +49,9 @@ typedef struct {
 
 static PVector* EMPTY_VECTOR = NULL;
 static PyObject* pmap_factory_fn = NULL;
-static PyObject* assoc_in_fn_name = NULL;
+static PyObject* set_in_fn_name = NULL;
 
-static PyObject* assocInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject* value) {
+static PyObject* setInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject* value) {
   if(pmap_factory_fn == NULL) {
     // Lazy import pmap factory to avoid circular import problems
     pmap_factory_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent"), "pmap");
@@ -60,7 +60,7 @@ static PyObject* assocInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject
   PyObject* emptyMap = PyObject_CallFunctionObjArgs(pmap_factory_fn, NULL);
   PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
   PyObject* newMap = PyObject_CallMethodObjArgs(emptyMap,
-						assoc_in_fn_name,
+						set_in_fn_name,
 						newSequence,
 						value,
 						NULL);
@@ -452,9 +452,9 @@ static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
 
 static PyObject* PVector_append(PVector *self, PyObject *obj);
 
-static PyObject* PVector_assoc_in(PVector *self, PyObject *obj);
+static PyObject* PVector_set_in(PVector *self, PyObject *obj);
 
-static PyObject* PVector_assoc(PVector *self, PyObject *obj);
+static PyObject* PVector_set(PVector *self, PyObject *obj);
 
 static PyObject* PVector_subscript(PVector* self, PyObject* item);
 
@@ -488,10 +488,10 @@ PyDoc_STRVAR(count_doc,
 
 static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
-	{"assoc",       (PyCFunction)PVector_assoc, METH_VARARGS, "Inserts an element at the specified position"},
+	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
 	{"__getitem__", (PyCFunction)PVector_subscript, METH_O|METH_COEXIST, "Subscript"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
-	{"assoc_in",    (PyCFunction)PVector_assoc_in, METH_VARARGS, "Insert an element in a nested structure"},
+	{"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Insert an element in a nested structure"},
 	{"index",       (PyCFunction)PVector_index,  METH_VARARGS, index_doc},
 	{"count",       (PyCFunction)PVector_count,  METH_O, count_doc},
 	{NULL}
@@ -803,26 +803,26 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   return (PyObject*)pvec;
 }
 
-static VNode* doAssoc(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
+static VNode* doSet(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
   if(level == 0) {
-    debug("doAssoc(): level == 0\n");
+    debug("doSet(): level == 0\n");
     VNode* theNewNode = newNode();
     copyInsert(theNewNode->items, node->items, position & BIT_MASK, value);
     incRefs((PyObject**)theNewNode->items);
     return theNewNode;
   } else {
-    debug("doAssoc(): level == %i\n", level);
+    debug("doSet(): level == %i\n", level);
     VNode* theNewNode = copyNode(node);
     Py_ssize_t index = (position >> level) & BIT_MASK;
 
     // Drop reference to this node since we're about to replace it
     ((VNode*)theNewNode->items[index])->refCount--;
-    theNewNode->items[index] = doAssoc(node->items[index], level - SHIFT, position, value); 
+    theNewNode->items[index] = doSet(node->items[index], level - SHIFT, position, value); 
     return theNewNode;
   }
 }
 
-static PyObject* internalAssoc(PVector *self, Py_ssize_t position, PyObject *argObj) {
+static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argObj) {
   if(position < 0) {
     position += self->count;
   }
@@ -837,7 +837,7 @@ static PyObject* internalAssoc(PVector *self, Py_ssize_t position, PyObject *arg
       return (PyObject*)new_pvec;
     } else {
       // Keep the tail, replace the root
-      VNode *newRoot = doAssoc(self->root, self->shift, position, argObj);
+      VNode *newRoot = doSet(self->root, self->shift, position, argObj);
       PVector *new_pvec = newPvec(self->count, self->shift, newRoot);
 
       // Free the tail and replace it with a reference to the tail of the original vector
@@ -854,7 +854,7 @@ static PyObject* internalAssoc(PVector *self, Py_ssize_t position, PyObject *arg
   }
 }
 
-static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
+static PyObject* PVector_set_in(PVector *self, PyObject *args) {
   PyObject *keySequence = NULL;
   PyObject *value = NULL;
 
@@ -875,9 +875,9 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
     }
 
     if(keySize == 1) {
-      return internalAssoc(self, keyIndex, value);
+      return internalSet(self, keyIndex, value);
     } else if(keyIndex == self->count) {
-      PyObject* newMap = assocInPmap(keySequence, keySize, value);
+      PyObject* newMap = setInPmap(keySequence, keySize, value);
       if(newMap == NULL) {
       	return NULL;
       }
@@ -892,14 +892,14 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
       }
 
       PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
-      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem, assoc_in_fn_name, newSequence, value, NULL);
+      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem, set_in_fn_name, newSequence, value, NULL);
       Py_DECREF(currentItem);
       Py_DECREF(newSequence);
       if(newItem == NULL) {
 	return NULL;
       }
       
-      PyObject* newVector = internalAssoc(self, keyIndex, newItem);
+      PyObject* newVector = internalSet(self, keyIndex, newItem);
       Py_DECREF(newItem);
       return newVector;
     }
@@ -909,7 +909,7 @@ static PyObject* PVector_assoc_in(PVector *self, PyObject *args) {
 /*
  Steals a reference to the object that is inserted in the vector.
 */
-static PyObject* PVector_assoc(PVector *self, PyObject *args) {
+static PyObject* PVector_set(PVector *self, PyObject *args) {
   PyObject *argObj = NULL;  /* argument to insert */
   Py_ssize_t position;
 
@@ -918,7 +918,7 @@ static PyObject* PVector_assoc(PVector *self, PyObject *args) {
     return NULL;
   }
 
-  return internalAssoc(self, position, argObj);
+  return internalSet(self, position, argObj);
 }
 
 
@@ -988,7 +988,7 @@ PyObject* moduleinit(void) {
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
 
 
-  assoc_in_fn_name = PyUnicode_FromString("assoc_in");
+  set_in_fn_name = PyUnicode_FromString("set_in");
 
   return m;
 }

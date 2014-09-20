@@ -90,7 +90,7 @@ def test_multi_level_sequence_from_iterator(pvector):
 def test_random_insert_within_tail(pvector):
     seq = pvector([1, 2, 3])
 
-    seq2 = seq.assoc(1, 4)
+    seq2 = seq.set(1, 4)
 
     assert seq2[1] == 4
     assert seq[1] == 2
@@ -99,7 +99,7 @@ def test_random_insert_within_tail(pvector):
 def test_random_insert_outside_tail(pvector):
     seq = pvector(range(20000))
 
-    seq2 = seq.assoc(19000, 4)
+    seq2 = seq.set(19000, 4)
 
     assert seq2[19000] == 4
     assert seq[19000] == 19000
@@ -107,24 +107,24 @@ def test_random_insert_outside_tail(pvector):
 
 def test_insert_beyond_end(pvector):
     seq = pvector(range(2))
-    seq2 = seq.assoc(2, 50)    
+    seq2 = seq.set(2, 50)
     assert seq2[2] == 50
 
     with pytest.raises(IndexError):
-        seq2.assoc(19, 4)
+        seq2.set(19, 4)
 
 
 def test_insert_with_index_from_the_end(pvector):
     x = pvector([1, 2, 3, 4])
 
-    assert x.assoc(-2, 5) == pvector([1, 2, 5, 4])
+    assert x.set(-2, 5) == pvector([1, 2, 5, 4])
 
 
 def test_insert_with_too_negative_index(pvector):
     x = pvector([1, 2, 3, 4])
 
     with pytest.raises(IndexError):
-        x.assoc(-5, 17)
+        x.set(-5, 17)
 
 
 def test_iteration(pvector):
@@ -366,50 +366,50 @@ def test_repeat(pvector):
     assert -3 * pvector([1, 2]) is pvector()
 
 
-def test_assoc_zero_key_length(pvector):
+def test_set_zero_key_length(pvector):
     x = pvector([1, 2])
 
-    assert x.assoc_in([], 3) is x
+    assert x.set_in([], 3) is x
 
 
-def test_assoc_in_base_case(pvector):
+def test_set_in_base_case(pvector):
     x = pvector([1, 2])
 
-    assert x.assoc_in([1], 3) == pvector([1, 3])
+    assert x.set_in([1], 3) == pvector([1, 3])
 
 
-def test_assoc_in_nested_vectors(pvector):
+def test_set_in_nested_vectors(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
-    assert x.assoc_in([2, 0], 999) == pvector([1, 2, pvector([999, 4]), 5])
+    assert x.set_in([2, 0], 999) == pvector([1, 2, pvector([999, 4]), 5])
 
 
-def test_assoc_in_when_appending(pvector):
+def test_set_in_when_appending(pvector):
     from pyrsistent import m
     x = pvector([1, 2])
 
-    assert x.assoc_in([2, 'd'], 999) == pvector([1, 2, m(d=999)])
+    assert x.set_in([2, 'd'], 999) == pvector([1, 2, m(d=999)])
 
 
-def test_assoc_in_index_error_out_range(pvector):
+def test_set_in_index_error_out_range(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
     with pytest.raises(IndexError):
-        x.assoc_in([2, 10], 999)
+        x.set_in([2, 10], 999)
 
 
-def test_assoc_in_index_error_wrong_type(pvector):
+def test_set_in_index_error_wrong_type(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
     with pytest.raises(TypeError):
-        x.assoc_in([2, 'foo'], 999)
+        x.set_in([2, 'foo'], 999)
 
 
-def test_assoc_in_non_assocable_type(pvector):
+def test_set_in_non_setable_type(pvector):
     x = pvector([1, 2, 5])
 
     with pytest.raises(AttributeError):
-        x.assoc_in([2, 3], 999)
+        x.set_in([2, 3], 999)
 
 
 def test_reverse(pvector):
