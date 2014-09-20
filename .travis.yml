@@ -14,4 +14,3 @@ env:
   - TOXENV=memorytest27
   - TOXENV=memorytest34
   - TOXENV=doctest27
-  - TOXENV=doctest34
