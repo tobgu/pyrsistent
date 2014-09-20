@@ -48,15 +48,15 @@ class PVector(object):
     >>> p2 = p.append(4)
     >>> p3 = p2.extend([5, 6, 7])
     >>> p
-    (1, 2, 3)
+    pvector([1, 2, 3])
     >>> p2
-    (1, 2, 3, 4)
+    pvector([1, 2, 3, 4])
     >>> p3
-    (1, 2, 3, 4, 5, 6, 7)
+    pvector([1, 2, 3, 4, 5, 6, 7])
     >>> p3[5]
     6
     >>> p.assoc(1, 99)
-    (1, 99, 3)
+    pvector([1, 99, 3])
     >>>
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
@@ -87,7 +87,7 @@ class PVector(object):
         >>> v1[2]
         7
         >>> v1[1:3]
-        (6, 7)
+        pvector([6, 7])
         """
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
@@ -109,12 +109,12 @@ class PVector(object):
         >>> v1 = v(1, 2)
         >>> v2 = v(3, 4)
         >>> v1 + v2
-        (1, 2, 3, 4)
+        pvector([1, 2, 3, 4])
         """
         return self.extend(other)
 
     def __repr__(self):
-        return str(self._totuple())
+        return 'pvector({})'.format(str(self._tolist()))
 
     __str__ = __repr__
 
@@ -151,7 +151,7 @@ class PVector(object):
         """
         >>> v1 = v(1, 2)
         >>> 3 * v1
-        (1, 2, 1, 2, 1, 2)
+        pvector([1, 2, 1, 2, 1, 2])
         """
         if times <= 0 or self is _EMPTY_VECTOR:
             return _EMPTY_VECTOR
@@ -204,11 +204,11 @@ class PVector(object):
 
         >>> v1 = v(1, 2, 3)
         >>> v1.assoc(1, 4)
-        (1, 4, 3)
+        pvector([1, 4, 3])
         >>> v1.assoc(3, 4)
-        (1, 2, 3, 4)
+        pvector([1, 2, 3, 4])
         >>> v1.assoc(-1, 4)
-        (1, 2, 4)
+        pvector([1, 2, 4])
         """
         if not isinstance(i, Integral):
             raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
@@ -270,7 +270,7 @@ class PVector(object):
 
         >>> v1 = v(1, 2)
         >>> v1.append(3)
-        (1, 2, 3)
+        pvector([1, 2, 3])
         """
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
@@ -316,7 +316,7 @@ class PVector(object):
 
         >>> v1 = v(1, 2, 3)
         >>> v1.extend([4, 5])
-        (1, 2, 3, 4, 5)
+        pvector([1, 2, 3, 4, 5])
         """
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
@@ -358,9 +358,9 @@ class PVector(object):
 
         >>> v1 = v(1, 2, m(a=5, b=6))
         >>> v1.assoc_in((2, 'b'), 17)
-        (1, 2, {'a': 5, 'b': 17})
+        pvector([1, 2, pmap({'a': 5, 'b': 17})])
         >>> v1.assoc_in((2, 'c', 'd'), 17)
-        (1, 2, {'a': 5, 'c': {'d': 17}, 'b': 6})
+        pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
         """
         if not keys:
             return self
@@ -406,7 +406,7 @@ def _pvector(sequence=()):
 
     >>> v1 = pvector([1, 2, 3])
     >>> v1
-    (1, 2, 3)
+    pvector([1, 2, 3])
     """
     return _EMPTY_VECTOR.extend(sequence)
 
@@ -426,7 +426,7 @@ def v(*elements):
 
     >>> v1 = v(1, 2, 3)
     >>> v1
-    (1, 2, 3)
+    pvector([1, 2, 3])
     """
     return pvector(elements)
 
@@ -457,11 +457,11 @@ class PMap(object):
     >>> m2 = m1.assoc('c', 3)
     >>> m3 = m2.dissoc('a')
     >>> m1
-    {'a': 1, 'b': 3}
+    pmap({'a': 1, 'b': 3})
     >>> m2
-    {'a': 1, 'c': 3, 'b': 3}
+    pmap({'a': 1, 'c': 3, 'b': 3})
     >>> m3
-    {'c': 3, 'b': 3}
+    pmap({'c': 3, 'b': 3})
     >>> m3['c']
     3
     """
@@ -534,7 +534,7 @@ class PMap(object):
         return self._size
 
     def __repr__(self):
-        return str(dict(self))
+        return 'pmap({})'.format(str(dict(self)))
 
     __eq__ = Mapping.__eq__
     __ne__ = Mapping.__ne__
@@ -552,11 +552,11 @@ class PMap(object):
         >>> m2 = m1.assoc('a', 3)
         >>> m3 = m1.assoc('c' ,4)
         >>> m1
-        {'a': 1, 'b': 2}
+        pmap({'a': 1, 'b': 2})
         >>> m2
-        {'a': 3, 'b': 2}
+        pmap({'a': 3, 'b': 2})
         >>> m3
-        {'a': 1, 'c': 4, 'b': 2}
+        pmap({'a': 1, 'c': 4, 'b': 2})
         """
         kv = (key, val)
         index, bucket = self._get_bucket(key)
@@ -588,7 +588,7 @@ class PMap(object):
 
         >>> m1 = m(a=1, b=2)
         >>> m1.dissoc('a')
-        {'b': 2}
+        pmap({'b': 2})
         >>> m1 is m1.dissoc('c')
         True
         """
@@ -610,7 +610,7 @@ class PMap(object):
 
         >>> m1 = m(a=1, b=2)
         >>> m1.merge(m(a=2, c=3), {'a': 17, 'd': 35})
-        {'a': 17, 'c': 3, 'b': 2, 'd': 35}
+        pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
         """
         # Optimization opportunities here
         if not maps:
@@ -635,7 +635,7 @@ class PMap(object):
 
         >>> m1 = m(a=5, b=6, c=v(1, 2))
         >>> m1.assoc_in(('c', 1), 17)
-        {'a': 5, 'c': (1, 17), 'b': 6}
+        pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
         """
         if not keys:
             return self
@@ -696,7 +696,7 @@ def pmap(initial={}, pre_size=0):
     will be inserted into the map eventually since it will reduce the number of reallocations required.
 
     >>> pmap({'a': 13, 'b': '14'})
-    {'a': 13, 'b': '14'}
+    pmap({'a': 13, 'b': '14'})
     """
     if not initial:
         return _EMPTY_PMAP
@@ -709,7 +709,7 @@ def m(**kwargs):
     Factory function, inserts all key value arguments into the newly created map.
 
     >>> m(a=13, b=14)
-    {'a': 13, 'b': 14}
+    pmap({'a': 13, 'b': 14})
     """
     return pmap(kwargs)
 

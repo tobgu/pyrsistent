@@ -280,23 +280,23 @@ def test_is_sequence(pvector):
 
 
 def test_empty_repr(pvector):
-    assert str(pvector()) == "()"
+    assert str(pvector()) == "pvector([])"
 
 
 def test_non_empty_repr(pvector):
     v = pvector([1, 2, 3])
-    assert str(v) == "(1, 2, 3)"
+    assert str(v) == "pvector([1, 2, 3])"
 
     # There's some state that needs to be reset between calls in the native version,
     # test that multiple invocations work.
-    assert str(v) == "(1, 2, 3)"
+    assert str(v) == "pvector([1, 2, 3])"
 
 
 def test_repr_when_contained_object_contains_reference_to_self(pvector):
     x = [1, 2, 3]
     v = pvector([1, 2, x])
     x.append(v)
-    assert str(v) == '(1, 2, [1, 2, 3, (1, 2, [...])])'
+    assert str(v) == 'pvector([1, 2, [1, 2, 3, pvector([1, 2, [...]])]])'
 
     # Run a GC to provoke any potential misbehavior
     import gc

@@ -251,7 +251,7 @@ def test_iteration_with_many_elements():
 
 
 def test_str():
-    assert str(pmap({1: 2, 3: 4})) == "{1: 2, 3: 4}"
+    assert str(pmap({1: 2, 3: 4})) == "pmap({1: 2, 3: 4})"
 
 
 def test_empty_truthiness():

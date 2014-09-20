@@ -226,20 +226,24 @@ static void PVector_dealloc(PVector *self) {
 }
 
 static PyObject *PVector_repr(PVector *self) {
-  // Reuse the tuple repr code, a bit less efficient but saves some code
+  // Reuse the list repr code, a bit less efficient but saves some code
   Py_ssize_t i;
-  PyObject *tuple = PyTuple_New(self->count);
+  PyObject *s, *temp;
+  PyObject *list = PyList_New(self->count);
   for (i = 0; i < self->count; ++i) {
     PyObject *o = _get_item(self, i);
     Py_INCREF(o);
-    PyTuple_SET_ITEM(tuple, i, o);
+    PyList_SET_ITEM(list, i, o);
   }
 
-  PyObject *result = PyObject_Repr(tuple);
-
-  Py_DECREF(tuple);
-  return result;
+  PyObject *list_repr = PyObject_Repr(list);
+  s = PyString_FromString("pvector(");
+  PyString_ConcatAndDel(&s, list_repr);
+  PyString_ConcatAndDel(&s, PyString_FromString(")"));
+  Py_DECREF(list);
+  return s;
 }
+
 
 static long PVector_hash(PVector *self) {
   // Follows the pattern of the tuple hash
