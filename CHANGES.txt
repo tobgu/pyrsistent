@@ -1,3 +1,10 @@
+v0.4.0, 2014-09-20 -- * Full Python 3 support.
+                      * Immutable object implemented.
+                      * Bug fixes in PVector.__repr__() and PMap.__hash__() and index check of PVector.
+                      * Repr changed to be fully cut and paste compatible
+                      * Changed assoc() -> set(), assoc_in() -> set_in(), massoc() -> mset().
+                        Sorry for the API breaking change but I think those names are more pythonic.
+                      * Improved documentation.
 v0.3.1, 2014-06-29 -- * assoc() on PSet renamed back to add()
 v0.3.0, 2014-06-28 -- * Full Sequence protocol support for PVector
                       * Full Mapping protocol support for PMap
@@ -18,6 +25,5 @@ TODO (in no particular order)
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
 - Ordered sets and maps?
-- Improve documentation
 - Recursive instantiation from nested lists/tuples/sets/maps (is this a good or just messy idea?)
 - Check pickling
