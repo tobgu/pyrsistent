@@ -228,7 +228,6 @@ static void PVector_dealloc(PVector *self) {
 static PyObject *PVector_repr(PVector *self) {
   // Reuse the list repr code, a bit less efficient but saves some code
   Py_ssize_t i;
-  PyObject *s, *temp;
   PyObject *list = PyList_New(self->count);
   for (i = 0; i < self->count; ++i) {
     PyObject *o = _get_item(self, i);
@@ -236,11 +235,21 @@ static PyObject *PVector_repr(PVector *self) {
     PyList_SET_ITEM(list, i, o);
   }
 
+
   PyObject *list_repr = PyObject_Repr(list);
-  s = PyString_FromString("pvector(");
+  Py_DECREF(list);
+
+  // Repr for list implemented differently in python 2 and 3. Need to
+  // handle this or core dump will occur.
+#if PY_MAJOR_VERSION >= 3
+  PyObject *s = PyUnicode_FromFormat("%s%U%s", "pvector(", list_repr, ")");
+  Py_DECREF(list_repr);
+#else
+  PyObject *s = PyString_FromString("pvector(");
   PyString_ConcatAndDel(&s, list_repr);
   PyString_ConcatAndDel(&s, PyString_FromString(")"));
-  Py_DECREF(list);
+#endif
+
   return s;
 }
 
