@@ -24,9 +24,9 @@ is part of this library
 >>> p1 = v(1, 2, 3)
 >>> p2 = p1.append(4)
 >>> print p1
-(1, 2, 3)
+pvector([1, 2, 3])
 >>> print p2
-(1, 2, 3, 4)
+pvector([1, 2, 3, 4])
 
 Performance is generally in the range of 1 - 100 times slower than using the corresponding built in types in Python.
 In the cases where attempts at optimizations have been done, speed has generally been valued over space.
@@ -54,3 +54,15 @@ Documentation
 ---------------
 
 Available at http://pyrsistent.readthedocs.org/
+
+Contributors
+------------
+
+Tobias Gustafsson https://github.com/tobgu
+
+Christopher Armstrong https://github.com/radix
+
+Contributing
+------------
+
+If you experience problems please log them on GitHub. If you want to contribute code, please fork the code and submit a pull request.

@@ -13,6 +13,7 @@ Contents:
 
    intro
    api
+   changes
 
 Indices and tables
 ==================
