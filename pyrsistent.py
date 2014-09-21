@@ -3,7 +3,6 @@ from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable,
 from itertools import chain
 from functools import wraps, reduce
 from numbers import Integral
-from operator import add
 
 import six
 
@@ -872,11 +871,13 @@ def pbag(elements):
 
 class _PBag(object):
     """
-    A somewhat efficient immutable bag / multiset type, based on Pyrsistent
-    maps.
+    A persistent bag / multiset type.
 
     Requires elements to be hashable, and allows duplicates, but has no
     ordering.
+
+    Do not instantiate directly, instead use the factory functions :py:func:`b`
+    or :py:func:`pbag` to create an instance.
     """
 
     __slots__ = ('_counts',)
@@ -903,10 +904,10 @@ class _PBag(object):
         return self._counts.get(element, 0)
 
     def __len__(self):
-        return reduce(add, six.itervalues(self._counts), 0)
+        return sum(self._counts.itervalues())
 
     def __iter__(self):
-        for elt, count in six.iteritems(self._counts):
+        for elt, count in self._counts.iteritems():
             for i in range(count):
                 yield elt
 
