@@ -1,6 +1,6 @@
 from collections import Mapping, Hashable
+from operator import add
 from pyrsistent import pmap, m
-import pytest
 
 
 def test_instance_of_hashable():
@@ -257,3 +257,12 @@ def test_str():
 def test_empty_truthiness():
     assert m(a=1)
     assert not m()
+
+def test_merge_with():
+    assert m(a=1).merge_with(add, m(a=2, b=4)) == m(a=3, b=4)
+    assert m(a=1).merge_with(lambda l, r: l, m(a=2, b=4)) == m(a=1, b=4)
+
+    def map_add(l, r):
+        return dict(list(l.items()) + list(r.items()))
+
+    assert m(a={'c': 3}).merge_with(map_add, m(a={'d': 4})) == m(a={'c': 3, 'd': 4})

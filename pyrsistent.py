@@ -628,6 +628,28 @@ class PMap(object):
 
         return result
 
+    def merge_with(self, merge_fn, *maps):
+        """
+        Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
+        maps the values will be merged using merge_fn going from left to right.
+
+        >>> from operator import add
+        >>> m1 = m(a=1, b=2)
+        >>> m1.merge_with(add, m(a=2))
+        pmap({'a': 3, 'b': 2})
+
+        The reverse behaviour of the regular merge. Keep the leftmost element instead of the rightmost.
+        >>> m1 = m(a=1)
+        >>> m1.merge_with(lambda l, r: l, m(a=2), {'a':3})
+        pmap({'a': 1})
+        """
+        result = self
+        for map in maps:
+            for key, value in map.items():
+                result = result.set(key, merge_fn(result[key], value) if key in result else value)
+
+        return result
+
     def set_in(self, keys, val):
         """
         Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
