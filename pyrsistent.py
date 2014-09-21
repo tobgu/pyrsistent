@@ -1,7 +1,9 @@
-from collections import Sequence, Mapping, Set, Hashable
+from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable,
+                         Sized)
 from itertools import chain
-from functools import wraps
+from functools import wraps, reduce
 from numbers import Integral
+from operator import add
 
 import six
 
@@ -851,6 +853,82 @@ def s(*args):
     pset([1, 2, 3])
     """
     return pset(args)
+
+
+##################### PBag ########################
+
+
+def _add_to_counters(counters, element):
+    return counters.set(element, counters.get(element, 0) + 1)
+
+
+def b(*elements):
+    return pbag(elements)
+
+
+def pbag(elements):
+    return _PBag(reduce(_add_to_counters, elements, m()))
+
+
+class _PBag(object):
+    """
+    A somewhat efficient immutable bag / multiset type, based on Pyrsistent
+    maps.
+
+    Requires elements to be hashable, and allows duplicates, but has no
+    ordering.
+    """
+
+    __slots__ = ('_counts',)
+
+    def __init__(self, counts):
+        self._counts = counts
+
+    def add(self, element):
+        """Add an element to the bag."""
+        return _PBag(_add_to_counters(self._counts, element))
+
+    def remove(self, element):
+        """Remove an element from the bag."""
+        if element not in self._counts:
+            raise KeyError(element)
+        elif self._counts[element] == 1:
+            newc = self._counts.remove(element)
+        else:
+            newc = self._counts.set(element, self._counts[element] - 1)
+        return _PBag(newc)
+
+    def count(self, element):
+        """Return the number of times an element appears."""
+        return self._counts.get(element, 0)
+
+    def __len__(self):
+        return reduce(add, six.itervalues(self._counts), 0)
+
+    def __iter__(self):
+        for elt, count in six.iteritems(self._counts):
+            for i in range(count):
+                yield elt
+
+    def __contains__(self, elt):
+        return elt in self._counts
+
+    def __repr__(self):
+        return "pbag({})".format(list(self))
+
+    def __eq__(self, other):
+        if type(other) is not _PBag:
+            raise TypeError("Can only compare PBag with PBags")
+        return self._counts == other._counts
+
+    def __hash__(self):
+        return hash(self._counts)
+
+
+Container.register(_PBag)
+Iterable.register(_PBag)
+Sized.register(_PBag)
+Hashable.register(_PBag)
 
 
 ######################################## Immutable object ##############################################
