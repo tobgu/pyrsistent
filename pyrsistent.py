@@ -1149,3 +1149,68 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}], verbose={verb
         raise SyntaxError(e.message + ':\n' + template)
 
     return namespace[name]
+
+
+
+## Freeze & Thaw
+
+def freeze(o):
+    """
+    Recursively convert simple Python containers into pyrsistent versions
+    of those containers.
+
+    - list is converted to pvector, recursively
+    - dict is converted to pmap, recursively on values (but not keys)
+    - set is converted to pset, but not recursively
+    - tuple is converted to tuple, recursively.
+
+    Sets and dict keys are not recursively frozen because they do not contain
+    mutable data by convention. The main exception to this rule is that
+    dict keys and set elements are often instances of mutable objects that
+    support hash-by-id, which this function can't convert anyway.
+
+    >>> freeze(set([1, 2]))
+    pset([1, 2])
+    >>> freeze([1, {'a': 3}])
+    pvector([1, pmap({'a': 3})])
+    >>> freeze((1, []))
+    (1, pvector([]))
+    """
+    typ = type(o)
+    if typ is dict:
+        return pmap({k: freeze(v) for k, v in six.iteritems(o)})
+    if typ is list:
+        return pvector(map(freeze, o))
+    if typ is tuple:
+        return tuple(map(freeze, o))
+    if typ is set:
+        return pset(o)
+    return o
+
+
+def thaw(o):
+    """
+    Recursively convert pyrsistent containers into simple Python containers.
+
+    - pvector is converted to list, recursively
+    - pmap is converted to dict, recursively on values (but not keys)
+    - pset is converted to set, but not recursively
+    - tuple is converted to tuple, recursively.
+
+    >>> thaw(s(1, 2))
+    set([1, 2])
+    >>> thaw(v(1, m(a=3)))
+    [1, {'a': 3}]
+    >>> thaw((1, v()))
+    (1, [])
+    """
+    typ = type(o)
+    if typ is type(pvector()):
+        return list(map(thaw, o))
+    if typ is type(pmap()):
+        return {k: thaw(v) for k, v in o.iteritems()}
+    if typ is tuple:
+        return tuple(map(thaw, o))
+    if typ is type(pset()):
+        return set(o)
+    return o
