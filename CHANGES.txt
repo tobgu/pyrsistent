@@ -41,6 +41,4 @@ TODO (in no particular order)
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
 - Ordered sets and maps?
-- Recursive instantiation from nested lists/tuples/sets/maps (is this a good or just messy idea?)
-- Check pickling
 

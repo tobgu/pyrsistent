@@ -687,6 +687,11 @@ class PMap(object):
     def _reallocate(self, new_size):
         return pvector(self._reallocate_to_list(new_size))
 
+    def __reduce__(self):
+        # Pickling support
+        return pmap, (dict(self),)
+
+
 Mapping.register(PMap)
 Hashable.register(PMap)
 

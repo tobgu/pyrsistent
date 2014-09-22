@@ -1,7 +1,7 @@
 from collections import Mapping, Hashable
 from operator import add
 from pyrsistent import pmap, m
-
+import pickle
 
 def test_instance_of_hashable():
     assert isinstance(m(), Hashable)
@@ -266,3 +266,11 @@ def test_merge_with():
         return dict(list(l.items()) + list(r.items()))
 
     assert m(a={'c': 3}).merge_with(map_add, m(a={'d': 4})) == m(a={'c': 3, 'd': 4})
+
+
+def test_pickling_empty_map():
+    assert pickle.loads(pickle.dumps(m(), -1)) == m()
+
+
+def test_pickling_non_empty_vector():
+    assert pickle.loads(pickle.dumps(m(a=1, b=2), -1)) == m(a=1, b=2)
