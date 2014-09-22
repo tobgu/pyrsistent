@@ -6,6 +6,14 @@ from pyrsistent import b, pbag
 def test_literalish_works():
     assert b(1, 2) == pbag([1, 2])
 
+def test_empty_bag():
+    """
+    creating an empty pbag returns a singleton.
+
+    Note that this should NOT be relied upon in application code.
+    """
+    assert b() is b()
+
 def test_supports_hash():
     assert hash(b(1, 2)) == hash(b(2, 1))
 
