@@ -894,31 +894,6 @@ def _add_to_counters(counters, element):
     return counters.set(element, counters.get(element, 0) + 1)
 
 
-def b(*elements):
-    """
-    Construct a persistent bag.
-
-    Takes an arbitrary number of arguments to insert into the new persistent
-    bag.
-
-    >>> b(1, 2, 3, 2)
-    pbag([1, 2, 2, 3])
-    """
-    return pbag(elements)
-
-
-def pbag(elements):
-    """
-    Convert an iterable to a persistent bag.
-
-    Takes an iterable with elements to insert.
-
-    >>> pbag([1, 2, 3, 2])
-    pbag([1, 2, 2, 3])
-    """
-    return _PBag(reduce(_add_to_counters, elements, m()))
-
-
 class _PBag(object):
     """
     A persistent bag/multiset type.
@@ -1060,6 +1035,36 @@ Container.register(_PBag)
 Iterable.register(_PBag)
 Sized.register(_PBag)
 Hashable.register(_PBag)
+
+
+def b(*elements):
+    """
+    Construct a persistent bag.
+
+    Takes an arbitrary number of arguments to insert into the new persistent
+    bag.
+
+    >>> b(1, 2, 3, 2)
+    pbag([1, 2, 2, 3])
+    """
+    return pbag(elements)
+
+
+def pbag(elements):
+    """
+    Convert an iterable to a persistent bag.
+
+    Takes an iterable with elements to insert.
+
+    >>> pbag([1, 2, 3, 2])
+    pbag([1, 2, 2, 3])
+    """
+    if not elements:
+        return _EMPTY_PBAG
+    return _PBag(reduce(_add_to_counters, elements, m()))
+
+
+_EMPTY_PBAG = _PBag(_EMPTY_PMAP)
 
 
 ######################################## Immutable object ##############################################
