@@ -1,4 +1,5 @@
 import pytest
+import pickle
 
 @pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
 def pvector(request):
@@ -454,3 +455,9 @@ def test_count(pvector):
 def test_empty_truthiness(pvector):
     assert pvector([1])
     assert not pvector([])
+
+def test_pickling_empty_vector(pvector):
+    assert pickle.loads(pickle.dumps(pvector(), -1)) == pvector()
+
+def test_pickling_non_empty_vector(pvector):
+    assert pickle.loads(pickle.dumps(pvector([1, 'a']), -1)) == pvector([1, 'a'])

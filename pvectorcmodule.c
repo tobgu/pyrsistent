@@ -225,8 +225,7 @@ static void PVector_dealloc(PVector *self) {
   Py_TRASHCAN_SAFE_END(self)
 }
 
-static PyObject *PVector_repr(PVector *self) {
-  // Reuse the list repr code, a bit less efficient but saves some code
+static PyObject * to_list(PVector *self) {
   Py_ssize_t i;
   PyObject *list = PyList_New(self->count);
   for (i = 0; i < self->count; ++i) {
@@ -235,7 +234,12 @@ static PyObject *PVector_repr(PVector *self) {
     PyList_SET_ITEM(list, i, o);
   }
 
+  return list;
+}
 
+static PyObject *PVector_repr(PVector *self) {
+  // Reuse the list repr code, a bit less efficient but saves some code
+  PyObject *list = to_list(self);
   PyObject *list_repr = PyObject_Repr(list);
   Py_DECREF(list);
 
@@ -289,7 +293,7 @@ static PyObject* compareSizes(long vlen, long wlen, int op) {
       case Py_GE: cmp = vlen >= wlen; break;
       default: return NULL; /* cannot happen */
     }
-    
+
     if (cmp) {
       res = Py_True;
     } else {
@@ -454,6 +458,23 @@ static PyObject* PVector_count(PVector *self, PyObject *value) {
 #endif
 }
 
+static PyObject* PVector_pickle_reduce(PVector *self) {
+
+  PyObject* module = PyImport_ImportModule("pvectorc");
+  PyObject* pvector_fn = PyObject_GetAttrString(module, "pvector");
+  Py_DECREF(module);
+
+  PyObject *list = to_list(self);
+  PyObject *arg_tuple = PyTuple_New(1);
+  PyTuple_SET_ITEM(arg_tuple, 0, list);
+
+  PyObject *result_tuple = PyTuple_New(2);
+  PyTuple_SET_ITEM(result_tuple, 0, pvector_fn);
+  PyTuple_SET_ITEM(result_tuple, 1, arg_tuple);
+
+  return result_tuple;
+}
+
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
   memcpy(dest, src, BRANCH_FACTOR * sizeof(void*));
   dest[pos] = obj;
@@ -488,12 +509,6 @@ static PyMappingMethods PVector_mapping_methods = {
     NULL
 };
 
-PyDoc_STRVAR(index_doc,
-"V.index(value, [start, [stop]]) -> integer -- return first index of value.\n"
-"Raises ValueError if the value is not present."
-);
-PyDoc_STRVAR(count_doc,
-"V.count(value) -> integer -- return number of occurrences of value");
 
 static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
@@ -501,8 +516,9 @@ static PyMethodDef PVector_methods[] = {
 	{"__getitem__", (PyCFunction)PVector_subscript, METH_O|METH_COEXIST, "Subscript"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
 	{"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Insert an element in a nested structure"},
-	{"index",       (PyCFunction)PVector_index,  METH_VARARGS, index_doc},
-	{"count",       (PyCFunction)PVector_count,  METH_O, count_doc},
+	{"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
+	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
+        {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
 	{NULL}
 };
 

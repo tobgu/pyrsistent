@@ -395,6 +395,12 @@ class PVector(object):
         """
         return self._tolist().count(value)
 
+    def __reduce__(self):
+        # Pickling support
+        return _pvector, (self._tolist(),)
+
+
+
 Sequence.register(PVector)
 Hashable.register(PVector)
 
