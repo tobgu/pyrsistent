@@ -1178,7 +1178,7 @@ def freeze(o):
     """
     typ = type(o)
     if typ is dict:
-        return pmap({k: freeze(v) for k, v in o.iteritems()})
+        return pmap({k: freeze(v) for k, v in six.iteritems(o)})
     elif typ is list:
         return pvector(map(freeze, o))
     elif typ is tuple:
@@ -1207,7 +1207,7 @@ def thaw(o):
     """
     typ = type(o)
     if typ is type(pvector()):
-        return map(thaw, o)
+        return list(map(thaw, o))
     if typ is type(pmap()):
         return {k: thaw(v) for k, v in o.iteritems()}
     if typ is tuple:
