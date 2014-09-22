@@ -1179,14 +1179,13 @@ def freeze(o):
     typ = type(o)
     if typ is dict:
         return pmap({k: freeze(v) for k, v in six.iteritems(o)})
-    elif typ is list:
+    if typ is list:
         return pvector(map(freeze, o))
-    elif typ is tuple:
+    if typ is tuple:
         return tuple(map(freeze, o))
-    elif typ is set:
+    if typ is set:
         return pset(o)
-    else:
-        return o
+    return o
 
 
 def thaw(o):
@@ -1212,7 +1211,6 @@ def thaw(o):
         return {k: thaw(v) for k, v in o.iteritems()}
     if typ is tuple:
         return tuple(map(thaw, o))
-    elif typ is type(pset()):
+    if typ is type(pset()):
         return set(o)
-    else:
-        return o
+    return o
