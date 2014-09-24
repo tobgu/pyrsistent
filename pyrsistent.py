@@ -1102,7 +1102,7 @@ def immutable(members='', name='Immutable', verbose=False):
     Traceback (most recent call last):
     Exception: Coordinates must be positive!
 
-    The immutable class also supports the notion of frozen members. The value of a frozen members
+    The immutable class also supports the notion of frozen members. The value of a frozen member
     cannot be updated. For example it could be used to implement an ID that should remain the same
     over time. A frozen member is denoted by a trailing underscore.
 

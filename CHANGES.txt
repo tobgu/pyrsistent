@@ -1,5 +1,12 @@
 Revision history
 ----------------
+v0.5.0, 2014-09-24
+  * New data structure, persistent bag / multiset
+  * New functions freeze and thaw to recursively convert between python
+    built in data types and corresponding pyrsistent data types.
+  * All data structures can now be pickled
+  * New function merge_in on persistent map which allows a user
+    supplied function to implement the merge strategy.
 
 v0.4.0, 2014-09-20
   * Full Python 3 support.
@@ -34,11 +41,13 @@ v0.1.0, 2013-11-10
 
 TODO (in no particular order)
 -----------------------------
-
 - More convenience methods to simplify work with these data structures.
 - Create optimized function for replacing multiple elements in the same function call (massoc) that can
   also be used by the PMap, "merge into".
 - Implement persistent linked list (cons, cdr, ...)
 - Versioned data structure where the different versions can be accessed by index?
-- Ordered sets and maps?
+- Ordered sets and maps
+- Queue
+- Deque
+- A good performance measurement suite
 
