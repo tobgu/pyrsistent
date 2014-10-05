@@ -1277,13 +1277,13 @@ class _PListBase(object):
             li = li.rest
 
     def __lt__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, _PListBase):
             return NotImplemented
 
         return tuple(self) < tuple(other)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, _PListBase):
             return NotImplemented
 
         self_head = self
