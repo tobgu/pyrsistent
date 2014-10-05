@@ -1234,43 +1234,47 @@ def thaw(o):
 
 ##### PList ####
 
-# Idea for the native implementation, use cached objects that are thin wrappers
-# around a light weight structure to avoid excessive object memory allocation?
+class _PListBase(object):
+    __slots__ = ()
 
-# This is kind of heavy weight but should be fine to set the interface.
-# What is the empty list?
-class _PList(object):
-    __slots__ = ('first', 'rest')
+    # Selected implementations can be taken straight from the Sequence
+    # class, other are less suitable. Especially those that work with
+    # index lookups.
+    count = Sequence.count
+    index = Sequence.index
 
-    def __new__(cls, first, rest):
-        instance = super(_PList, cls).__new__(cls)
-        instance.first = first
-        instance.rest = rest
-        return instance
+    def __reduce__(self):
+        # Pickling support
+        return plist, (list(self),)
+
+    def __len__(self):
+        # This is obviously O(n) but with the current implementation
+        # where a list is also a node the overhead of storing the length
+        # in every node would be quite significant.
+        return sum(1 for _ in self)
+
+    def __repr__(self):
+        return "plist({})".format(list(self))
+    __str__ = __repr__
+
+    def cons(self, e):
+        return _PList(e, self)
+
+    def reverse(self):
+        result = plist()
+        head = self
+        while head:
+            result = result.cons(head.first)
+            head = head.rest
+
+        return result
+    __reversed__ = reverse
 
     def __iter__(self):
         li = self
         while li:
             yield li.first
             li = li.rest
-
-    def cons(self, e):
-        return _PList(e, self)
-
-    def __bool__(self):
-        return True
-    __nonzero__ = __bool__
-
-    def __len__(self):
-        # This is obviously O(n) but with the current implementation
-        # where a list is also a node the overhead of storing the length
-        # in every node would be quite significant.
-        len = 1
-        rest = self.rest
-        while rest:
-            len += 1
-            rest = rest.rest
-        return len
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -1286,18 +1290,9 @@ class _PList(object):
 
         return not self_head and not other_head
 
-    def _drop(self, count):
-        head = self
-        while count > 0:
-            head = head.rest
-            count -= 1
-
-        return head
-
     def __getitem__(self, index):
-        # Implemented just for the sake of completeness, don't use this
-        # this data structure if you plan to do a lot of indexing, it is
-        # very inefficient!
+        # Don't use this this data structure if you plan to do a lot of indexing, it is
+        # very inefficient! Use a PVector instead!
 
         if isinstance(index, slice):
             if index.start is not None and index.stop is None and (index.step is None or index.step == 1):
@@ -1313,54 +1308,46 @@ class _PList(object):
             # NB: O(n)!
             index += len(self)
 
-        return self._drop(index).first
+        try:
+            return self._drop(index).first
+        except AttributeError:
+            raise IndexError("PList index out of range")
 
-    # Selected implementations can be taken straight from the Sequence
-    # class, other are less suitable. Especially those that work with
-    # index lookups.
-    count = Sequence.count
-    index = Sequence.index
+    def _drop(self, count):
+        if count < 0:
+            raise IndexError("PList index out of range")
 
-    def __repr__(self):
-        return "plist({})".format(list(self))
-    __str__ = __repr__
-
-    def reverse(self):
-        result = plist()
         head = self
-        while head:
-            result = result.cons(head.first)
+        while count > 0:
             head = head.rest
+            count -= 1
 
-        return result
-    __reversed__ = reverse
+        return head
 
-    def __reduce__(self):
-        # Pickling support
-        return plist, (list(self),)
+
+class _PList(_PListBase):
+    __slots__ = ('first', 'rest')
+
+    def __new__(cls, first, rest):
+        instance = super(_PList, cls).__new__(cls)
+        instance.first = first
+        instance.rest = rest
+        return instance
+
+    def __bool__(self):
+        return True
+    __nonzero__ = __bool__
+
 
 Sequence.register(_PList)
 
 
-class _EmptyPList(object):
+class _EmptyPList(_PListBase):
     __slots__ = ()
-
-    def __iter__(self):
-        return iter(())
-
-    def cons(self, e):
-        return _PList(e, self)
 
     def __bool__(self):
         return False
     __nonzero__ = __bool__
-
-    def __len__(self):
-        return 0
-
-    def __repr__(self):
-        return "plist([])"
-    __str__ = __repr__
 
     @property
     def first(self):
@@ -1368,21 +1355,8 @@ class _EmptyPList(object):
 
     @property
     def rest(self):
-        raise AttributeError("Empty PList has no rest")
-
-    def __getitem__(self, item):
-        raise IndexError("Empty PList contains no elements")
-
-    def reverse(self):
         return self
-    __reversed__ = reverse
 
-    count = Sequence.count
-    index = Sequence.index
-
-    def __reduce__(self):
-        # Pickling support
-        return plist, ([],)
 
 Sequence.register(_EmptyPList)
 

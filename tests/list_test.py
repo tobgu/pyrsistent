@@ -46,9 +46,8 @@ def test_first_illegal_on_empty_list():
         plist().first
 
 
-def test_rest_illegal_on_empty_list():
-    with pytest.raises(AttributeError):
-        plist().rest
+def test_rest_return_self_on_empty_list():
+    assert plist().rest is plist()
 
 
 def test_reverse():
@@ -73,20 +72,36 @@ def test_repr():
 def test_indexing():
     assert plist([1, 2, 3])[2] == 3
     assert plist([1, 2, 3])[-1] == 3
-    assert plist
 
 
 def test_indexing_on_empty_list():
     with pytest.raises(IndexError):
         plist()[0]
 
+
+def test_index_out_of_range():
+    with pytest.raises(IndexError):
+        plist([1, 2])[2]
+
+    with pytest.raises(IndexError):
+        plist([1, 2])[-3]
+
+
 def test_slicing_take():
     assert plist([1, 2, 3])[:2] == plist([1, 2])
+
+
+def test_slicing_take_out_of_range():
+    assert plist([1, 2, 3])[:20] == plist([1, 2, 3])
 
 
 def test_slicing_drop():
     li = plist([1, 2, 3])
     assert li[1:] is li.rest
+
+
+def test_slicing_drop_out_of_range():
+    assert plist([1, 2, 3])[3:] is plist()
 
 
 def test_contains():
@@ -120,4 +135,6 @@ def test_pickling_non_empty_list():
     assert pickle.loads(pickle.dumps(plist([1, 2, 3]), -1)) == plist([1, 2, 3])
 
 
-# Pickling
+# Hashing
+# index out of range
+# more comparisons
