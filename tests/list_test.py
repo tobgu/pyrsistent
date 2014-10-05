@@ -135,6 +135,17 @@ def test_pickling_non_empty_list():
     assert pickle.loads(pickle.dumps(plist([1, 2, 3]), -1)) == plist([1, 2, 3])
 
 
-# Hashing
-# index out of range
-# more comparisons
+def test_comparison():
+    assert plist([1, 2]) < plist([1, 2, 3])
+    assert plist([2, 1]) > plist([1, 2, 3])
+    assert plist() < plist([1])
+    assert plist([1]) > plist()
+
+
+def test_comparison_with_other_type():
+    assert plist() != []
+
+
+def test_hashing():
+    assert hash(plist([1, 2])) == hash(plist([1, 2]))
+    assert hash(plist([1, 2])) != hash(plist([2, 1]))

@@ -1276,9 +1276,15 @@ class _PListBase(object):
             yield li.first
             li = li.rest
 
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        return tuple(self) < tuple(other)
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            False
+            return NotImplemented
 
         self_head = self
         other_head = other
@@ -1323,6 +1329,9 @@ class _PListBase(object):
             count -= 1
 
         return head
+
+    def __hash__(self):
+        return hash(tuple(self))
 
 
 class _PList(_PListBase):
