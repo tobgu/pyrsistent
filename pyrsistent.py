@@ -1,5 +1,4 @@
-from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable,
-                         Sized, namedtuple)
+from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable, Sized)
 from itertools import chain
 from functools import wraps, reduce
 from numbers import Integral
@@ -1371,13 +1370,75 @@ Sequence.register(_EmptyPList)
 
 _EMPTY_PLIST = _EmptyPList()
 
-def plist(iterable=()):
-    x = list(iterable)
-    x.reverse()
-    li = _EMPTY_PLIST
-    for y in x:
-        li = _PList(y, li)
-    return li
+def plist(iterable=(), reverse=False):
+    if not reverse:
+        iterable = list(iterable)
+        iterable.reverse()
+
+    return reduce(lambda pl, elem: pl.cons(elem), iterable, _EMPTY_PLIST)
+
 
 def l(*args):
     return plist(args)
+
+##### PDeque #####
+class _PDeque(object):
+    __slots__ = ('_left_list', '_right_list')
+
+    def __new__(cls, left_list, right_list):
+        instance = super(_PDeque, cls).__new__(cls)
+        instance._left_list = left_list
+        instance._right_list = right_list
+        return instance
+
+    @property
+    def right(self):
+        return self._tip_from_lists(self._right_list, self._left_list)
+
+    @property
+    def left(self):
+        return self._tip_from_lists(self._left_list, self._right_list)
+
+    @staticmethod
+    def _tip_from_lists(primary_list, secondary_list):
+        if primary_list:
+            return primary_list.first
+
+        if secondary_list:
+            return secondary_list[-1]
+
+        raise IndexError('No elements in empty deque')
+
+    def __iter__(self):
+        return chain(self._left_list, self._right_list.reverse())
+
+    def __repr__(self):
+        return "pdeque({})".format(list(self))
+    __str__ = __repr__
+
+    def pop(self):
+        # TODO: pop when there is only one or less element in the list to pop from
+        return self._pop(self._left_list, self._right_list.rest)
+
+    def popleft(self):
+        return self._pop(self._left_list.rest, self._right_list)
+
+    def _pop(self, new_left_list, new_right_list):
+        if self._is_empty():
+            return self
+
+        return _PDeque(new_left_list, new_right_list)
+
+    def _is_empty(self):
+        return not self._left_list and not self._right_list
+
+
+_EMPTY_PDEQUE = _PDeque(plist(), plist())
+def pdeque(iterable=()):
+    if not iterable:
+        return _EMPTY_PDEQUE
+
+    t = tuple(iterable)
+    left = plist(t[:len(t)-1])
+    right = plist(t[len(t)-1:], reverse=True)
+    return _PDeque(left, right)

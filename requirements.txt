@@ -4,3 +4,4 @@ sphinx-rtd-theme==0.1.5
 memory-profiler==0.31
 psutil==2.1.1
 tox
+six
