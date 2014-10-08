@@ -1269,6 +1269,21 @@ class _PListBase(object):
         return result
     __reversed__ = reverse
 
+    def split(self, index):
+        left_list = _EMPTY_PLIST
+        right_list = self
+        i = 0
+        while right_list and i < index:
+            left_list = left_list.cons(right_list.first)
+            right_list = right_list.rest
+            i += 1
+
+        if not right_list:
+            # Just a small optimization in the cases where no split occurred
+            return self, _EMPTY_PLIST
+
+        return left_list.reverse(), right_list
+
     def __iter__(self):
         li = self
         while li:
@@ -1383,12 +1398,13 @@ def l(*args):
 
 ##### PDeque #####
 class _PDeque(object):
-    __slots__ = ('_left_list', '_right_list')
+    __slots__ = ('_left_list', '_right_list', '_length')
 
-    def __new__(cls, left_list, right_list):
+    def __new__(cls, left_list, right_list, length):
         instance = super(_PDeque, cls).__new__(cls)
         instance._left_list = left_list
         instance._right_list = right_list
+        instance._length = length
         return instance
 
     @property
@@ -1417,28 +1433,41 @@ class _PDeque(object):
     __str__ = __repr__
 
     def pop(self):
-        # TODO: pop when there is only one or less element in the list to pop from
-        return self._pop(self._left_list, self._right_list.rest)
-
-    def popleft(self):
-        return self._pop(self._left_list.rest, self._right_list)
-
-    def _pop(self, new_left_list, new_right_list):
         if self._is_empty():
             return self
 
-        return _PDeque(new_left_list, new_right_list)
+        if self._right_list.rest:
+            new_right_list = self._right_list.rest
+            new_left_list = self._left_list
+        else:
+            new_left_list, new_right_list = self._left_list.split(int(self._length/2))
+
+        return _PDeque(new_left_list, new_right_list, self._length - 1)
+
+    def popleft(self):
+        if self._is_empty():
+            return self
+
+        if self._left_list.rest:
+            new_left_list = self._left_list.rest
+            new_right_list = self._right_list
+        else:
+            new_left_list, new_right_list = self._right_list.split(int(self._length/2))
+
+        return _PDeque(new_left_list, new_right_list, self._length - 1)
 
     def _is_empty(self):
         return not self._left_list and not self._right_list
 
 
-_EMPTY_PDEQUE = _PDeque(plist(), plist())
+_EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
 def pdeque(iterable=()):
     if not iterable:
         return _EMPTY_PDEQUE
 
     t = tuple(iterable)
-    left = plist(t[:len(t)-1])
-    right = plist(t[len(t)-1:], reverse=True)
-    return _PDeque(left, right)
+    length = len(t)
+    pivot = int(length / 2)
+    left = plist(t[:pivot])
+    right = plist(t[pivot:], reverse=True)
+    return _PDeque(left, right, length)

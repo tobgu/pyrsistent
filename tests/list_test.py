@@ -149,3 +149,22 @@ def test_comparison_with_other_type():
 def test_hashing():
     assert hash(plist([1, 2])) == hash(plist([1, 2]))
     assert hash(plist([1, 2])) != hash(plist([2, 1]))
+
+
+def test_split():
+    left_list, right_list = plist([1, 2, 3, 4, 5]).split(3)
+    assert left_list == plist([1, 2, 3])
+    assert right_list == plist([4, 5])
+
+
+def test_split_no_split_occurred():
+    x = plist([1, 2])
+    left_list, right_list = x.split(2)
+    assert left_list is x
+    assert right_list is plist()
+
+
+def test_split_empty_list():
+    left_list, right_list = plist().split(2)
+    assert left_list == plist()
+    assert right_list == plist()
