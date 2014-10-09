@@ -1409,11 +1409,11 @@ class _PDeque(object):
 
     @property
     def right(self):
-        return self._tip_from_lists(self._right_list, self._left_list)
+        return _PDeque._tip_from_lists(self._right_list, self._left_list)
 
     @property
     def left(self):
-        return self._tip_from_lists(self._left_list, self._right_list)
+        return _PDeque._tip_from_lists(self._left_list, self._right_list)
 
     @staticmethod
     def _tip_from_lists(primary_list, secondary_list):
@@ -1433,28 +1433,29 @@ class _PDeque(object):
     __str__ = __repr__
 
     def pop(self):
-        if self._right_list.rest:
-            new_right_list = self._right_list.rest
-            new_left_list = self._left_list
-        elif self._left_list.rest:
-            new_right_list = self._left_list.reverse()
-            new_left_list = _EMPTY_PLIST
-        else:
-            return _EMPTY_PDEQUE
-
-        return _PDeque(new_left_list, new_right_list, self._length - 1)
+        new_right_list, new_left_list = _PDeque._pop_lists(self._right_list, self._left_list)
+        return _PDeque._new_deque(new_left_list, new_right_list, self._length - 1)
 
     def popleft(self):
-        if self._left_list.rest:
-            new_left_list = self._left_list.rest
-            new_right_list = self._right_list
-        elif self._right_list.rest:
-            new_left_list = self._right_list.reverse()
-            new_right_list = _EMPTY_PLIST
-        else:
-            return _EMPTY_PDEQUE
+        new_left_list, new_right_list = _PDeque._pop_lists(self._left_list, self._right_list)
+        return _PDeque._new_deque(new_left_list, new_right_list, self._length - 1)
 
-        return _PDeque(new_left_list, new_right_list, self._length - 1)
+    @staticmethod
+    def _pop_lists(primary_list, secondary_list):
+        if primary_list.rest:
+            return primary_list.rest, secondary_list
+
+        if secondary_list.rest:
+            return secondary_list.reverse(), _EMPTY_PLIST
+
+        return _EMPTY_PLIST, _EMPTY_PLIST
+
+    @staticmethod
+    def _new_deque(left_list, right_list, length):
+        if left_list or right_list:
+            return _PDeque(left_list, right_list, length - 1)
+
+        return _EMPTY_PDEQUE
 
     def _is_empty(self):
         return not self._left_list and not self._right_list
@@ -1462,12 +1463,9 @@ class _PDeque(object):
 
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
 def pdeque(iterable=()):
-    if not iterable:
-        return _EMPTY_PDEQUE
-
     t = tuple(iterable)
     length = len(t)
     pivot = int(length / 2)
     left = plist(t[:pivot])
     right = plist(t[pivot:], reverse=True)
-    return _PDeque(left, right, length)
+    return _PDeque._new_deque(left, right, length)
