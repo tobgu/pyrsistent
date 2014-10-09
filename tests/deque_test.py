@@ -60,3 +60,16 @@ def test_pop_empty_deque_returns_empty_queue():
 def test_str():
     assert str(pdeque([1, 2, 3])) == 'pdeque([1, 2, 3])'
     assert str(pdeque([])) == 'pdeque([])'
+
+
+def test_append():
+    assert pdeque([1, 2]).append(3).append(4) == pdeque([1, 2, 3, 4])
+
+def test_appendleft():
+    assert pdeque([2, 1]).appendleft(3).appendleft(4) == pdeque([4, 3, 2, 1])
+
+def test_extend():
+    assert pdeque([1, 2]).extend([3, 4]) == pdeque([1, 2, 3, 4])
+
+def test_extendleft():
+    assert pdeque([2, 1]).extendleft([3, 4]) == pdeque([4, 3, 2, 1])

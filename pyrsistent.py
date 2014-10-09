@@ -1460,6 +1460,41 @@ class _PDeque(object):
     def _is_empty(self):
         return not self._left_list and not self._right_list
 
+    def __eq__(self, other):
+        # TODO: More stringent check with type
+        if tuple(self) == tuple(other):
+            # Sanity check of the length value since it is redundant (there for performance)
+            assert len(self) == len(other)
+            return True
+
+        return False
+
+    def __len__(self):
+        return self._length
+
+    def append(self, elem):
+        return _PDeque(self._left_list, self._right_list.cons(elem), self._length + 1)
+
+    def appendleft(self, elem):
+        return _PDeque(self._left_list.cons(elem), self._right_list, self._length + 1)
+
+    @staticmethod
+    def _extend_list(the_list, iterable):
+        count = 0
+        for elem in iterable:
+            the_list = the_list.cons(elem)
+            count += 1
+
+        return the_list, count
+
+    def extend(self, iterable):
+        new_right, extend_count = _PDeque._extend_list(self._right_list, iterable)
+        return _PDeque(self._left_list, new_right, self._length + extend_count)
+
+    def extendleft(self, iterable):
+        new_left, extend_count = _PDeque._extend_list(self._left_list, iterable)
+        return _PDeque(new_left, self._right_list, self._length + extend_count)
+
 
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
 def pdeque(iterable=()):
