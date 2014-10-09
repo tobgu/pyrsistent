@@ -22,7 +22,8 @@ def test_pop():
     assert x.right == 1
     assert x.left == 1
 
-    # TODO: Down to empty
+    x = x.pop()
+    assert x == pdeque()
 
 def test_popleft():
     x = pdeque([1, 2, 3, 4]).popleft()
@@ -30,14 +31,15 @@ def test_popleft():
     assert x.right == 4
 
     x = x.popleft()
-    assert x.right == 3
-    assert x.left == 4
+    assert x.left == 3
+    assert x.right == 4
 
-    x = x.pop()
+    x = x.popleft()
     assert x.right == 4
     assert x.left == 4
 
-    # TODO: Down to empty
+    x = x.popleft()
+    assert x == pdeque()
 
 def test_left_on_empty_deqeue():
     with pytest.raises(IndexError):

@@ -1433,26 +1433,26 @@ class _PDeque(object):
     __str__ = __repr__
 
     def pop(self):
-        if self._is_empty():
-            return self
-
         if self._right_list.rest:
             new_right_list = self._right_list.rest
             new_left_list = self._left_list
+        elif self._left_list.rest:
+            new_right_list = self._left_list.reverse()
+            new_left_list = _EMPTY_PLIST
         else:
-            new_left_list, new_right_list = self._left_list.split(int(self._length/2))
+            return _EMPTY_PDEQUE
 
         return _PDeque(new_left_list, new_right_list, self._length - 1)
 
     def popleft(self):
-        if self._is_empty():
-            return self
-
         if self._left_list.rest:
             new_left_list = self._left_list.rest
             new_right_list = self._right_list
+        elif self._right_list.rest:
+            new_left_list = self._right_list.reverse()
+            new_right_list = _EMPTY_PLIST
         else:
-            new_left_list, new_right_list = self._right_list.split(int(self._length/2))
+            return _EMPTY_PDEQUE
 
         return _PDeque(new_left_list, new_right_list, self._length - 1)
 
