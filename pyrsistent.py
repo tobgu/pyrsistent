@@ -1233,6 +1233,37 @@ def thaw(o):
 
 ##### PList ####
 
+class _PListBuilder(object):
+    """
+    Helper class to allow construction of a list without
+    having to reverse it in the end.
+    """
+    __slots__ = ('_head', '_tail')
+
+    def __init__(self):
+        self._head = _EMPTY_PLIST
+        self._tail = _EMPTY_PLIST
+
+    def _append(self, elem, constructor):
+        if not self._tail:
+            self._head = constructor(elem)
+            self._tail = self._head
+        else:
+            self._tail.rest = constructor(elem)
+            self._tail = self._tail.rest
+
+        return self._head
+
+    def append_elem(self, elem):
+        return self._append(elem, lambda e: _PList(e, _EMPTY_PLIST))
+
+    def append_plist(self, pl):
+        return self._append(pl, lambda l: l)
+
+    def build(self):
+        return self._head
+
+
 class _PListBase(object):
     __slots__ = ()
 
@@ -1270,6 +1301,7 @@ class _PListBase(object):
     __reversed__ = reverse
 
     def split(self, index):
+        # TODO: Rewrite using the list builder?
         left_list = _EMPTY_PLIST
         right_list = self
         i = 0
@@ -1346,6 +1378,18 @@ class _PListBase(object):
 
     def __hash__(self):
         return hash(tuple(self))
+
+    def remove(self, elem):
+        builder = _PListBuilder()
+        head = self
+        while head:
+            if head.first == elem:
+                return builder.append_plist(head.rest)
+
+            builder.append_elem(head.first)
+            head = head.rest
+
+        raise ValueError('{} not found in PList'.format(elem))
 
 
 class _PList(_PListBase):
@@ -1495,6 +1539,20 @@ class _PDeque(object):
         new_left, extend_count = _PDeque._extend_list(self._left_list, iterable)
         return _PDeque(new_left, self._right_list, self._length + extend_count)
 
+    def count(self, elem):
+        return self._left_list.count(elem) + self._right_list.count(elem)
+
+    def remove(self, elem):
+        try:
+            return _PDeque(self._left_list.remove(elem), self._right_list, self._length - 1)
+        except ValueError:
+            try:
+                # This is severely inefficient with a double reverse, should perhaps implement
+                # a remove_last()?
+                return _PDeque(self._left_list,
+                               self._right_list.reverse().remove(elem).reverse(), self._length - 1)
+            except ValueError:
+                raise ValueError('{} not found in PDeque'.format(elem))
 
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
 def pdeque(iterable=()):

@@ -168,3 +168,17 @@ def test_split_empty_list():
     left_list, right_list = plist().split(2)
     assert left_list == plist()
     assert right_list == plist()
+
+
+def test_remove():
+    assert plist([1, 2, 3, 2]).remove(2) == plist([1, 3, 2])
+    assert plist([1, 2, 3]).remove(1) == plist([2, 3])
+    assert plist([1, 2, 3]).remove(3) == plist([1, 2])
+
+
+def test_remove_missing_element():
+    with pytest.raises(ValueError):
+        plist([1, 2]).remove(3)
+
+    with pytest.raises(ValueError):
+        plist().remove(2)

@@ -65,11 +65,35 @@ def test_str():
 def test_append():
     assert pdeque([1, 2]).append(3).append(4) == pdeque([1, 2, 3, 4])
 
+
 def test_appendleft():
     assert pdeque([2, 1]).appendleft(3).appendleft(4) == pdeque([4, 3, 2, 1])
+
 
 def test_extend():
     assert pdeque([1, 2]).extend([3, 4]) == pdeque([1, 2, 3, 4])
 
+
 def test_extendleft():
     assert pdeque([2, 1]).extendleft([3, 4]) == pdeque([4, 3, 2, 1])
+
+
+def test_count():
+    x = pdeque([1, 2, 3, 2, 1])
+    assert x.count(1) == 2
+    assert x.count(2) == 2
+
+
+def test_remove():
+    assert pdeque([1, 2, 3, 4]).remove(2) == pdeque([1, 3, 4])
+    assert pdeque([1, 2, 3, 4]).remove(4) == pdeque([1, 2, 3])
+
+    # Right list must be reversed before removing element
+    assert pdeque([1, 2, 3, 3, 4, 5, 4, 6]).remove(4) == pdeque([1, 2, 3, 3, 5, 4, 6])
+
+def test_remove_element_missing():
+    with pytest.raises(ValueError):
+        pdeque().remove(2)
+
+    with pytest.raises(ValueError):
+        pdeque([1, 2, 3]).remove(4)
