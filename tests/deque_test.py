@@ -98,3 +98,8 @@ def test_remove_element_missing():
 
     with pytest.raises(ValueError):
         pdeque([1, 2, 3]).remove(4)
+
+
+def test_reverse():
+    assert pdeque([1, 2, 3, 4]).reverse() == pdeque([4, 3, 2, 1])
+    assert pdeque().reverse() == pdeque()

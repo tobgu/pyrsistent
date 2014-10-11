@@ -1553,6 +1553,10 @@ class _PDeque(object):
             except ValueError:
                 raise ValueError('{} not found in PDeque'.format(elem))
 
+    def reverse(self):
+        return _PDeque(self._right_list, self._left_list, self._length)
+
+
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
 def pdeque(iterable=()):
     t = tuple(iterable)
