@@ -91,6 +91,7 @@ def test_remove():
     # Right list must be reversed before removing element
     assert pdeque([1, 2, 3, 3, 4, 5, 4, 6]).remove(4) == pdeque([1, 2, 3, 3, 5, 4, 6])
 
+
 def test_remove_element_missing():
     with pytest.raises(ValueError):
         pdeque().remove(2)

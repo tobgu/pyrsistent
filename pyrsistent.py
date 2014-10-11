@@ -1301,12 +1301,11 @@ class _PListBase(object):
     __reversed__ = reverse
 
     def split(self, index):
-        # TODO: Rewrite using the list builder?
-        left_list = _EMPTY_PLIST
+        lb = _PListBuilder()
         right_list = self
         i = 0
         while right_list and i < index:
-            left_list = left_list.cons(right_list.first)
+            lb.append_elem(right_list.first)
             right_list = right_list.rest
             i += 1
 
@@ -1314,7 +1313,7 @@ class _PListBase(object):
             # Just a small optimization in the cases where no split occurred
             return self, _EMPTY_PLIST
 
-        return left_list.reverse(), right_list
+        return lb.build(), right_list
 
     def __iter__(self):
         li = self
