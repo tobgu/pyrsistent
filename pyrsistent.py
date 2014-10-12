@@ -1,5 +1,5 @@
 from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable, Sized)
-from itertools import chain
+from itertools import chain, islice
 from functools import wraps, reduce
 from numbers import Integral
 
@@ -1290,6 +1290,13 @@ class _PListBase(object):
     def cons(self, e):
         return _PList(e, self)
 
+    def mcons(self, iterable):
+        head = self
+        for elem in iterable:
+            head = head.cons(elem)
+
+        return head
+
     def reverse(self):
         result = plist()
         head = self
@@ -1469,6 +1476,7 @@ class _PDeque(object):
         raise IndexError('No elements in empty deque')
 
     def __iter__(self):
+        # Perhaps want to be lazy about reversing the right list here?
         return chain(self._left_list, self._right_list.reverse())
 
     def __repr__(self):
@@ -1496,7 +1504,7 @@ class _PDeque(object):
     @staticmethod
     def _new_deque(left_list, right_list, length):
         if left_list or right_list:
-            return _PDeque(left_list, right_list, length - 1)
+            return _PDeque(left_list, right_list, length)
 
         return _EMPTY_PDEQUE
 
@@ -1555,6 +1563,21 @@ class _PDeque(object):
 
     def reverse(self):
         return _PDeque(self._right_list, self._left_list, self._length)
+    __reversed__ = reverse
+
+    def rotate(self, steps):
+        popped_deque = self
+        if steps >= 0:
+            for _ in range(steps):
+                popped_deque = popped_deque.pop()
+
+            return popped_deque.extendleft(islice(self.reverse(), steps))
+        else:
+            for _ in range(steps):
+                popped_deque = popped_deque.popleft()
+
+            return popped_deque.extend(islice(self, -steps))
+
 
 
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)

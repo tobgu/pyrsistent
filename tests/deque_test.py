@@ -7,6 +7,7 @@ def test_basic_right_and_left():
 
     assert x.right == 2
     assert x.left == 1
+    assert len(x) == 2
 
 
 def test_pop():
@@ -24,6 +25,7 @@ def test_pop():
 
     x = x.pop()
     assert x == pdeque()
+
 
 def test_popleft():
     x = pdeque([1, 2, 3, 4]).popleft()
@@ -103,3 +105,14 @@ def test_remove_element_missing():
 def test_reverse():
     assert pdeque([1, 2, 3, 4]).reverse() == pdeque([4, 3, 2, 1])
     assert pdeque().reverse() == pdeque()
+
+
+def test_rotate_right():
+    pdeque([1, 2, 3, 4, 5]).rotate(2) == pdeque([4, 5, 1, 2, 3])
+    pdeque([1, 2]).rotate(0) == pdeque([1, 2])
+    pdeque().rotate(2) == pdeque()
+
+
+def test_rotate_left():
+    pdeque([1, 2, 3, 4, 5]).rotate(-2) == pdeque([3, 4, 5, 1, 2])
+    pdeque().rotate(-2) == pdeque()

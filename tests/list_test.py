@@ -182,3 +182,7 @@ def test_remove_missing_element():
 
     with pytest.raises(ValueError):
         plist().remove(2)
+
+
+def test_mcons():
+    assert plist([1, 2]).mcons([3, 4]) == plist([4, 3, 1, 2])
