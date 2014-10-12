@@ -27,6 +27,16 @@ def test_pop():
     assert x == pdeque()
 
 
+def test_pop_multiple():
+    assert pdeque([1, 2, 3, 4]).pop(3) == pdeque([1])
+    assert pdeque([1, 2]).pop(3) == pdeque()
+
+
+def test_pop_with_negative_index():
+    assert pdeque([1, 2, 3]).pop(-1) == pdeque([1, 2, 3]).popleft(1)
+    assert pdeque([1, 2, 3]).popleft(-1) == pdeque([1, 2, 3]).pop(1)
+
+
 def test_popleft():
     x = pdeque([1, 2, 3, 4]).popleft()
     assert x.left == 2
@@ -43,17 +53,22 @@ def test_popleft():
     x = x.popleft()
     assert x == pdeque()
 
-def test_left_on_empty_deqeue():
+
+def test_popleft_multiple():
+    assert pdeque([1, 2, 3, 4]).popleft(3) == pdeque([4])
+
+
+def test_left_on_empty_deque():
     with pytest.raises(IndexError):
         pdeque().left
 
 
-def test_right_on_empty_deqeue():
+def test_right_on_empty_deque():
     with pytest.raises(IndexError):
         pdeque().right
 
 
-def test_pop_empty_deque_returns_empty_queue():
+def test_pop_empty_deque_returns_empty_deque():
     # The other option is to throw an index error, this is what feels best for now though
     assert pdeque().pop() is pdeque()
     assert pdeque().popleft() is pdeque()
@@ -108,11 +123,11 @@ def test_reverse():
 
 
 def test_rotate_right():
-    pdeque([1, 2, 3, 4, 5]).rotate(2) == pdeque([4, 5, 1, 2, 3])
-    pdeque([1, 2]).rotate(0) == pdeque([1, 2])
-    pdeque().rotate(2) == pdeque()
+    assert pdeque([1, 2, 3, 4, 5]).rotate(2) == pdeque([4, 5, 1, 2, 3])
+    assert pdeque([1, 2]).rotate(0) == pdeque([1, 2])
+    assert pdeque().rotate(2) == pdeque()
 
 
 def test_rotate_left():
-    pdeque([1, 2, 3, 4, 5]).rotate(-2) == pdeque([3, 4, 5, 1, 2])
-    pdeque().rotate(-2) == pdeque()
+    assert pdeque([1, 2, 3, 4, 5]).rotate(-2) == pdeque([3, 4, 5, 1, 2])
+    assert pdeque().rotate(-2) == pdeque()

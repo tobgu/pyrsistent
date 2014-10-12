@@ -1483,23 +1483,35 @@ class _PDeque(object):
         return "pdeque({})".format(list(self))
     __str__ = __repr__
 
-    def pop(self):
-        new_right_list, new_left_list = _PDeque._pop_lists(self._right_list, self._left_list)
-        return _PDeque._new_deque(new_left_list, new_right_list, self._length - 1)
+    def pop(self, count=1):
+        if count < 0:
+            return self.popleft(-count)
 
-    def popleft(self):
-        new_left_list, new_right_list = _PDeque._pop_lists(self._left_list, self._right_list)
-        return _PDeque._new_deque(new_left_list, new_right_list, self._length - 1)
+        new_right_list, new_left_list = _PDeque._pop_lists(self._right_list, self._left_list, count)
+        return _PDeque._new_deque(new_left_list, new_right_list, self._length - count)
+
+    def popleft(self, count=1):
+        if count < 0:
+            return self.pop(-count)
+        new_left_list, new_right_list = _PDeque._pop_lists(self._left_list, self._right_list, count)
+        return _PDeque._new_deque(new_left_list, new_right_list, self._length - count)
 
     @staticmethod
-    def _pop_lists(primary_list, secondary_list):
-        if primary_list.rest:
-            return primary_list.rest, secondary_list
+    def _pop_lists(primary_list, secondary_list, count):
+        new_primary_list = primary_list
+        new_secondary_list = secondary_list
 
-        if secondary_list.rest:
-            return secondary_list.reverse(), _EMPTY_PLIST
+        while count > 0 and (new_primary_list or new_secondary_list):
+            count -= 1
+            if new_primary_list.rest:
+                new_primary_list = new_primary_list.rest
+            elif new_secondary_list.rest:
+                new_primary_list = new_secondary_list.reverse()
+                new_secondary_list = _EMPTY_PLIST
+            else:
+                new_primary_list = new_secondary_list = _EMPTY_PLIST
 
-        return _EMPTY_PLIST, _EMPTY_PLIST
+        return new_primary_list, new_secondary_list
 
     @staticmethod
     def _new_deque(left_list, right_list, length):
@@ -1566,18 +1578,11 @@ class _PDeque(object):
     __reversed__ = reverse
 
     def rotate(self, steps):
-        popped_deque = self
+        popped_deque = self.pop(steps)
         if steps >= 0:
-            for _ in range(steps):
-                popped_deque = popped_deque.pop()
-
             return popped_deque.extendleft(islice(self.reverse(), steps))
-        else:
-            for _ in range(steps):
-                popped_deque = popped_deque.popleft()
 
-            return popped_deque.extend(islice(self, -steps))
-
+        return popped_deque.extend(islice(self, -steps))
 
 
 _EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
