@@ -9,6 +9,10 @@ def test_basic_right_and_left():
     assert x.left == 1
     assert len(x) == 2
 
+def test_construction_with_maxlen():
+    assert pdeque([1, 2, 3, 4], maxlen=2) == pdeque([3, 4])
+    assert pdeque([1, 2, 3, 4], maxlen=4) == pdeque([1, 2, 3, 4])
+    assert pdeque([], maxlen=2) == pdeque()
 
 def test_pop():
     x = pdeque([1, 2, 3, 4]).pop()
@@ -26,6 +30,11 @@ def test_pop():
     x = x.pop()
     assert x == pdeque()
 
+    x = pdeque([1, 2]).pop()
+    assert x == pdeque([1])
+
+    x = x.pop()
+    assert x == pdeque()
 
 def test_pop_multiple():
     assert pdeque([1, 2, 3, 4]).pop(3) == pdeque([1])
@@ -53,6 +62,11 @@ def test_popleft():
     x = x.popleft()
     assert x == pdeque()
 
+    x = pdeque([1, 2]).popleft()
+    assert x == pdeque([2])
+
+    x = x.popleft()
+    assert x == pdeque()
 
 def test_popleft_multiple():
     assert pdeque([1, 2, 3, 4]).popleft(3) == pdeque([4])
@@ -70,8 +84,8 @@ def test_right_on_empty_deque():
 
 def test_pop_empty_deque_returns_empty_deque():
     # The other option is to throw an index error, this is what feels best for now though
-    assert pdeque().pop() is pdeque()
-    assert pdeque().popleft() is pdeque()
+    assert pdeque().pop() == pdeque()
+    assert pdeque().popleft() == pdeque()
 
 
 def test_str():
@@ -83,8 +97,20 @@ def test_append():
     assert pdeque([1, 2]).append(3).append(4) == pdeque([1, 2, 3, 4])
 
 
+def test_append_with_maxlen():
+    assert pdeque([1, 2], maxlen=2).append(3).append(4) == pdeque([3, 4])
+    assert pdeque([1, 2], maxlen=3).append(3).append(4) == pdeque([2, 3, 4])
+    assert pdeque([], maxlen=0).append(1) == pdeque()
+
+
 def test_appendleft():
     assert pdeque([2, 1]).appendleft(3).appendleft(4) == pdeque([4, 3, 2, 1])
+
+
+def test_appendleft_with_maxlen():
+    assert pdeque([2, 1], maxlen=2).appendleft(3).appendleft(4) == pdeque([4, 3])
+    assert pdeque([2, 1], maxlen=3).appendleft(3).appendleft(4) == pdeque([4, 3, 2])
+    assert pdeque([], maxlen=0).appendleft(1) == pdeque()
 
 
 def test_extend():
@@ -131,3 +157,10 @@ def test_rotate_right():
 def test_rotate_left():
     assert pdeque([1, 2, 3, 4, 5]).rotate(-2) == pdeque([3, 4, 5, 1, 2])
     assert pdeque().rotate(-2) == pdeque()
+
+# TODO:
+# - Fix comparison
+# - maxlen, appendX and extendX, other places?
+# Indexing and slicing (by using pop and popleft?)
+# Set maxlen (return a new deque with the new maxlen)
+# maxlen in repr and in pickling, check that

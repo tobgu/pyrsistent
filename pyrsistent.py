@@ -1448,13 +1448,14 @@ def l(*args):
 
 ##### PDeque #####
 class _PDeque(object):
-    __slots__ = ('_left_list', '_right_list', '_length')
+    __slots__ = ('_left_list', '_right_list', '_length', '_maxlen')
 
-    def __new__(cls, left_list, right_list, length):
+    def __new__(cls, left_list, right_list, length, maxlen=None):
         instance = super(_PDeque, cls).__new__(cls)
         instance._left_list = left_list
         instance._right_list = right_list
         instance._length = length
+        instance._maxlen = maxlen
         return instance
 
     @property
@@ -1476,7 +1477,6 @@ class _PDeque(object):
         raise IndexError('No elements in empty deque')
 
     def __iter__(self):
-        # Perhaps want to be lazy about reversing the right list here?
         return chain(self._left_list, self._right_list.reverse())
 
     def __repr__(self):
@@ -1488,13 +1488,14 @@ class _PDeque(object):
             return self.popleft(-count)
 
         new_right_list, new_left_list = _PDeque._pop_lists(self._right_list, self._left_list, count)
-        return _PDeque._new_deque(new_left_list, new_right_list, self._length - count)
+        return _PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
 
     def popleft(self, count=1):
         if count < 0:
             return self.pop(-count)
+
         new_left_list, new_right_list = _PDeque._pop_lists(self._left_list, self._right_list, count)
-        return _PDeque._new_deque(new_left_list, new_right_list, self._length - count)
+        return _PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
 
     @staticmethod
     def _pop_lists(primary_list, secondary_list, count):
@@ -1505,20 +1506,13 @@ class _PDeque(object):
             count -= 1
             if new_primary_list.rest:
                 new_primary_list = new_primary_list.rest
-            elif new_secondary_list.rest:
+            elif new_secondary_list:
                 new_primary_list = new_secondary_list.reverse()
                 new_secondary_list = _EMPTY_PLIST
             else:
                 new_primary_list = new_secondary_list = _EMPTY_PLIST
 
         return new_primary_list, new_secondary_list
-
-    @staticmethod
-    def _new_deque(left_list, right_list, length):
-        if left_list or right_list:
-            return _PDeque(left_list, right_list, length)
-
-        return _EMPTY_PDEQUE
 
     def _is_empty(self):
         return not self._left_list and not self._right_list
@@ -1536,10 +1530,21 @@ class _PDeque(object):
         return self._length
 
     def append(self, elem):
-        return _PDeque(self._left_list, self._right_list.cons(elem), self._length + 1)
+        new_left_list, new_right_list, new_length = self._append(self._left_list, self._right_list, elem)
+        return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
 
     def appendleft(self, elem):
-        return _PDeque(self._left_list.cons(elem), self._right_list, self._length + 1)
+        new_right_list, new_left_list, new_length = self._append(self._right_list, self._left_list, elem)
+        return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
+
+    def _append(self, primary_list, secondary_list, elem):
+        if self._maxlen is not None and self._length == self._maxlen:
+            if self._maxlen == 0:
+                return primary_list, secondary_list, 0
+            new_primary_list, new_secondary_list = _PDeque._pop_lists(primary_list, secondary_list, 1)
+            return new_primary_list, new_secondary_list.cons(elem), self._length
+
+        return primary_list, secondary_list.cons(elem), self._length + 1
 
     @staticmethod
     def _extend_list(the_list, iterable):
@@ -1585,11 +1590,12 @@ class _PDeque(object):
         return popped_deque.extend(islice(self, -steps))
 
 
-_EMPTY_PDEQUE = _PDeque(plist(), plist(), 0)
-def pdeque(iterable=()):
+def pdeque(iterable=(), maxlen=None):
     t = tuple(iterable)
+    if maxlen is not None:
+        t = t[-maxlen:]
     length = len(t)
     pivot = int(length / 2)
     left = plist(t[:pivot])
     right = plist(t[pivot:], reverse=True)
-    return _PDeque._new_deque(left, right, length)
+    return _PDeque(left, right, length, maxlen)
