@@ -36,6 +36,9 @@ def test_pop():
     x = x.pop()
     assert x == pdeque()
 
+    assert pdeque().append(1).pop() == pdeque()
+    assert pdeque().appendleft(1).pop() == pdeque()
+
 def test_pop_multiple():
     assert pdeque([1, 2, 3, 4]).pop(3) == pdeque([1])
     assert pdeque([1, 2]).pop(3) == pdeque()
@@ -68,6 +71,9 @@ def test_popleft():
     x = x.popleft()
     assert x == pdeque()
 
+    assert pdeque().append(1).popleft() == pdeque()
+    assert pdeque().appendleft(1).popleft() == pdeque()
+
 def test_popleft_multiple():
     assert pdeque([1, 2, 3, 4]).popleft(3) == pdeque([4])
 
@@ -91,6 +97,7 @@ def test_pop_empty_deque_returns_empty_deque():
 def test_str():
     assert str(pdeque([1, 2, 3])) == 'pdeque([1, 2, 3])'
     assert str(pdeque([])) == 'pdeque([])'
+    assert str(pdeque([1, 2], maxlen=4)) == 'pdeque([1, 2], maxlen=4)'
 
 
 def test_append():
@@ -117,8 +124,22 @@ def test_extend():
     assert pdeque([1, 2]).extend([3, 4]) == pdeque([1, 2, 3, 4])
 
 
+def test_extend_with_maxlen():
+    assert pdeque([1, 2], maxlen=3).extend([3, 4]) == pdeque([2, 3, 4])
+    assert pdeque([1, 2], maxlen=2).extend([3, 4]) == pdeque([3, 4])
+    assert pdeque([], maxlen=2).extend([1, 2]) == pdeque([1, 2])
+    assert pdeque([], maxlen=0).extend([1, 2]) == pdeque([])
+
+
 def test_extendleft():
     assert pdeque([2, 1]).extendleft([3, 4]) == pdeque([4, 3, 2, 1])
+
+
+def test_extendleft_with_maxlen():
+    assert pdeque([1, 2], maxlen=3).extendleft([3, 4]) == pdeque([4, 3, 1])
+    assert pdeque([1, 2], maxlen=2).extendleft([3, 4]) == pdeque([4, 3])
+    assert pdeque([], maxlen=2).extendleft([1, 2]) == pdeque([2, 1])
+    assert pdeque([], maxlen=0).extendleft([1, 2]) == pdeque([])
 
 
 def test_count():
@@ -158,9 +179,16 @@ def test_rotate_left():
     assert pdeque([1, 2, 3, 4, 5]).rotate(-2) == pdeque([3, 4, 5, 1, 2])
     assert pdeque().rotate(-2) == pdeque()
 
+
+def test_set_maxlen():
+    x = pdeque([], maxlen=4)
+    assert x.maxlen == 4
+
+    with pytest.raises(AttributeError):
+        x.maxlen = 5
+
+
 # TODO:
 # - Fix comparison
-# - maxlen, appendX and extendX, other places?
 # Indexing and slicing (by using pop and popleft?)
-# Set maxlen (return a new deque with the new maxlen)
 # maxlen in repr and in pickling, check that
