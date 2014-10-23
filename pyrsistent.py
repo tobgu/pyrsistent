@@ -1359,8 +1359,8 @@ class _PListBase(object):
             # Take the easy way out for all other slicing cases, not much structural reuse possible anyway
             return plist(tuple(self)[index])
 
-        if not isinstance(index, int):
-            raise TypeError("list indices must be integers, not {}".format(type(index)))
+        if not isinstance(index, Integral):
+            raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
 
         if index < 0:
             # NB: O(n)!
@@ -1455,6 +1455,14 @@ class _PDeque(object):
         instance._left_list = left_list
         instance._right_list = right_list
         instance._length = length
+
+        if maxlen is not None:
+            if not isinstance(maxlen, Integral):
+                raise TypeError('An integer is required as maxlen')
+
+            if maxlen < 0:
+                raise ValueError("maxlen must be non-negative")
+
         instance._maxlen = maxlen
         return instance
 
@@ -1523,8 +1531,16 @@ class _PDeque(object):
     def _is_empty(self):
         return not self._left_list and not self._right_list
 
+    def __lt__(self, other):
+        if not isinstance(other, _PDeque):
+            return NotImplemented
+
+        return tuple(self) < tuple(other)
+
     def __eq__(self, other):
-        # TODO: More stringent check with type
+        if not isinstance(other, _PDeque):
+            return NotImplemented
+
         if tuple(self) == tuple(other):
             # Sanity check of the length value since it is redundant (there for performance)
             assert len(self) == len(other)
@@ -1606,6 +1622,33 @@ class _PDeque(object):
 
         return popped_deque.extend(islice(self, -steps))
 
+    def __reduce__(self):
+        # Pickling support
+        return pdeque, (list(self), self._maxlen)
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            if index.step is not None and index.step != 1:
+                # Too difficult, no structural sharing possible
+                return pdeque(tuple(self)[index], maxlen=self._maxlen)
+
+            result = self
+            if index.start is not None:
+                result = result.popleft(index.start % self._length)
+            if index.stop is not None:
+                result = result.pop(self._length - (index.stop % self._length))
+
+            return result
+
+        if not isinstance(index, Integral):
+            raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
+
+        if index >= 0:
+            return self.popleft(index).left
+
+        return  self.pop(index).right
+
+Sequence.register(_PDeque)
 
 def pdeque(iterable=(), maxlen=None):
     t = tuple(iterable)

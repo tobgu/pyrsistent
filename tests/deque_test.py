@@ -1,3 +1,4 @@
+import pickle
 import pytest
 from pyrsistent import pdeque
 
@@ -9,10 +10,20 @@ def test_basic_right_and_left():
     assert x.left == 1
     assert len(x) == 2
 
+
 def test_construction_with_maxlen():
     assert pdeque([1, 2, 3, 4], maxlen=2) == pdeque([3, 4])
     assert pdeque([1, 2, 3, 4], maxlen=4) == pdeque([1, 2, 3, 4])
     assert pdeque([], maxlen=2) == pdeque()
+
+
+def test_construction_with_invalide_maxlen():
+    with pytest.raises(TypeError):
+        pdeque([], maxlen='foo')
+
+    with pytest.raises(ValueError):
+        pdeque([], maxlen=-3)
+
 
 def test_pop():
     x = pdeque([1, 2, 3, 4]).pop()
@@ -187,8 +198,62 @@ def test_set_maxlen():
     with pytest.raises(AttributeError):
         x.maxlen = 5
 
+def test_comparison():
+    small = pdeque([1, 2])
+    large = pdeque([1, 2, 3])
+
+    assert small < large
+    assert large > small
+    assert not small > large
+    assert not large < small
+    assert large != small
+
+    # Not comparable to other types
+    assert small != [1, 2]
+    assert not [1, 2] < large
+
+
+def test_pickling():
+    input = pdeque([1, 2, 3], maxlen=5)
+    output = pickle.loads(pickle.dumps(input, -1))
+
+    assert output == input
+    assert output.maxlen == input.maxlen
+
+
+def test_indexing():
+    assert pdeque([1, 2, 3])[0] == 1
+    assert pdeque([1, 2, 3])[1] == 2
+    assert pdeque([1, 2, 3])[-1] == 3
+
+
+def test_indexing_out_of_range():
+    with pytest.raises(IndexError):
+        pdeque([1, 2, 3])[-4]
+
+    with pytest.raises(IndexError):
+        pdeque([1, 2, 3])[3]
+
+
+def test_indexing_invalid_type():
+    with pytest.raises(TypeError) as e:
+        pdeque([1, 2, 3])['foo']
+
+    assert 'cannot be interpreted' in str(e)
+
+
+def test_slicing():
+    assert pdeque([1, 2, 3])[1:2] == pdeque([2])
+    assert pdeque([1, 2, 3])[2:1] == pdeque([])
+    assert pdeque([1, 2, 3])[-2:-1] == pdeque([2])
+    assert pdeque([1, 2, 3])[::2] == pdeque([1, 3])
+
+
 
 # TODO:
-# - Fix comparison
-# Indexing and slicing (by using pop and popleft?)
-# maxlen in repr and in pickling, check that
+# Register with relevant ABCs
+# Update documentation with which ABCs are supported
+# Update documentation with which O()s that apply and other characteristics.
+# Literalish
+# index(), count()
+# __hash__ + Hashable hash(tuple(self))

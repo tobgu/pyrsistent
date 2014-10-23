@@ -86,6 +86,12 @@ def test_index_out_of_range():
     with pytest.raises(IndexError):
         plist([1, 2])[-3]
 
+def test_index_invalid_type():
+    with pytest.raises(TypeError) as e:
+        plist([1, 2, 3])['foo']
+
+    assert 'cannot be interpreted' in str(e)
+
 
 def test_slicing_take():
     assert plist([1, 2, 3])[:2] == plist([1, 2])
