@@ -248,6 +248,8 @@ def test_slicing():
     assert pdeque([1, 2, 3])[-2:-1] == pdeque([2])
     assert pdeque([1, 2, 3])[::2] == pdeque([1, 3])
 
+def test_hashing():
+    assert hash(pdeque([1, 2, 3])) == hash(pdeque().append(1).append(2).append(3))
 
 
 # TODO:
@@ -256,4 +258,3 @@ def test_slicing():
 # Update documentation with which O()s that apply and other characteristics.
 # Literalish
 # index(), count()
-# __hash__ + Hashable hash(tuple(self))

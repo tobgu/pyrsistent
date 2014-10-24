@@ -1548,6 +1548,9 @@ class _PDeque(object):
 
         return False
 
+    def __hash__(self):
+        return  hash(tuple(self))
+
     def __len__(self):
         return self._length
 
@@ -1649,6 +1652,8 @@ class _PDeque(object):
         return  self.pop(index).right
 
 Sequence.register(_PDeque)
+Hashable.register(_PDeque)
+
 
 def pdeque(iterable=(), maxlen=None):
     t = tuple(iterable)
