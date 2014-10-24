@@ -1,6 +1,6 @@
 import pickle
 import pytest
-from pyrsistent import pdeque
+from pyrsistent import pdeque, dq
 
 
 def test_basic_right_and_left():
@@ -17,7 +17,7 @@ def test_construction_with_maxlen():
     assert pdeque([], maxlen=2) == pdeque()
 
 
-def test_construction_with_invalide_maxlen():
+def test_construction_with_invalid_maxlen():
     with pytest.raises(TypeError):
         pdeque([], maxlen='foo')
 
@@ -49,6 +49,7 @@ def test_pop():
 
     assert pdeque().append(1).pop() == pdeque()
     assert pdeque().appendleft(1).pop() == pdeque()
+
 
 def test_pop_multiple():
     assert pdeque([1, 2, 3, 4]).pop(3) == pdeque([1])
@@ -84,6 +85,7 @@ def test_popleft():
 
     assert pdeque().append(1).popleft() == pdeque()
     assert pdeque().appendleft(1).popleft() == pdeque()
+
 
 def test_popleft_multiple():
     assert pdeque([1, 2, 3, 4]).popleft(3) == pdeque([4])
@@ -198,6 +200,7 @@ def test_set_maxlen():
     with pytest.raises(AttributeError):
         x.maxlen = 5
 
+
 def test_comparison():
     small = pdeque([1, 2])
     large = pdeque([1, 2, 3])
@@ -248,13 +251,14 @@ def test_slicing():
     assert pdeque([1, 2, 3])[-2:-1] == pdeque([2])
     assert pdeque([1, 2, 3])[::2] == pdeque([1, 3])
 
+
 def test_hashing():
     assert hash(pdeque([1, 2, 3])) == hash(pdeque().append(1).append(2).append(3))
 
 
-# TODO:
-# Register with relevant ABCs
-# Update documentation with which ABCs are supported
-# Update documentation with which O()s that apply and other characteristics.
-# Literalish
-# index(), count()
+def test_index():
+    assert pdeque([1, 2, 3]).index(3) == 2
+
+
+def test_literalish():
+    assert dq(1, 2, 3) == pdeque([1, 2, 3])

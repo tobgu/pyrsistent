@@ -1651,6 +1651,8 @@ class _PDeque(object):
 
         return  self.pop(index).right
 
+    index = Sequence.index
+
 Sequence.register(_PDeque)
 Hashable.register(_PDeque)
 
@@ -1664,3 +1666,6 @@ def pdeque(iterable=(), maxlen=None):
     left = plist(t[:pivot])
     right = plist(t[pivot:], reverse=True)
     return _PDeque(left, right, length, maxlen)
+
+def dq(*args):
+    return pdeque(args)
