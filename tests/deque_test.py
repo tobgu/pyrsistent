@@ -211,9 +211,8 @@ def test_comparison():
     assert not large < small
     assert large != small
 
-    # Not comparable to other types
+    # Not equal to other types
     assert small != [1, 2]
-    assert not [1, 2] < large
 
 
 def test_pickling():
