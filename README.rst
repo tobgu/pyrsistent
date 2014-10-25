@@ -3,8 +3,6 @@ Pyrsistent introduction
 
 Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in 
 the sense that they are immutable.
-The collection types currently implemented are PVector (similar to a python list), PMap (similar to
-a python dict), PSet (similar to a python set) and PBag (similar to collections.Counter).
 
 All methods on a data structure that would normally mutate it instead return a new copy of the structure containing the
 requested updates. The original structure is left untouched.
@@ -29,6 +27,12 @@ is part of this library
 pvector([1, 2, 3])
 >>> print p2
 pvector([1, 2, 3, 4])
+
+The collection types currently implemented are PVector (similar to a python list), PMap (similar to
+a python dict), PSet (similar to a python set), PBag (similar to collections.Counter), PList (a classic
+singly linked list) and PDeque (similar to collections.deque). There is also an immutable object type
+built on the named tuple as well as freeze and thaw functions to convert between pythons standard collections
+and pyrsistent collections.
 
 Pyrsistent is influenced by persistent data structures such as those found in the standard library of Clojure. It
 aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
