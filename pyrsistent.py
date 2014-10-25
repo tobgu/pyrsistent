@@ -25,6 +25,9 @@ def _comparator(f):
 
 class PVector(object):
     """
+    Persistent vector implementation. Meant as a replacement for the cases where you would normally
+    use a Python list.
+
     Do not instantiate directly, instead use the factory functions :py:func:`v` and :func:`pvector` to
     create an instance.
 
@@ -406,15 +409,15 @@ Hashable.register(PVector)
 _EMPTY_VECTOR = PVector(0, SHIFT, [], [])
 
 
-def _pvector(sequence=()):
+def _pvector(iterable=()):
     """
-    Factory function, returns a new PVector object containing the elements in sequence.
+    Create a new persistent vector containing the elements in iterable.
 
     >>> v1 = pvector([1, 2, 3])
     >>> v1
     pvector([1, 2, 3])
     """
-    return _EMPTY_VECTOR.extend(sequence)
+    return _EMPTY_VECTOR.extend(iterable)
 
 
 pvector = _pvector
@@ -428,7 +431,7 @@ except ImportError:
 
 def v(*elements):
     """
-    Factory function, returns a new PVector object containing all parameters.
+    Create a new persistent vector containing all paramenters to this function.
 
     >>> v1 = v(1, 2, 3)
     >>> v1
@@ -440,10 +443,10 @@ def v(*elements):
 ####################### PMap #####################################
 class PMap(object):
     """
+    Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
+
     Do not instantiate directly, instead use the factory functions :py:func:`m` or :py:func:`pmap` to
     create an instance.
-
-    Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
 
     Was originally written as a very close copy of the Clojure equivalent but was later rewritten to closer
     re-assemble the python dict. This means that a sparse vector (a PVector) of buckets is used. The keys are
@@ -723,7 +726,7 @@ _EMPTY_PMAP = _turbo_mapping({}, 0)
 
 def pmap(initial={}, pre_size=0):
     """
-    Factory function, inserts all elements in initial into the newly created map.
+    Create new persistent map, inserts all elements in initial into the newly created map.
     The optional argument pre_size may be used to specify an initial size of the underlying bucket vector. This
     may have a positive performance impact in the cases where you know beforehand that a large number of elements
     will be inserted into the map eventually since it will reduce the number of reallocations required.
@@ -739,7 +742,7 @@ def pmap(initial={}, pre_size=0):
 
 def m(**kwargs):
     """
-    Factory function, inserts all key value arguments into the newly created map.
+    Creates a new persitent map. Inserts all key value arguments into the newly created map.
 
     >>> m(a=13, b=14)
     pmap({'a': 13, 'b': 14})
@@ -750,11 +753,11 @@ def m(**kwargs):
 
 class PSet(object):
     """
-    Do not instantiate directly, instead use the factory functions :py:func:`s` or :py:func:`pset`
-    to create an instance.
-
     Persistent set implementation. Built on top of the persistent map. The set supports all operations
     in the Set protocol and is Hashable.
+
+    Do not instantiate directly, instead use the factory functions :py:func:`s` or :py:func:`pset`
+    to create an instance.
 
     Some examples:
 
@@ -860,24 +863,26 @@ Hashable.register(PSet)
 _EMPTY_PSET = PSet(_EMPTY_PMAP)
 
 
-def pset(sequence=(), pre_size=8):
+def pset(iterable=(), pre_size=8):
     """
-    Factory function, takes an iterable with elements to insert and optionally a sizing parameter equivalent to that
+    Creates a persistent set from iterable. Optionally takes a sizing parameter equivalent to that
     used for :py:func:`pmap`.
 
     >>> s1 = pset([1, 2, 3, 2])
     >>> s1
     pset([1, 2, 3])
     """
-    if not sequence:
+    if not iterable:
         return _EMPTY_PSET
 
-    return PSet._from_iterable(sequence, pre_size=pre_size)
+    return PSet._from_iterable(iterable, pre_size=pre_size)
 
 
 def s(*args):
     """
-    Factory function for persistent sets.
+    Create a persistent set.
+
+    Takes an arbitrary number of arguments to insert into the new set.
 
     >>> s1 = s(1, 2, 3, 2)
     >>> s1
@@ -1287,10 +1292,24 @@ class _PListBase(object):
         return "plist({})".format(list(self))
     __str__ = __repr__
 
-    def cons(self, e):
-        return _PList(e, self)
+    def cons(self, elem):
+        """
+        Return a new list with elem inserted as new head.
+
+        >>> plist([1, 2]).cons(3)
+        plist([3, 1, 2])
+        """
+        return _PList(elem, self)
 
     def mcons(self, iterable):
+        """
+        Return a new list with all elements of iterable repeatedly cons:ed to the current list.
+        NB! The elements will be inserted in the reverse order of the iterable.
+        Runs in O(len(iterable)).
+
+        >>> plist([1, 2]).mcons([3, 4])
+        plist([4, 3, 1, 2])
+        """
         head = self
         for elem in iterable:
             head = head.cons(elem)
@@ -1298,6 +1317,17 @@ class _PListBase(object):
         return head
 
     def reverse(self):
+        """
+        Return a reversed version of list. Runs in O(n) where n is the length of the list.
+
+        >>> plist([1, 2, 3]).reverse()
+        plist([3, 2, 1])
+
+        Also supports the standard reversed function.
+
+        >>> reversed(plist([1, 2, 3]))
+        plist([3, 2, 1])
+        """
         result = plist()
         head = self
         while head:
@@ -1308,6 +1338,13 @@ class _PListBase(object):
     __reversed__ = reverse
 
     def split(self, index):
+        """
+        Spilt the list at position specified by index. Returns a tuple containing the
+        list up until index and the list after the index. Runs in O(index).
+
+        >>> plist([1, 2, 3, 4]).split(2)
+        (plist([1, 2]), plist([3, 4]))
+        """
         lb = _PListBuilder()
         right_list = self
         i = 0
@@ -1386,6 +1423,16 @@ class _PListBase(object):
         return hash(tuple(self))
 
     def remove(self, elem):
+        """
+        Return new list with first element equal to elem removed. O(k) where k is the position
+        of the element that is removed.
+
+        Raises ValueError if no matching element is found.
+
+        >>> plist([1, 2, 1]).remove(1)
+        plist([2, 1])
+        """
+
         builder = _PListBuilder()
         head = self
         while head:
@@ -1399,6 +1446,32 @@ class _PListBase(object):
 
 
 class _PList(_PListBase):
+    """
+    Classical Lisp style singly linked list. Adding elements to the head using cons is O(1).
+    Element access is O(k) where k is the position of the element in the list. Taking the
+    length of the list is O(n).
+
+    Fully supports the Sequence and Hashable protocols including indexing and slicing but
+    if you need fast random access go for the PVector instead.
+
+    Do not instantiate directly, instead use the factory functions :py:func:`l` or :py:func:`plist` to
+    create an instance.
+
+    Some examples:
+
+    >>> x = plist([1, 2])
+    >>> y = x.cons(3)
+    >>> x
+    plist([1, 2])
+    >>> y
+    plist([3, 1, 2])
+    >>> y.first
+    3
+    >>> y.rest == x
+    True
+    >>> y[:2]
+    plist([3, 1])
+    """
     __slots__ = ('first', 'rest')
 
     def __new__(cls, first, rest):
@@ -1413,6 +1486,7 @@ class _PList(_PListBase):
 
 
 Sequence.register(_PList)
+Hashable.register(_PList)
 
 
 class _EmptyPList(_PListBase):
@@ -1432,10 +1506,21 @@ class _EmptyPList(_PListBase):
 
 
 Sequence.register(_EmptyPList)
+Hashable.register(_EmptyPList)
 
 _EMPTY_PLIST = _EmptyPList()
 
 def plist(iterable=(), reverse=False):
+    """
+    Creates a new persistent list containing all elements of iterable.
+    Optional parameter reverse specifies if the elements should be inserted in
+    reverse order or not.
+
+    >>> plist([1, 2, 3])
+    plist([1, 2, 3])
+    >>> plist([1, 2, 3], reverse=True)
+    plist([3, 2, 1])
+    """
     if not reverse:
         iterable = list(iterable)
         iterable.reverse()
@@ -1444,6 +1529,12 @@ def plist(iterable=(), reverse=False):
 
 
 def l(*args):
+    """
+    Creates a new persistent list containing all arguments.
+
+    >>> l(1, 2, 3)
+    plist([1, 2, 3])
+    """
     return plist(args)
 
 ##### PDeque #####
