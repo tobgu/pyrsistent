@@ -878,7 +878,7 @@ def pset(iterable=(), pre_size=8):
     return PSet._from_iterable(iterable, pre_size=pre_size)
 
 
-def s(*args):
+def s(*elements):
     """
     Create a persistent set.
 
@@ -888,7 +888,7 @@ def s(*args):
     >>> s1
     pset([1, 2, 3])
     """
-    return pset(args)
+    return pset(elements)
 
 
 ##################### PBag ########################
@@ -1528,17 +1528,57 @@ def plist(iterable=(), reverse=False):
     return reduce(lambda pl, elem: pl.cons(elem), iterable, _EMPTY_PLIST)
 
 
-def l(*args):
+def l(*elements):
     """
     Creates a new persistent list containing all arguments.
 
     >>> l(1, 2, 3)
     plist([1, 2, 3])
     """
-    return plist(args)
+    return plist(elements)
 
 ##### PDeque #####
 class _PDeque(object):
+    """
+    Persistent double ended queue (deque). Allows quick appends and pops in both ends. Implemented
+    using two persistent lists.
+
+    A maximum length can be specified to create a bounded queue.
+
+    Fully supports the Sequence and Hashable protocols including indexing and slicing but
+    if you need fast random access go for the PVector instead.
+
+    Do not instantiate directly, instead use the factory functions :py:func:`dq` or :py:func:`pdeque` to
+    create an instance.
+
+    Some examples:
+
+    >>> x = pdeque([1, 2, 3])
+    >>> x.left
+    1
+    >>> x.right
+    3
+    >>> x[0] == x.left
+    True
+    >>> x[-1] == x.right
+    True
+    >>> x.pop()
+    pdeque([1, 2])
+    >>> x.pop() == x[:-1]
+    True
+    >>> x.popleft()
+    pdeque([2, 3])
+    >>> x.append(4)
+    pdeque([1, 2, 3, 4])
+    >>> x.appendleft(4)
+    pdeque([4, 1, 2, 3])
+
+    >>> y = pdeque([1, 2, 3], maxlen=3)
+    >>> y.append(4)
+    pdeque([2, 3, 4], maxlen=3)
+    >>> y.appendleft(4)
+    pdeque([4, 1, 2], maxlen=3)
+    """
     __slots__ = ('_left_list', '_right_list', '_length', '_maxlen')
 
     def __new__(cls, left_list, right_list, length, maxlen=None):
@@ -1559,10 +1599,16 @@ class _PDeque(object):
 
     @property
     def right(self):
+        """
+        Rightmost element in dqueue.
+        """
         return _PDeque._tip_from_lists(self._right_list, self._left_list)
 
     @property
     def left(self):
+        """
+        Leftmost element in dqueue.
+        """
         return _PDeque._tip_from_lists(self._left_list, self._right_list)
 
     @staticmethod
@@ -1585,9 +1631,25 @@ class _PDeque(object):
 
     @property
     def maxlen(self):
+        """
+        Maximum length of the queue.
+        """
         return self._maxlen
 
     def pop(self, count=1):
+        """
+        Return new deque with rightmost element removed. Popping the empty queue
+        will return the empty queue. A optional count can be given to indicate the
+        number of elements to pop. Popping with a negative index is the same as
+        popleft. Executes in amortized O(k) where k is the number of elements to pop.
+
+        >>> pdeque([1, 2]).pop()
+        pdeque([1])
+        >>> pdeque([1, 2]).pop(2)
+        pdeque([])
+        >>> pdeque([1, 2]).pop(-1)
+        pdeque([2])
+        """
         if count < 0:
             return self.popleft(-count)
 
@@ -1595,6 +1657,13 @@ class _PDeque(object):
         return _PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
 
     def popleft(self, count=1):
+        """
+        Return new deque with leftmost element removed. Otherwise functionally
+        equivalent to pop().
+
+        >>> pdeque([1, 2]).popleft()
+        pdeque([2])
+        """
         if count < 0:
             return self.pop(-count)
 
@@ -1646,10 +1715,22 @@ class _PDeque(object):
         return self._length
 
     def append(self, elem):
+        """
+        Return new deque with elem as the rightmost element.
+
+        >>> pdeque([1, 2]).append(3)
+        pdeque([1, 2, 3])
+        """
         new_left_list, new_right_list, new_length = self._append(self._left_list, self._right_list, elem)
         return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
 
     def appendleft(self, elem):
+        """
+        Return new deque with elem as the leftmost element.
+
+        >>> pdeque([1, 2]).appendleft(3)
+        pdeque([3, 1, 2])
+        """
         new_right_list, new_left_list, new_length = self._append(self._right_list, self._left_list, elem)
         return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
 
@@ -1683,17 +1764,44 @@ class _PDeque(object):
         return new_primary_list, new_secondary_list, extend_count
 
     def extend(self, iterable):
+        """
+        Return new deque with all elements of iterable appended to the right.
+
+        >>> pdeque([1, 2]).extend([3, 4])
+        pdeque([1, 2, 3, 4])
+        """
         new_right_list, new_left_list, extend_count = self._extend(self._right_list, self._left_list, iterable)
         return _PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
 
     def extendleft(self, iterable):
+        """
+        Return new deque with all elements of iterable appended to the left.
+
+        NB! The elements will be inserted in reverse order compared to the order in the iterable.
+
+        >>> pdeque([1, 2]).extendleft([3, 4])
+        pdeque([4, 3, 1, 2])
+        """
         new_left_list, new_right_list, extend_count = self._extend(self._left_list, self._right_list, iterable)
         return _PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
 
     def count(self, elem):
+        """
+        Return the number of elements equal to elem present in the queue
+
+        >>> pdeque([1, 2, 1]).count(1)
+        2
+        """
         return self._left_list.count(elem) + self._right_list.count(elem)
 
     def remove(self, elem):
+        """
+        Return new deque with first element from left equal to elem removed. If no such element is found
+        a ValueError is raised.
+
+        >>> pdeque([2, 1, 2]).remove(2)
+        pdeque([1, 2])
+        """
         try:
             return _PDeque(self._left_list.remove(elem), self._right_list, self._length - 1)
         except ValueError:
@@ -1706,10 +1814,30 @@ class _PDeque(object):
                 raise ValueError('{} not found in PDeque'.format(elem))
 
     def reverse(self):
+        """
+        Return reversed deque.
+
+        >>> pdeque([1, 2, 3]).reverse()
+        pdeque([3, 2, 1])
+
+        Also supports the standard python reverse function.
+
+        >>> reversed(pdeque([1, 2, 3]))
+        pdeque([3, 2, 1])
+        """
         return _PDeque(self._right_list, self._left_list, self._length)
     __reversed__ = reverse
 
     def rotate(self, steps):
+        """
+        Return deque with elements rotated steps steps.
+
+        >>> x = pdeque([1, 2, 3])
+        >>> x.rotate(1)
+        pdeque([3, 1, 2])
+        >>> x.rotate(-2)
+        pdeque([3, 1, 2])
+        """
         popped_deque = self.pop(steps)
         if steps >= 0:
             return popped_deque.extendleft(islice(self.reverse(), steps))
@@ -1749,6 +1877,15 @@ Hashable.register(_PDeque)
 
 
 def pdeque(iterable=(), maxlen=None):
+    """
+    Return deque containing the elements of iterable. If maxlen is specified then
+    len(iterable) - maxlen elements are discarded from the left to if len(iterable) > maxlen.
+
+    >>> pdeque([1, 2, 3])
+    pdeque([1, 2, 3])
+    >>> pdeque([1, 2, 3, 4], maxlen=2)
+    pdeque([3, 4], maxlen=2)
+    """
     t = tuple(iterable)
     if maxlen is not None:
         t = t[-maxlen:]
@@ -1758,5 +1895,11 @@ def pdeque(iterable=(), maxlen=None):
     right = plist(t[pivot:], reverse=True)
     return _PDeque(left, right, length, maxlen)
 
-def dq(*args):
-    return pdeque(args)
+def dq(*elements):
+    """
+    Return deque containing all arguments.
+
+    >>> dq(1, 2, 3)
+    pdeque([1, 2, 3])
+    """
+    return pdeque(elements)
