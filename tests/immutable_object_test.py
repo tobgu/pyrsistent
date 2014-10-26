@@ -1,19 +1,19 @@
 import pytest
-from pyrsistent import immutable
+from pyrsistent import pclass
 
-class Empty(immutable(verbose=True)):
+class Empty(pclass(verbose=True)):
     pass
 
 
-class Single(immutable('x')):
+class Single(pclass('x')):
     pass
 
 
-class FrozenMember(immutable('x, y_')):
+class FrozenMember(pclass('x, y_')):
     pass
 
 
-class DerivedWithNew(immutable(['x', 'y'])):
+class DerivedWithNew(pclass(['x', 'y'])):
     def __new__(cls, x, y):
         return super(DerivedWithNew, cls).__new__(cls, x, y)
 
@@ -38,6 +38,12 @@ def test_basic_instantiation():
     assert t.x == 17
     assert str(t) == 'Single(x=17)'
 
+
+def test_cannot_modify_member():
+    t = Single(17)
+
+    with pytest.raises(AttributeError):
+        t.x = 18
 
 def test_basic_replace():
     t = Single(17)
