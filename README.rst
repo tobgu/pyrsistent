@@ -69,6 +69,8 @@ Documentation
 
 Available at http://pyrsistent.readthedocs.org/
 
+Brief presentation available at http://slides.com/tobiasgustafsson/immutability-and-python/
+
 Contributors
 ------------
 

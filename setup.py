@@ -54,7 +54,7 @@ WARNING: Could not build the %s.
                                                   "the compilation "
                                                   "failed."))
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 setup(
     name='pyrsistent',
     version=__version__,

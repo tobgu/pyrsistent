@@ -1073,7 +1073,6 @@ _EMPTY_PBAG = _PBag(_EMPTY_PMAP)
 
 ######################################## Immutable object ##############################################
 
-
 def pclass(members='', name='PClass', verbose=False):
     """
     Produces a class that either can be used standalone or as a base class for persistent classes.
@@ -1170,7 +1169,8 @@ class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose
 
     return namespace[name]
 
-
+# Deprecated alias for pclass
+immutable = pclass
 
 ## Freeze & Thaw
 
