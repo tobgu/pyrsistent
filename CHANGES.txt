@@ -1,5 +1,12 @@
 Revision history
 ----------------
+v0.6.2, 2014-11-03
+  * Fix typo causing the pure python vector to be used even if the C implementation was
+    available. Thanks @zerc for finding it!
+
+v0.6.1, 2014-10-31
+  * Renamed 'immutable' to 'pclass' for consistency but left immutable for compatibility.
+
 v0.6.0, 2014-10-25
   * New data structure, persistent linked list
   * New data structure, persistent double ended queue

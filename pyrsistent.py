@@ -424,7 +424,7 @@ pvector = _pvector
 try:
     # Use the C extension as underlying implementation if it is available
     from pvectorc import pvector as pvector_c
-    pvector = pvector
+    pvector = pvector_c
 except ImportError:
     pass
 
