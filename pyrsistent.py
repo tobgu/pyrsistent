@@ -17,9 +17,9 @@ SHIFT = _bitcount(BIT_MASK)
 def _comparator(f):
     @wraps(f)
     def wrapper(*args, **kwds):
-        if isinstance(args[0], PVector) and isinstance(args[1], PVector): 
+        if all(isinstance(a, PVector) for a in args):
             return f(*args, **kwds)
-        return NotImplemented
+        return NotImplementedError("Possible only compare PVector instances")
     return wrapper
 
 
@@ -95,7 +95,7 @@ class PVector(object):
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
             # return ourselves, implement those...
-            if index.start is None and index.stop is None and index.step is None:
+            if all(v is None for v in (index.start, index.stop, index.step)):
                 return self
 
             # This is a bit nasty realizing the whole structure as a list before
@@ -128,26 +128,66 @@ class PVector(object):
 
     @_comparator
     def __ne__(self, other):
+        """
+        >>> v1 = v(1, 2)
+        >>> v2 = v(3, 4)
+        >>> v1 != v2
+        True
+        """
         return self._tolist() != other._tolist()
 
     @_comparator
     def __eq__(self, other):
+        """
+        >>> v1 = v2 = v(1, 2)
+        >>> v1 is v2
+        True
+        >>> v1 == v2
+        True
+        >>> v3 = v(1, 2)
+        >>> v1 == v3
+        True
+        """
         return self is other or self._tolist() == other._tolist()
 
     @_comparator
     def __gt__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v2 > v1
+        True
+        """
         return self._tolist() > other._tolist()
 
     @_comparator
     def __lt__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v1 < v2
+        True
+        """
         return self._tolist() < other._tolist()
 
     @_comparator
     def __ge__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v2 >= v1
+        True
+        """
         return self._tolist() >= other._tolist()
 
     @_comparator
     def __le__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v1 <= v2
+        True
+        """
         return self._tolist() <= other._tolist()
 
     def __mul__(self, times):
