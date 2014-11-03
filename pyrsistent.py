@@ -128,26 +128,66 @@ class PVector(object):
 
     @_comparator
     def __ne__(self, other):
+        """
+        >>> v1 = v(1, 2)
+        >>> v2 = v(3, 4)
+        >>> v1 != v2
+        True
+        """
         return self._tolist() != other._tolist()
 
     @_comparator
     def __eq__(self, other):
+        """
+        >>> v1 = v2 = v(1, 2)
+        >>> v1 is v2
+        True
+        >>> v1 == v2
+        True
+        >>> v3 = v(1, 2)
+        >>> v1 == v3
+        True
+        """
         return self is other or self._tolist() == other._tolist()
 
     @_comparator
     def __gt__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v2 > v1
+        True
+        """
         return self._tolist() > other._tolist()
 
     @_comparator
     def __lt__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v1 < v2
+        True
+        """
         return self._tolist() < other._tolist()
 
     @_comparator
     def __ge__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v2 >= v1
+        True
+        """
         return self._tolist() >= other._tolist()
 
     @_comparator
     def __le__(self, other):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 4)
+        >>> v1 <= v2
+        True
+        """
         return self._tolist() <= other._tolist()
 
     def __mul__(self, times):
