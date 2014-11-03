@@ -17,9 +17,9 @@ SHIFT = _bitcount(BIT_MASK)
 def _comparator(f):
     @wraps(f)
     def wrapper(*args, **kwds):
-        if isinstance(args[0], PVector) and isinstance(args[1], PVector): 
+        if all(isinstance(a, PVector) for a in args):
             return f(*args, **kwds)
-        return NotImplemented
+        return NotImplementedError("Possible only compare PVector instances")
     return wrapper
 
 
@@ -95,7 +95,7 @@ class PVector(object):
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
             # return ourselves, implement those...
-            if index.start is None and index.stop is None and index.step is None:
+            if all(v is None for v in (index.start, index.stop, index.step)):
                 return self
 
             # This is a bit nasty realizing the whole structure as a list before
