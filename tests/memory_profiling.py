@@ -22,10 +22,14 @@ def run_function(fn):
         fn(pvector)
 
 def detect_memory_leak(samples):
-    # Skip the first half to get rid of the build up period and the last since it seems
+    # Skip the first samples to get rid of the build up period and the last sample since it seems
     # a little less precise
-    samples = samples[int(len(samples)/2):len(samples)-1]
-    return not samples.count(samples[0]) > len(samples) - 2
+    rising = 0
+    for i in range(5, len(samples)-1):
+        if samples[i] < samples[i+1]:
+            rising += 1
+
+    return (rising / float(len(samples) - 6)) > 0.2
 
 def profile_tests():
     test_functions = [fn for fn in inspect.getmembers(vector_test, inspect.isfunction)
