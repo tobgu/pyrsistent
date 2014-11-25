@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable, Sized)
-from itertools import chain, islice
 from functools import wraps, reduce
+from itertools import chain, islice
 from numbers import Integral
+import sys
 
 import six
 
@@ -117,7 +119,7 @@ class PVector(object):
         return self.extend(other)
 
     def __repr__(self):
-        return 'pvector({})'.format(str(self._tolist()))
+        return 'pvector({0})'.format(str(self._tolist()))
 
     __str__ = __repr__
 
@@ -543,7 +545,7 @@ class PMap(object):
         return self._size
 
     def __repr__(self):
-        return 'pmap({})'.format(str(dict(self)))
+        return 'pmap({0})'.format(str(dict(self)))
 
     __eq__ = Mapping.__eq__
     __ne__ = Mapping.__ne__
@@ -751,6 +753,10 @@ def m(**kwargs):
 
 ##################### PSet ########################
 
+
+PY2 = sys.version_info[0] < 3
+
+
 class PSet(object):
     """
     Persistent set implementation. Built on top of the persistent map. The set supports all operations
@@ -786,10 +792,10 @@ class PSet(object):
         return len(self._map)
 
     def __repr__(self):
-        if six.PY2 or not self:
+        if PY2 or not self:
             return 'p' + str(set(self))
 
-        return 'pset([{}])'.format(str(set(self))[1:-1])
+        return 'pset([{0}])'.format(str(set(self))[1:-1])
 
     __str__ = __repr__
 
@@ -798,7 +804,7 @@ class PSet(object):
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
-        return PSet(pmap({k: True for k in it}, pre_size=pre_size))
+        return PSet(pmap(dict((k, True) for k in it), pre_size=pre_size))
 
     def add(self, element):
         """
@@ -1006,7 +1012,7 @@ class _PBag(object):
         return elt in self._counts
 
     def __repr__(self):
-        return "pbag({})".format(list(self))
+        return "pbag({0})".format(list(self))
 
     def __eq__(self, other):
         """
@@ -1125,7 +1131,7 @@ def pclass(members='', name='PClass', verbose=False):
         frozen_members = ["'%s'" % f for f in members if f.endswith('_')]
         if frozen_members:
             return """
-        frozen_fields = fields_to_modify & {{{frozen_members}}}
+        frozen_fields = fields_to_modify & set([{frozen_members}])
         if frozen_fields:
             raise AttributeError('Cannot set frozen members %s' % ', '.join(frozen_fields))
             """.format(frozen_members=', '.join(frozen_members))
@@ -1151,8 +1157,8 @@ class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose
         {frozen_member_test}
 
         return self.__class__.__new__(self.__class__, *map(kwargs.pop, [{quoted_members}], self))
-    """.format(quoted_members=quoted_members,
-               member_set="{%s}" % quoted_members if quoted_members else 'set()',
+""".format(quoted_members=quoted_members,
+               member_set="set([%s])" % quoted_members if quoted_members else 'set()',
                frozen_member_test=frozen_member_test(),
                verbose=verbose,
                class_name=name)
@@ -1165,6 +1171,7 @@ class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose
     try:
         six.exec_(template, namespace)
     except SyntaxError as e:
+        raise e
         raise SyntaxError(e.message + ':\n' + template)
 
     return namespace[name]
@@ -1198,7 +1205,7 @@ def freeze(o):
     """
     typ = type(o)
     if typ is dict:
-        return pmap({k: freeze(v) for k, v in six.iteritems(o)})
+        return pmap(dict((k, freeze(v)) for k, v in six.iteritems(o)))
     if typ is list:
         return pvector(map(freeze, o))
     if typ is tuple:
@@ -1228,7 +1235,7 @@ def thaw(o):
     if typ is type(pvector()):
         return list(map(thaw, o))
     if typ is type(pmap()):
-        return {k: thaw(v) for k, v in o.iteritems()}
+        return dict((k, thaw(v)) for k, v in o.iteritems())
     if typ is tuple:
         return tuple(map(thaw, o))
     if typ is type(pset()):
@@ -1289,7 +1296,7 @@ class _PListBase(object):
         return sum(1 for _ in self)
 
     def __repr__(self):
-        return "plist({})".format(list(self))
+        return "plist({0})".format(list(self))
     __str__ = __repr__
 
     def cons(self, elem):
@@ -1442,7 +1449,7 @@ class _PListBase(object):
             builder.append_elem(head.first)
             head = head.rest
 
-        raise ValueError('{} not found in PList'.format(elem))
+        raise ValueError('{0} not found in PList'.format(elem))
 
 
 class _PList(_PListBase):
@@ -1626,7 +1633,7 @@ class _PDeque(object):
 
     def __repr__(self):
         return "pdeque({0}{1})".format(list(self),
-                                       ', maxlen={}'.format(self._maxlen) if self._maxlen is not None else '')
+                                       ', maxlen={0}'.format(self._maxlen) if self._maxlen is not None else '')
     __str__ = __repr__
 
     @property
@@ -1811,7 +1818,7 @@ class _PDeque(object):
                 return _PDeque(self._left_list,
                                self._right_list.reverse().remove(elem).reverse(), self._length - 1)
             except ValueError:
-                raise ValueError('{} not found in PDeque'.format(elem))
+                raise ValueError('{0} not found in PDeque'.format(elem))
 
     def reverse(self):
         """
