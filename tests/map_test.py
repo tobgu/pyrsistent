@@ -104,7 +104,7 @@ def test_supports_hash_and_equals():
     assert not (x != y)
 
 def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
-    x = pmap({x: x for x in range(1000)})
+    x = pmap(dict((x, x) for x in range(1000)))
     y = pmap({10: 10, 200: 200, 700: 700})
 
     for z in x:
@@ -221,8 +221,8 @@ def test_bitmap_indexed_iteration():
         values.add(v)
     
     assert count == 2
-    assert keys == {'a', 'b'}
-    assert values == {2, 1}
+    assert keys == set(['a', 'b'])
+    assert values == set([2, 1])
 
 
 def test_iteration_with_many_elements():
