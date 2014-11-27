@@ -1,5 +1,12 @@
 Revision history
 ----------------
+v0.6.3, 2014-11-27
+  * Python 2.6 support, thanks @wrmsr!
+  * PMap.merge/merge_with renamed to update/update_with. merge/merge_with remains but will be
+    removed for 1.0.
+  * This is a release candidate for 1.0! Please be aware that PMap.merge/merge_with and immutable()
+    will be removed for 1.0.
+
 v0.6.2, 2014-11-03
   * Fix typo causing the pure python vector to be used even if the C implementation was
     available. Thanks @zerc for finding it!
