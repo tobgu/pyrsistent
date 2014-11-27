@@ -114,22 +114,22 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     assert x == y
     assert hash(x) == hash(y)
 
-def test_merge_with_multiple_arguments():
+def test_update_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.
     x = m(a=1, b=2, c=3)    
-    y = x.merge(m(b=4, c=5), {'c': 6})
+    y = x.update(m(b=4, c=5), {'c': 6})
 
     assert y == m(a=1, b=4, c=6)
 
-def test_merge_one_argument():
+def test_update_one_argument():
     x = m(a=1)
 
-    assert x.merge(m(b=2)) == m(a=1, b=2)
+    assert x.update(m(b=2)) == m(a=1, b=2)
 
-def test_merge_no_arguments():
+def test_update_no_arguments():
     x = m(a=1)
 
-    assert x.merge() is x
+    assert x.update() is x
 
 def test_set_in_base_case():
     # Works as set when called with only one key
@@ -258,14 +258,14 @@ def test_empty_truthiness():
     assert m(a=1)
     assert not m()
 
-def test_merge_with():
-    assert m(a=1).merge_with(add, m(a=2, b=4)) == m(a=3, b=4)
-    assert m(a=1).merge_with(lambda l, r: l, m(a=2, b=4)) == m(a=1, b=4)
+def test_update_with():
+    assert m(a=1).update_with(add, m(a=2, b=4)) == m(a=3, b=4)
+    assert m(a=1).update_with(lambda l, r: l, m(a=2, b=4)) == m(a=1, b=4)
 
     def map_add(l, r):
         return dict(list(l.items()) + list(r.items()))
 
-    assert m(a={'c': 3}).merge_with(map_add, m(a={'d': 4})) == m(a={'c': 3, 'd': 4})
+    assert m(a={'c': 3}).update_with(map_add, m(a={'d': 4})) == m(a={'c': 3, 'd': 4})
 
 
 def test_pickling_empty_map():

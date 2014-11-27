@@ -6,6 +6,7 @@ from numbers import Integral
 import sys
 
 import six
+import warnings
 
 
 def _bitcount(val):
@@ -614,50 +615,66 @@ class PMap(object):
 
         return self
 
+
     def merge(self, *maps):
+        """
+        Deprecated, use update() instead!
+        """
+        warnings.warn("Deprecated! Use update() instead!", DeprecationWarning)
+        return self.update(*maps)
+
+
+    def update(self, *maps):
         """
         Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
         maps the rightmost (last) value is inserted.
 
         >>> m1 = m(a=1, b=2)
-        >>> m1.merge(m(a=2, c=3), {'a': 17, 'd': 35})
+        >>> m1.update(m(a=2, c=3), {'a': 17, 'd': 35})
         pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
         """
         # Optimization opportunities here
         if not maps:
             return self
         elif len(maps) > 1:
-            merge_map = dict(maps[0])
+            update_map = dict(maps[0])
             for m in maps[1:]:
-                merge_map.update(m)
+                update_map.update(m)
         else:
-            merge_map = maps[0]
+            update_map = maps[0]
 
         result = self
-        for k, v in merge_map.items():
+        for k, v in update_map.items():
             result = result.set(k, v)
 
         return result
 
     def merge_with(self, merge_fn, *maps):
         """
+        Deprecated, use update_with() instead!
+        """
+        warnings.warn("Deprecated! Use update_with() instead!", DeprecationWarning)
+        return self.update_with(merge_fn, *maps)
+
+    def update_with(self, update_fn, *maps):
+        """
         Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
         maps the values will be merged using merge_fn going from left to right.
 
         >>> from operator import add
         >>> m1 = m(a=1, b=2)
-        >>> m1.merge_with(add, m(a=2))
+        >>> m1.update_with(add, m(a=2))
         pmap({'a': 3, 'b': 2})
 
         The reverse behaviour of the regular merge. Keep the leftmost element instead of the rightmost.
         >>> m1 = m(a=1)
-        >>> m1.merge_with(lambda l, r: l, m(a=2), {'a':3})
+        >>> m1.update_with(lambda l, r: l, m(a=2), {'a':3})
         pmap({'a': 1})
         """
         result = self
         for map in maps:
             for key, value in map.items():
-                result = result.set(key, merge_fn(result[key], value) if key in result else value)
+                result = result.set(key, update_fn(result[key], value) if key in result else value)
 
         return result
 
