@@ -15,21 +15,22 @@ someone has decided to remove that element that you expected to be there.
 The following code snippet illustrates the difference between the built in, regular, list and the vector which
 is part of this library
 
+.. code:: python
 
->>> from pyrsistent import v
->>> l = [1, 2, 3]
->>> l.append(4)
->>> print l
-[1, 2, 3, 4]
->>> p1 = v(1, 2, 3)
->>> p2 = p1.append(4)
->>> p3 = p2.set(1, 5)
->>> print p1
-pvector([1, 2, 3])
->>> print p2
-pvector([1, 2, 3, 4])
->>> print p3
-pvector([1, 5, 3, 4])
+    >>> from pyrsistent import v
+    >>> l = [1, 2, 3]
+    >>> l.append(4)
+    >>> print l
+    [1, 2, 3, 4]
+    >>> p1 = v(1, 2, 3)
+    >>> p2 = p1.append(4)
+    >>> p3 = p2.set(1, 5)
+    >>> p1
+    pvector([1, 2, 3])
+    >>> p2
+    pvector([1, 2, 3, 4])
+    >>> p3
+    pvector([1, 5, 3, 4])
 
 The collection types currently implemented are PVector (similar to a python list), PMap (similar to
 a python dict), PSet (similar to a python set), PBag (similar to collections.Counter), PList (a classic

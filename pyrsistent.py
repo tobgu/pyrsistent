@@ -31,11 +31,11 @@ class PVector(object):
     Persistent vector implementation. Meant as a replacement for the cases where you would normally
     use a Python list.
 
-    Do not instantiate directly, instead use the factory functions :py:func:`v` and :func:`pvector` to
+    Do not instantiate directly, instead use the factory functions :py:func:`v` and :py:func:`pvector` to
     create an instance.
 
     Heavily influenced by the persistent vector available in Clojure. Initially this was more or
-    less just a port of the Java code for the Clojure data structures. It has since been modified and to
+    less just a port of the Java code for the Clojure vector. It has since been modified and to
     some extent optimized for usage in Python.
 
     The vector is organized as a trie, any mutating method will return a new vector that contains the changes. No
@@ -203,9 +203,9 @@ class PVector(object):
 
     def set(self, i, val):
         """
-        Return a new vector with element at position i replaced with val. The first vector remains unchanged.
+        Return a new vector with element at position i replaced with val. The original vector remains unchanged.
 
-        Associng a value one step beyond the end of the vector is equal to appending. Associng beyond that will
+        Setting a value one step beyond the end of the vector is equal to appending. Setting beyond that will
         result in an IndexError.
 
         >>> v1 = v(1, 2, 3)
@@ -434,7 +434,7 @@ except ImportError:
 
 def v(*elements):
     """
-    Create a new persistent vector containing all paramenters to this function.
+    Create a new persistent vector containing all parameters to this function.
 
     >>> v1 = v(1, 2, 3)
     >>> v1
@@ -658,7 +658,7 @@ class PMap(object):
 
     def update_with(self, update_fn, *maps):
         """
-        Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
+        Return a new PMap with the items in Mappings maps inserted. If the same key is present in multiple
         maps the values will be merged using merge_fn going from left to right.
 
         >>> from operator import add
@@ -667,6 +667,7 @@ class PMap(object):
         pmap({'a': 3, 'b': 2})
 
         The reverse behaviour of the regular merge. Keep the leftmost element instead of the rightmost.
+
         >>> m1 = m(a=1)
         >>> m1.update_with(lambda l, r: l, m(a=2), {'a':3})
         pmap({'a': 1})
@@ -750,8 +751,8 @@ def pmap(initial={}, pre_size=0):
     may have a positive performance impact in the cases where you know beforehand that a large number of elements
     will be inserted into the map eventually since it will reduce the number of reallocations required.
 
-    >>> pmap({'a': 13, 'b': '14'})
-    pmap({'a': 13, 'b': '14'})
+    >>> pmap({'a': 13, 'b': 14})
+    pmap({'a': 13, 'b': 14})
     """
     if not initial:
         return _EMPTY_PMAP
