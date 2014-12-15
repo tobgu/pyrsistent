@@ -48,6 +48,8 @@ class PVector(object):
 
     The PVector implements the Sequence protocol and is Hashable.
 
+    Inserts are amortized O(1). Random access is log32(n) where n is the size of the vector.
+
     The following are examples of some common operations on persistent vectors:
 
     >>> p = v(1, 2, 3)
@@ -463,6 +465,8 @@ class PMap(object):
 
     PMap implements the Mapping protocol and is Hashable.
 
+    Random access and insert is log32(n) where n is the size of the map.
+
     The following are examples of some common operations on persistent maps
 
     >>> m1 = m(a=1, b=3)
@@ -782,6 +786,8 @@ class PSet(object):
 
     Do not instantiate directly, instead use the factory functions :py:func:`s` or :py:func:`pset`
     to create an instance.
+
+    Random access and insert is log32(n) where n is the size of the set.
 
     Some examples:
 

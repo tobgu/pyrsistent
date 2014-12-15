@@ -12,37 +12,132 @@ data structures. You can rest assured that the object you hold a reference to wi
 lifetime and need not worry that somewhere five stack levels below you in the darkest corner of your application
 someone has decided to remove that element that you expected to be there.
 
-The following code snippet illustrates the difference between the built in, regular, list and the vector which
-is part of this library
+Pyrsistent is influenced by persistent data structures such as those found in the standard library of Clojure. The
+data structures are designed to share common elements through path copying.
+It aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
+program without hassle.
 
-.. code:: python
-
-    >>> from pyrsistent import v
-    >>> l = [1, 2, 3]
-    >>> l.append(4)
-    >>> print l
-    [1, 2, 3, 4]
-    >>> p1 = v(1, 2, 3)
-    >>> p2 = p1.append(4)
-    >>> p3 = p2.set(1, 5)
-    >>> p1
-    pvector([1, 2, 3])
-    >>> p2
-    pvector([1, 2, 3, 4])
-    >>> p3
-    pvector([1, 5, 3, 4])
+Examples
+--------
+.. _Sequence: _collections
+.. _Hashable: _collections
+.. _Mapping: _collections
+.. _Mappings: _collections
+.. _Set: _collections
+.. _collections: https://docs.python.org/3/library/collections.abc.html
+.. _documentation: http://pyrsistent.readthedocs.org/
 
 The collection types currently implemented are PVector (similar to a python list), PMap (similar to
-a python dict), PSet (similar to a python set), PBag (similar to collections.Counter), PList (a classic
-singly linked list) and PDeque (similar to collections.deque). There is also an immutable object type
+dict), PSet (similar to set), PBag (similar to collections.Counter), PList (a classic
+singly linked list) and PDeque (similar to collections.deque). There is also an immutable object type (pclass)
 built on the named tuple as well as freeze and thaw functions to convert between pythons standard collections
 and pyrsistent collections.
 
-Pyrsistent is influenced by persistent data structures such as those found in the standard library of Clojure. The
-data structures are designed to share common elements through path copying ()
-It
-aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
-program without hassle.
+Below are examples of common usage patterns for some of the structures. More information and
+full documentation for all data structures is available in the documentation_.
+
+PVector
+~~~~~~~
+With full support for the Sequence_ protocol PVector is meant as a drop in replacement to the built in list from a readers
+point of view. Write operations of course differ since no in place mutation takes is done but naming should be in line
+with corresponding operations on the built in list.
+
+Support for the Hashable_ protocol also means that it can be used as key in Mappings_.
+
+Appends are amortized O(1). Random access and insert is log32(n) where n is the size of the vector.
+
+.. code:: python
+
+    >>> from pyrsistent import v, pvector
+    >>> v1 = v(1, 2, 3)
+    >>> v2 = v1.append(4)
+    >>> v3 = v2.set(1, 5)
+    >>> v1
+    pvector([1, 2, 3])
+    >>> v2
+    pvector([1, 2, 3, 4])
+    >>> v3
+    pvector([1, 5, 3, 4])
+    >>> v3[1]
+    5
+    >>> v3[1:3]
+    pvector([5, 3])
+    >>> list(x + 1 for x in v3)
+    [2, 6, 4, 5]
+    >>> pvector(2 * x for x in range(3))
+    pvector([0, 2, 4])
+
+PMap
+~~~~
+With full support for the Mapping_ protocol PMap is meant as a drop in replacement to the built in dict from a readers point
+of view. Support for the Hashable_ protocol also means that it can be used as key in other Mappings_.
+
+Random access and insert is log32(n) where n is the size of the map.
+
+.. code:: python
+
+    >>> from pyrsistent import m, pmap, v
+    >>> m1 = m(a=1, b=2)
+    >>> m2 = m1.set('c', 3)
+    >>> m3 = m2.set('a', 5)
+    >>> m1
+    pmap({'a': 1, 'b': 2})
+    >>> m2
+    pmap({'a': 1, 'c': 3, 'b': 2})
+    >>> m3
+    pmap({'a': 5, 'c': 3, 'b': 2})
+    >>> m3['a']
+    5
+    >>> m4 = m(a=5, b=6, c=v(1, 2))
+    >>> m4.set_in(('c', 1), 17)
+    pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
+    >>> m5 = m(a=1, b=2)
+    >>> m5.update(m(a=2, c=3), {'a': 17, 'd': 35})
+    pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
+    >>> m3.items()
+    [('a', 5), ('c', 3), ('b', 2)]
+    >>> list(m3)
+    ['a', 'c', 'b']
+
+PSet
+~~~~
+With full support for the Set_ protocol PSet is meant as a drop in replacement to the built in set from a readers point
+of view. Support for the Hashable_ protocol also means that it can be used as key in Mappings_.
+
+Random access and insert is log32(n) where n is the size of the set.
+
+.. code::python
+
+    >>> from pyrsistent import s
+    >>> s1 = s(1, 2, 3, 2)
+    >>> s2 = s1.add(4)
+    >>> s3 = s1.remove(1)
+    >>> s1
+    pset([1, 2, 3])
+    >>> s2
+    pset([1, 2, 3, 4])
+    >>> s3
+    pset([2, 3])
+    >>> s1 | s(3, 4, 5)
+    pset([1, 2, 3, 4, 5])
+    >>> s1 & s(3, 4, 5)
+    pset([3])
+    >>> s1 < s2
+    True
+    >>> s1 < s(3, 4, 5)
+    False
+
+freeze and thaw
+~~~~~~~~~~~~~~~
+These functions are great when your cozy immutable world has to interact with the evil mutable world outside.
+
+.. code::python
+
+    >>> from pyrsistent import freeze, thaw, v, m
+    >>> freeze([1, {'a': 3}])
+    pvector([1, pmap({'a': 3})])
+    >>> thaw(v(1, m(a=3)))
+    [1, {'a': 3}]
 
 Compatibility
 -------------
@@ -54,7 +149,7 @@ Performance
 -----------
 
 Pyrsistent is developed with performance in mind. Still, while some operations are nearly on par with their built in, 
-mutable, counterparts in terms of speed, other operations are considerably slower. In the cases where attempts at 
+mutable, counterparts in terms of speed, other operations are slower. In the cases where attempts at
 optimizations have been done, speed has generally been valued over space.
 
 Pyrsistent comes with two API compatible flavors of PVector (on which PMap and PSet are based), one pure Python 
@@ -64,14 +159,13 @@ The C extension will be used automatically when possible.
 The pure python implementation is fully PyPy compatible. Running it under PyPy speeds operations up considerably if 
 the structures are used heavily (if JITed), for some cases the performance is almost on par with the built in counterparts.
 
-
 Installation
--------------
+------------
 
 pip install pyrsistent
 
 Documentation
----------------
+-------------
 
 Available at http://pyrsistent.readthedocs.org/
 
