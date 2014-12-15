@@ -19,11 +19,11 @@ program without hassle.
 
 Examples
 --------
-.. _Sequence: _collections
-.. _Hashable: _collections
-.. _Mapping: _collections
-.. _Mappings: _collections
-.. _Set: _collections
+.. _Sequence: collections_
+.. _Hashable: collections_
+.. _Mapping: collections_
+.. _Mappings: collections_
+.. _Set: collections_
 .. _collections: https://docs.python.org/3/library/collections.abc.html
 .. _documentation: http://pyrsistent.readthedocs.org/
 
@@ -106,7 +106,7 @@ of view. Support for the Hashable_ protocol also means that it can be used as ke
 
 Random access and insert is log32(n) where n is the size of the set.
 
-.. code::python
+.. code:: python
 
     >>> from pyrsistent import s
     >>> s1 = s(1, 2, 3, 2)
@@ -131,7 +131,7 @@ freeze and thaw
 ~~~~~~~~~~~~~~~
 These functions are great when your cozy immutable world has to interact with the evil mutable world outside.
 
-.. code::python
+.. code:: python
 
     >>> from pyrsistent import freeze, thaw, v, m
     >>> freeze([1, {'a': 3}])
