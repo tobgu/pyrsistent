@@ -69,12 +69,12 @@ class PVector(object):
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
 
-    def __new__(cls, c, s, r, t):
+    def __new__(cls, count, shift, root, tail):
         self = super(PVector, cls).__new__(cls)
-        self._count = c
-        self._shift = s
-        self._root = r
-        self._tail = t
+        self._count = count
+        self._shift = shift
+        self._root = root
+        self._tail = tail
 
         # Derived attribute stored for performance
         self._tail_offset = self._count - len(self._tail)
@@ -110,7 +110,7 @@ class PVector(object):
         if index < 0:
             index += self._count
 
-        return self._node_for(index)[index & BIT_MASK]
+        return PVector._node_for(self, index)[index & BIT_MASK]
 
     def __add__(self, other):
         """
@@ -203,6 +203,95 @@ class PVector(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
+    class _Setter(object):
+        __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes', '_extra_tail')
+
+        def __init__(self, v):
+            self._count = v._count
+            self._shift = v._shift
+            self._root = v._root
+            self._tail = v._tail
+            self._tail_offset = v._tail_offset
+            self._dirty_nodes = {}
+            self._extra_tail = []
+
+        def __getitem__(self, index):
+            if not isinstance(index, Integral):
+                raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
+
+            if index < 0:
+                index += self._count
+
+            return PVector._node_for(self, index)[index & BIT_MASK]
+
+        def append(self, element):
+            self._check_frozen()
+            self._extra_tail.append(element)
+
+        def extend(self, iterable):
+            self._check_frozen()
+            self._extra_tail.extend(iterable)
+
+        def __setitem__(self, index, val):
+            self._check_frozen()
+
+            if not isinstance(index, Integral):
+                raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
+
+            if 0 <= index < self._count:
+                if index >= self._tail_offset:
+                    if id(self._tail) not in self._dirty_nodes:
+                        self._tail = list(self._tail)
+                        self._dirty_nodes[id(self._tail)] = True
+
+                    self._tail[index & BIT_MASK] = val
+                else:
+                    self._root = self._do_set(self._shift, self._root, index, val)
+            elif self._count <= index < self._count + len(self._extra_tail):
+                self._extra_tail[index - self._count] = val
+            else:
+                raise IndexError()
+
+        def _do_set(self, level, node, i, val):
+            if id(node) in self._dirty_nodes:
+                ret = node
+            else:
+                ret = list(node)
+                self._dirty_nodes[id(ret)] = True
+
+            if level == 0:
+                ret[i & BIT_MASK] = val
+            else:
+                sub_index = (i >> level) & BIT_MASK  # >>>
+                ret[sub_index] = self._do_set(level - SHIFT, node[sub_index], i, val)
+
+            return ret
+
+        def _set_frozen(self):
+            self._dirty_nodes = None
+
+        def _check_frozen(self):
+            if self._dirty_nodes is None:
+                raise Exception("Can't modify setter. PVector has been created!")
+
+        def pvector(self):
+            self._set_frozen()
+            v = PVector(self._count, self._shift, self._root, self._tail)
+            v._mutating_extend(self._extra_tail)
+            return v
+
+    def setter(self):
+        return PVector._Setter(self)
+
+    def mset(self, *args):
+        # args % 2 == or die
+        # args integral or die
+        setter = PVector._Setter(self)
+        for i in xrange(0, len(args), 2):
+            setter[args[i]] = args[i+1]
+
+        return setter.pvector()
+
     def set(self, i, val):
         """
         Return a new vector with element at position i replaced with val. The original vector remains unchanged.
@@ -247,13 +336,14 @@ class PVector(object):
 
         return ret
 
-    def _node_for(self, i):
-        if 0 <= i < self._count:
-            if i >= self._tail_offset:
-                return self._tail
+    @staticmethod
+    def _node_for(pvector_like, i):
+        if 0 <= i < pvector_like._count:
+            if i >= pvector_like._tail_offset:
+                return pvector_like._tail
 
-            node = self._root
-            for level in range(self._shift, 0, -SHIFT):
+            node = pvector_like._root
+            for level in range(pvector_like._shift, 0, -SHIFT):
                 node = node[(i >> level) & BIT_MASK]  # >>>
 
             return node
@@ -405,7 +495,6 @@ class PVector(object):
     def __reduce__(self):
         # Pickling support
         return _pvector, (self._tolist(),)
-
 
 
 Sequence.register(PVector)

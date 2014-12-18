@@ -461,3 +461,32 @@ def test_pickling_empty_vector(pvector):
 
 def test_pickling_non_empty_vector(pvector):
     assert pickle.loads(pickle.dumps(pvector([1, 'a']), -1)) == pvector([1, 'a'])
+
+def test_mset():
+    from pyrsistent import _pvector as pv
+    p1 = pv(xrange(2000))
+    p2 = p1.mset(1, -1, 2, -2, 505, -505, 1998, -1998)
+
+    # Original not changed
+    assert p1[1] == 1
+    assert p1[2] == 2
+    assert p1[505] == 505
+    assert p1[1998] == 1998
+
+    # Other updated
+    assert p2[1] == -1
+    assert p2[2] == -2
+    assert p2[505] == -505
+    assert p2[1998] == -1998
+
+def test_setter():
+    pass
+
+# Set elements in different positions (including positions appended/extended)
+# Get elements in differnt positions -"-
+# Get/set elements outside valid ranges
+# Try to get/set when not integral
+# Try to set when pvector has been produced
+# Append and extend
+# Modify multiple setters created from the same vector, verify no interference
+# mset with invalid index spec
