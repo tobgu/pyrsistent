@@ -289,7 +289,7 @@ class PVector(object):
 
     def mset(self, *args):
         if len(args) % 2:
-            raise TypeError("mset expected an even number of arguments, was {}".format(len(args)))
+            raise TypeError("mset expected an even number of arguments, was {0}".format(len(args)))
 
         setter = PVector._Evolver(self)
         for i in range(0, len(args), 2):
