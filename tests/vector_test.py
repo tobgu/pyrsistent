@@ -452,41 +452,196 @@ def test_count(pvector):
     assert x.count(1) == 2
     assert x.count(4) == 0
 
+
 def test_empty_truthiness(pvector):
     assert pvector([1])
     assert not pvector([])
 
+
 def test_pickling_empty_vector(pvector):
     assert pickle.loads(pickle.dumps(pvector(), -1)) == pvector()
+
 
 def test_pickling_non_empty_vector(pvector):
     assert pickle.loads(pickle.dumps(pvector([1, 'a']), -1)) == pvector([1, 'a'])
 
-def test_mset():
-    from pyrsistent import _pvector as pv
-    p1 = pv(xrange(2000))
-    p2 = p1.mset(1, -1, 2, -2, 505, -505, 1998, -1998)
+
+def test_mset_basic_assignments():
+    from pyrsistent import _pvector as pvector
+
+    v1 = pvector(range(2000))
+    v2 = v1.mset(1, -1, 505, -505, 1998, -1998)
 
     # Original not changed
-    assert p1[1] == 1
-    assert p1[2] == 2
-    assert p1[505] == 505
-    assert p1[1998] == 1998
+    assert v1[1] == 1
+    assert v1[505] == 505
+    assert v1[1998] == 1998
 
     # Other updated
-    assert p2[1] == -1
-    assert p2[2] == -2
-    assert p2[505] == -505
-    assert p2[1998] == -1998
+    assert v2[1] == -1
+    assert v2[505] == -505
+    assert v2[1998] == -1998
 
-def test_setter():
-    pass
 
-# Set elements in different positions (including positions appended/extended)
-# Get elements in differnt positions -"-
-# Get/set elements outside valid ranges
-# Try to get/set when not integral
-# Try to set when pvector has been produced
-# Append and extend
-# Modify multiple setters created from the same vector, verify no interference
-# mset with invalid index spec
+def test_mset_odd_number_of_arguments():
+    from pyrsistent import _pvector as pvector
+    v = pvector([0, 1])
+
+    with pytest.raises(TypeError):
+        v.mset(0, 10, 1)
+
+
+def test_evolver_simple_update_in_tail():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector([1, 2, 3])
+    e = v.evolver()
+    e[1] = 4
+
+    assert list(e.pvector()) == [1, 4, 3]
+    assert list(v) == [1, 2, 3]
+
+
+def test_evolver_simple_update_in_tree():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector(range(35))
+    e = v.evolver()
+    e[10] = -10
+
+    assert e[10] == -10
+    assert e.pvector()[10] == -10
+    assert v[10] == 10
+
+
+def test_evolver_simple_update_just_outside_vector():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector()
+    e = v.evolver()
+    e[0] = 1
+
+    assert e[0] == 1
+    assert e.pvector()[0] == 1
+    assert len(v) == 0
+
+
+def test_evolver_append():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector()
+    e = v.evolver()
+    e.append(1)
+
+    assert list(e.pvector()) == [1]
+    assert list(v) == []
+
+
+def test_evolver_extend():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector([1])
+    e = v.evolver()
+    e.extend([2, 3])
+    e[2] = 4
+
+    assert list(e.pvector()) == [1, 2, 4]
+    assert list(v) == [1]
+
+
+def test_evolver_assign_and_read_with_negative_indices():
+    from pyrsistent import _pvector as pvector
+
+    v = pvector([1, 2, 3])
+    e = v.evolver()
+    e[-1] = 4
+
+    assert e[-1] == 4
+    assert list(e.pvector()) == [1, 2, 4]
+
+
+def test_evolver_non_integral_access():
+    from pyrsistent import _pvector as pvector
+    e = pvector([1]).evolver()
+
+    with pytest.raises(TypeError):
+        x = e['foo']
+
+
+def test_evolver_non_integral_assignment():
+    from pyrsistent import _pvector as pvector
+    e = pvector([1]).evolver()
+
+    with pytest.raises(TypeError):
+        e['foo'] = 1
+
+
+def test_evolver_out_of_bounds_access():
+    from pyrsistent import _pvector as pvector
+    e = pvector([1]).evolver()
+
+    with pytest.raises(IndexError):
+        x = e[1]
+
+
+def test_evolver_out_of_bounds_assignment():
+    from pyrsistent import _pvector as pvector
+    e = pvector([1]).evolver()
+
+    with pytest.raises(IndexError):
+        e[2] = 1
+
+
+def test_no_dependencies_between_evolvers_from_the_same_pvector():
+    from pyrsistent import _pvector as pvector
+
+    original_list = list(range(40))
+    v = pvector(original_list)
+    e1 = v.evolver()
+    e2 = v.evolver()
+
+    e1.extend([1, 2, 3])
+    e1[2] = 20
+    e1[35] = 350
+
+    e2.extend([-1, -2, -3])
+    e2[2] = -20
+    e2[35] = -350
+
+    e1_expected = original_list + [1, 2, 3]
+    e1_expected[2] = 20
+    e1_expected[35] = 350
+    assert list(e1.pvector()) == e1_expected
+
+    e2_expected = original_list + [-1, -2, -3]
+    e2_expected[2] = -20
+    e2_expected[35] = -350
+    assert list(e2.pvector()) == e2_expected
+
+def test_pvectors_produced_from_the_same_evolver_do_not_interfere():
+    from pyrsistent import _pvector as pvector
+
+    original_list = list(range(40))
+    v = pvector(original_list)
+    e = v.evolver()
+
+    e.extend([1, 2, 3])
+    e[2] = 20
+    e[35] = 350
+
+    v1 = e.pvector()
+    v1_expected = original_list + [1, 2, 3]
+    v1_expected[2] = 20
+    v1_expected[35] = 350
+
+    e.extend([-1, -2, -3])
+    e[3] = -30
+    e[36] = -360
+
+    v2 = e.pvector()
+    v2_expected = v1_expected + [-1, -2, -3]
+    v2_expected[3] = -30
+    v2_expected[36] = -360
+
+    assert list(v1) == v1_expected
+    assert list(v2) == v2_expected

@@ -203,52 +203,63 @@ class PVector(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
-    class _Setter(object):
-        __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes', '_extra_tail')
+    class _Evolver(object):
+        __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes', '_extra_tail', '_cached_leafs')
 
         def __init__(self, v):
+            self._reset(v)
+
+        def __getitem__(self, index):
+            if not isinstance(index, Integral):
+                raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
+
+            if index < 0:
+                index += self._count + len(self._extra_tail)
+
+            if self._count <= index < self._count + len(self._extra_tail):
+                return self._extra_tail[index - self._count]
+
+            return PVector._node_for(self, index)[index & BIT_MASK]
+
+        def _reset(self, v):
             self._count = v._count
             self._shift = v._shift
             self._root = v._root
             self._tail = v._tail
             self._tail_offset = v._tail_offset
             self._dirty_nodes = {}
+            self._cached_leafs = {}
             self._extra_tail = []
 
-        def __getitem__(self, index):
-            if not isinstance(index, Integral):
-                raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
-
-            if index < 0:
-                index += self._count
-
-            return PVector._node_for(self, index)[index & BIT_MASK]
-
         def append(self, element):
-            self._check_frozen()
             self._extra_tail.append(element)
 
         def extend(self, iterable):
-            self._check_frozen()
             self._extra_tail.extend(iterable)
 
         def __setitem__(self, index, val):
-            self._check_frozen()
-
             if not isinstance(index, Integral):
                 raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
 
+            if index < 0:
+                index += self._count + len(self._extra_tail)
+
             if 0 <= index < self._count:
-                if index >= self._tail_offset:
+                node = self._cached_leafs.get(index >> SHIFT)
+                if node:
+                    node[index & BIT_MASK] = val
+                elif index >= self._tail_offset:
                     if id(self._tail) not in self._dirty_nodes:
                         self._tail = list(self._tail)
                         self._dirty_nodes[id(self._tail)] = True
-
+                        self._cached_leafs[index >> SHIFT] = self._tail
                     self._tail[index & BIT_MASK] = val
                 else:
                     self._root = self._do_set(self._shift, self._root, index, val)
             elif self._count <= index < self._count + len(self._extra_tail):
                 self._extra_tail[index - self._count] = val
+            elif index == self._count + len(self._extra_tail):
+                self._extra_tail.append(val)
             else:
                 raise IndexError()
 
@@ -261,33 +272,27 @@ class PVector(object):
 
             if level == 0:
                 ret[i & BIT_MASK] = val
+                self._cached_leafs[i >> SHIFT] = ret
             else:
                 sub_index = (i >> level) & BIT_MASK  # >>>
                 ret[sub_index] = self._do_set(level - SHIFT, node[sub_index], i, val)
 
             return ret
 
-        def _set_frozen(self):
-            self._dirty_nodes = None
-
-        def _check_frozen(self):
-            if self._dirty_nodes is None:
-                raise Exception("Can't modify setter. PVector has been created!")
-
         def pvector(self):
-            self._set_frozen()
-            v = PVector(self._count, self._shift, self._root, self._tail)
-            v._mutating_extend(self._extra_tail)
+            v = PVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
+            self._reset(v)
             return v
 
-    def setter(self):
-        return PVector._Setter(self)
+    def evolver(self):
+        return PVector._Evolver(self)
 
     def mset(self, *args):
-        # args % 2 == or die
-        # args integral or die
-        setter = PVector._Setter(self)
-        for i in xrange(0, len(args), 2):
+        if len(args) % 2:
+            raise TypeError("mset expected an even number of arguments, was {}".format(len(args)))
+
+        setter = PVector._Evolver(self)
+        for i in range(0, len(args), 2):
             setter[args[i]] = args[i+1]
 
         return setter.pvector()

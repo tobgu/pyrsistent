@@ -1,3 +1,4 @@
+from itertools import repeat
 from pyrsistent import pvector, pset
 
 import time
@@ -236,13 +237,64 @@ def random_access(s):
 
     return result
 
+def run_multiple_random_inserts():
+    from pyrsistent import _pvector
+
+    indices = [2, 405, 56, 5067, 15063, 7045, 19999, 10022, 6000, 4023]
+    for x in range(4):
+        indices.extend([i+318 for i in indices])
+
+    print "Number of accesses: %s" % len(indices)
+    print "Number of elements in vector: %s" % max(indices)
+
+    original = _pvector(range(max(indices)))
+    original2 = _pvector(range(max(indices)))
+
+    # Using ordinary set
+    start = time.time()
+    new = original
+    for r in range(10000):
+        for i in indices:
+            new = new.set(i, 0)
+    print "Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices))
+
+    assert original == original2
+
+    # Using setter view
+    start = time.time()
+    evolver = original.evolver()
+    for r in range(10000):
+        for i in indices:
+            evolver[i] = 0
+    new2 = evolver.pvector()
+    print "Done evolver, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices))
+
+    assert original == original2
+
+    def interleave(it1, it2):
+        for i in zip(it1, it2):
+            for j in i:
+                yield j
+
+    # Using mset
+    start = time.time()
+    new3 = original
+    args = list(interleave(indices, repeat(0)))
+    for _ in range(10000):
+        new3 = new3.mset(*args)
+    print "Done mset, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(args)/2)
+
+    assert list(new) == list(new2)
+    assert list(new2) == list(new3)
+
 if __name__ == "__main__":
-    run_big_list_initialization()
-    run_big_iterator_initialization()
-    run_slicing_performance()
-    run_create_many_small_vectors()
-    run_set_performance()
-    run_string_from_objects()
-    run_to_list()
-    run_len()
-    run_vector_random_access_performance()
+    run_multiple_random_inserts()
+#    run_big_list_initialization()
+#    run_big_iterator_initialization()
+#    run_slicing_performance()
+#    run_create_many_small_vectors()
+#    run_set_performance()
+#    run_string_from_objects()
+#    run_to_list()
+#    run_len()
+#    run_vector_random_access_performance()
