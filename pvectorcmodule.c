@@ -629,15 +629,19 @@ static void incRefs(PyObject **obj) {
   }
 }
 
-static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
+static PVector* newPvecWithTail(unsigned int count, unsigned int shift, VNode *root, VNode *tail) {
   PVector *pvec = PyObject_GC_New(PVector, &PVectorType);
   debug("pymem alloc_copy %x, ref cnt: %u\n", pvec, pvec->ob_refcnt);
   pvec->count = count;
   pvec->shift = shift;
   pvec->root = root;
-  pvec->tail = newNode();
+  pvec->tail = tail;
   PyObject_GC_Track((PyObject*)pvec);
   return pvec;
+}
+
+static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
+  return newPvecWithTail(count, shift, root, newNode());
 }
 
 static VNode* newPath(unsigned int level, VNode* node){
@@ -1227,10 +1231,14 @@ static PyTypeObject PVectorEvolverType = {
     0,                                          /* tp_members */
 };
 
+
+// Indicate that a node is "dirty" (has been updated by the evolver)
+// by setting the MSB of the refCount. This will be cleared when
+// creating a pvector from the evolver.
 #define DIRTY_BIT 0x80000000
 #define REF_COUNT_MASK (~DIRTY_BIT)
 #define IS_DIRTY(node) (node->refCount & DIRTY_BIT)
-#define SET_DIRTY(node) (node->refCount &= DIRTY_BIT)
+#define SET_DIRTY(node) (node->refCount |= DIRTY_BIT)
 #define CLEAR_DIRTY(node) (node->refCount &= REF_COUNT_MASK)
 
 static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
@@ -1294,9 +1302,12 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
     if((0 <= position) && (position < self->vector->count)) {
       if(position >= TAIL_OFF(self->vector)) {
         // Reuse the root, replace the tail
+        printf("Setting tail\n");
         if(!IS_DIRTY(self->tail)) {
+          printf("Not dirty\n");
           // Copy tail, set dirty
           VNode* newTail = allocNode();
+          newTail->refCount = 0;
           memcpy(newTail->items, self->tail->items, TAIL_SIZE(self->vector) * sizeof(void*));
 
           // TODO Update ref count as a last step when all dirty nodes are cleared.
@@ -1305,6 +1316,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
           // be deallocated when the source vector is deallocated.
           self->tail = newTail;
           SET_DIRTY(self->tail);
+          printf("Not dirty %x\n", self->tail->refCount);
         }
 
         self->tail->items[position & BIT_MASK] = (void*)value;
@@ -1330,19 +1342,35 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
   return -1;
 }
 
-static PyObject *PVectorEvolver_pvector(PVectorEvolver *evolver) {
+static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   printf("Calling pvector\n");
   // Increment count on root/if they have not been modified?
   // Increment reference count on object held by dirty nodes
   // Lastly, decrement reference count on the vector that we were
   // constructed from and replace it with a reference to a new 
   // vector.
-  return (PyObject*)(evolver->vector);
+
+  if(!IS_DIRTY(self->root) && !IS_DIRTY(self->tail)) {
+    printf("Non dirty\n");
+    Py_INCREF(self->vector);
+    return (PyObject*)self->vector;
+  }
+
+  CLEAR_DIRTY(self->tail);
+  self->tail->refCount++;
+  self->root->refCount++;
+  PVector *oldPvector = self->vector;
+  PVector *newPvector = newPvecWithTail(self->vector->count, self->vector->shift,
+                                        self->root, self->tail);
+  initializeEvolver(self, newPvector);
+  Py_DECREF(oldPvector);
+
+  return (PyObject*)(self->vector);
 };
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
     Py_VISIT(self->vector);
-    // TODO visit list
+    // TODO visit append list
     return 0;
 }
 
