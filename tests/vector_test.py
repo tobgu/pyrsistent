@@ -491,15 +491,11 @@ def test_mset_odd_number_of_arguments():
         v.mset(0, 10, 1)
 
 
-def test_evolver_simple_update_in_tail():
-    from pyrsistent import _pvector as pvector
+def test_evolver_no_update(pvector):
+    # This is mostly a test against memory leaks in the C implementation
+    v = pvector(range(40))
 
-    v = pvector([1, 2, 3])
-    e = v.evolver()
-    e[1] = 4
-
-    assert list(e.pvector()) == [1, 4, 3]
-    assert list(v) == [1, 2, 3]
+    assert v.evolver().pvector() == v
 
 
 def test_evolver_simple_update_in_tree():
@@ -513,6 +509,14 @@ def test_evolver_simple_update_in_tree():
     assert e.pvector()[10] == -10
     assert v[10] == 10
 
+def test_evolver_simple_update_in_tail(pvector):
+    v = pvector(range(35))
+    e = v.evolver()
+    e[33] = -33
+
+    assert e[33] == -33
+#    assert e.pvector()[33] == -33
+#    assert v[10] == 10
 
 def test_evolver_simple_update_just_outside_vector():
     from pyrsistent import _pvector as pvector
@@ -526,7 +530,7 @@ def test_evolver_simple_update_just_outside_vector():
     assert len(v) == 0
 
 
-def test_evolver_append():
+def test_evolver_append(pvector):
     from pyrsistent import _pvector as pvector
 
     v = pvector()
@@ -555,9 +559,11 @@ def test_evolver_assign_and_read_with_negative_indices():
     v = pvector([1, 2, 3])
     e = v.evolver()
     e[-1] = 4
+    e.extend([11, 12, 13])
+    e[-1] = 33
 
-    assert e[-1] == 4
-    assert list(e.pvector()) == [1, 2, 4]
+    assert e[-1] == 33
+    assert list(e.pvector()) == [1, 2, 4, 11, 12, 33]
 
 
 def test_evolver_non_integral_access():
@@ -568,8 +574,7 @@ def test_evolver_non_integral_access():
         x = e['foo']
 
 
-def test_evolver_non_integral_assignment():
-    from pyrsistent import _pvector as pvector
+def test_evolver_non_integral_assignment(pvector):
     e = pvector([1]).evolver()
 
     with pytest.raises(TypeError):

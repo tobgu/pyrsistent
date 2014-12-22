@@ -22,6 +22,7 @@ require to be exposed outside of this module.
 #define BIT_MASK (BRANCH_FACTOR - 1)
 
 static PyTypeObject PVectorType;
+static PyTypeObject PVectorEvolverType;
 
 int SHIFT = 0;
 
@@ -46,6 +47,14 @@ typedef struct {
   VNode *root;
   VNode *tail;
 } PVector;
+
+typedef struct {
+  PyObject_HEAD
+  PVector* vector;
+  VNode* root;
+  VNode* tail;
+} PVectorEvolver;
+
 
 static PVector* EMPTY_VECTOR = NULL;
 static PyObject* pmap_factory_fn = NULL;
@@ -475,6 +484,28 @@ static PyObject* PVector_pickle_reduce(PVector *self) {
   return result_tuple;
 }
 
+static void initializeEvolver(PVectorEvolver* evolver, PVector* vector) {
+  // Need to hold a reference to the underlying vector to manage
+  // the ref counting properly.
+  evolver->vector = vector;
+  Py_INCREF(vector);
+  evolver->root = vector->root;
+  evolver->tail = vector->tail;
+}
+
+static PyObject * PVector_evolver(PyObject *self) {
+  PVectorEvolver *evolver = PyObject_GC_New(PVectorEvolver, &PVectorEvolverType);
+  if (evolver == NULL) {
+    return NULL;
+  }
+  
+  PyObject_GC_Track(evolver);
+  initializeEvolver(evolver, (PVector*)self);
+  Py_INCREF(evolver);
+  return (PyObject *)evolver;
+}
+
+
 static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
   memcpy(dest, src, BRANCH_FACTOR * sizeof(void*));
   dest[pos] = obj;
@@ -519,6 +550,7 @@ static PyMethodDef PVector_methods[] = {
 	{"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
+        {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
 	{NULL}
 };
 
@@ -916,6 +948,8 @@ static PyObject* PVector_set_in(PVector *self, PyObject *args) {
 	return NULL;
       }
 
+      // This is slightly scary calling out to Python code. Could
+      // there be concurrency issues if the GIL is released?
       PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
       PyObject* newItem = PyObject_CallMethodObjArgs(currentItem, set_in_fn_name, newSequence, value, NULL);
       Py_DECREF(currentItem);
@@ -974,8 +1008,9 @@ PyObject* moduleinit(void) {
   PVectorType.tp_init = NULL;
   PVectorType.tp_new = NULL;
 
-  if (PyType_Ready(&PVectorType) < 0)
+  if (PyType_Ready(&PVectorType) < 0) {
     return NULL;
+  }
 
   // Register with Sequence to appear as a proper sequence to the outside world
   PyObject* c = PyObject_GetAttrString(PyImport_ImportModule("collections"), "Sequence");
@@ -1050,7 +1085,7 @@ static PyMethodDef PVectorIter_methods[] = {
     {NULL,              NULL}           /* sentinel */
 };
 
-PyTypeObject PVectorIterType = {
+static PyTypeObject PVectorIterType = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "pvector_iterator",                         /* tp_name */
     sizeof(PVectorIter),                        /* tp_basicsize */
@@ -1085,8 +1120,10 @@ PyTypeObject PVectorIterType = {
 
 static PyObject * PVectorIter_iter(PyObject *seq) {
     PVectorIter *it = PyObject_GC_New(PVectorIter, &PVectorIterType);
-    if (it == NULL)
+    if (it == NULL) {
         return NULL;
+    }
+
     it->it_index = 0;
     Py_INCREF(seq);
     it->it_seq = (PVector *)seq;
@@ -1123,3 +1160,191 @@ static PyObject *PVectorIter_next(PVectorIter *it) {
     it->it_seq = NULL;
     return NULL;
 }
+
+
+
+/*********************** PVector Evolver **************************/
+
+/* 
+Evolver to make multi updates easier to work with and more efficient.
+*/
+
+static void PVectorEvolver_dealloc(PVectorEvolver *);
+static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
+static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
+static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
+static int PVectorEvolver_set_item(PVectorEvolver *, PyObject*, PyObject*);
+static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
+static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg);
+
+static PyMappingMethods PVectorEvolver_mapping_methods = {
+  // TODO:    (lenfunc)PVector_len,
+  0,
+  (binaryfunc)PVectorEvolver_subscript,
+  (objobjargproc)PVectorEvolver_set_item,
+};
+
+
+static PyMethodDef PVectorEvolver_methods[] = {
+	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
+	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
+        //	{"__getitem__", (PyCFunction)PVectorEvolver_subscript, METH_O|METH_COEXIST, "Subscript"},
+        //	{"__setitem__", (PyCFunction)PVectorEvolver_set_item, METH_VARARGS, "Inserts an element at the specified position"},   
+        {"pvector",     (PyCFunction)PVectorEvolver_pvector, METH_NOARGS, "Create PVector from evolver"},
+        {NULL,              NULL}           /* sentinel */
+};
+
+static PyTypeObject PVectorEvolverType = {
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    "pvector_evolver",                          /* tp_name */
+    sizeof(PVectorEvolver),                     /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)PVectorEvolver_dealloc,         /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    0,                                          /* tp_compare */
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    &PVectorEvolver_mapping_methods,             /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    PyObject_GenericGetAttr,                    /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
+    0,                                          /* tp_doc */
+    (traverseproc)PVectorEvolver_traverse,      /* tp_traverse       */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    PVectorEvolver_methods,                     /* tp_methods */
+    0,                                          /* tp_members */
+};
+
+#define DIRTY_BIT 0x80000000
+#define REF_COUNT_MASK (~DIRTY_BIT)
+#define IS_DIRTY(node) (node->refCount & DIRTY_BIT)
+#define SET_DIRTY(node) (node->refCount &= DIRTY_BIT)
+#define CLEAR_DIRTY(node) (node->refCount &= REF_COUNT_MASK)
+
+static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
+  printf("Deallocatng\n");
+  PyObject_GC_UnTrack(evolver);
+  printf("foo\n");
+  Py_DECREF(evolver->vector);
+  printf("bar\n");
+
+  // TODO: Deallocate all nodes that are dirty (with ref count = 1?)
+  PyObject_GC_Del(evolver);
+  printf("baz\n");
+
+}
+
+static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
+  return NULL;
+}
+
+static PyObject *PVectorEvolver_extend(PVectorEvolver *self, PyObject *args) {
+  return NULL;
+}
+
+static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) {
+  if (PyIndex_Check(item)) {
+    Py_ssize_t pos = PyNumber_AsSsize_t(item, PyExc_IndexError);
+    if (pos == -1 && PyErr_Occurred()) {
+      return NULL;
+    }
+
+    if (pos < 0) {
+      pos += self->vector->count;
+      // TODO: Include length of append list
+    }
+
+    if(0 <= pos && pos < self->vector->count) {
+      if(pos >= TAIL_OFF(self->vector)) {
+        PyObject* obj = self->tail->items[pos & BIT_MASK];
+        Py_XINCREF(obj);
+        return obj;
+      } else {
+        return NULL;
+      }
+    }
+  }
+  return NULL;
+}
+
+static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
+  /* The n parses for size, the O parses for a python object */
+  if (PyIndex_Check(item)) {
+    Py_ssize_t position = PyNumber_AsSsize_t(item, PyExc_IndexError);
+    if (position == -1 && PyErr_Occurred()) {
+      return -1;
+    }
+         
+    if (position < 0) {
+      position += self->vector->count; // + PyList_GET_SIZE(self);
+    }
+
+    if((0 <= position) && (position < self->vector->count)) {
+      if(position >= TAIL_OFF(self->vector)) {
+        // Reuse the root, replace the tail
+        if(!IS_DIRTY(self->tail)) {
+          // Copy tail, set dirty
+          VNode* newTail = allocNode();
+          memcpy(newTail->items, self->tail->items, TAIL_SIZE(self->vector) * sizeof(void*));
+
+          // TODO Update ref count as a last step when all dirty nodes are cleared.
+
+          // No need to take care of the the original tail here. It will
+          // be deallocated when the source vector is deallocated.
+          self->tail = newTail;
+          SET_DIRTY(self->tail);
+        }
+
+        self->tail->items[position & BIT_MASK] = (void*)value;
+        return 0;
+      } else {
+        // TODO
+        /* // Keep the tail, replace the root */
+        /* VNode *newRoot = doSet(self->root, self->shift, position, argObj); */
+        /* PVector *new_pvec = newPvec(self->count, self->shift, newRoot); */
+
+        /* // Free the tail and replace it with a reference to the tail of the original vector */
+        /* freeNode(new_pvec->tail); */
+        /* new_pvec->tail = self->tail; */
+        /* self->tail->refCount++; */
+        /* return (PyObject*)new_pvec; */
+      }
+    }
+  }
+
+  PyErr_Format(PyExc_TypeError,
+               "Indices must be integers, not %.200s",
+               item->ob_type->tp_name);
+  return -1;
+}
+
+static PyObject *PVectorEvolver_pvector(PVectorEvolver *evolver) {
+  printf("Calling pvector\n");
+  // Increment count on root/if they have not been modified?
+  // Increment reference count on object held by dirty nodes
+  // Lastly, decrement reference count on the vector that we were
+  // constructed from and replace it with a reference to a new 
+  // vector.
+  return (PyObject*)(evolver->vector);
+};
+
+static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
+    Py_VISIT(self->vector);
+    // TODO visit list
+    return 0;
+}
+
+
+// PyList_GET_SIZE(self);
