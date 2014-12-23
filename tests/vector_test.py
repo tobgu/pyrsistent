@@ -498,9 +498,7 @@ def test_evolver_no_update(pvector):
     assert v.evolver().pvector() == v
 
 
-def test_evolver_simple_update_in_tree():
-    from pyrsistent import _pvector as pvector
-
+def test_evolver_simple_update_in_tree(pvector):
     v = pvector(range(35))
     e = v.evolver()
     e[10] = -10
@@ -518,7 +516,6 @@ def test_evolver_simple_update_in_tail(pvector):
     assert e[33] == -33
     assert e.pvector()[33] == -33
     assert v[33] == 33
-
 
 def test_evolver_simple_update_just_outside_vector():
     from pyrsistent import _pvector as pvector

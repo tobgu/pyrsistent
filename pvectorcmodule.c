@@ -50,9 +50,8 @@ typedef struct {
 
 typedef struct {
   PyObject_HEAD
-  PVector* vector;
-  VNode* root;
-  VNode* tail;
+  PVector* originalVector;
+  PVector* newVector;
 } PVectorEvolver;
 
 
@@ -166,11 +165,12 @@ static VNode* nodeFor(PVector *self, int i){
 static PyObject* _get_item(PVector *self, Py_ssize_t pos) {
   VNode* node = nodeFor((PVector*)self, pos);
 
+  PyObject *result = NULL;
   if(node != NULL) {
-    return node->items[pos & BIT_MASK];
+    result = node->items[pos & BIT_MASK];
   }
 
-  return NULL;
+  return result;
 }
 
 /*
@@ -484,13 +484,21 @@ static PyObject* PVector_pickle_reduce(PVector *self) {
   return result_tuple;
 }
 
+static PVector* rawCopyPVector(PVector* vector) {
+  PVector* newVector = PyObject_GC_New(PVector, &PVectorType);
+  newVector->count = vector->count;
+  newVector->shift = vector->shift;
+  newVector->root = vector->root;
+  newVector->tail = vector->tail;
+  PyObject_GC_Track((PyObject*)newVector);
+  return newVector;
+}
+
 static void initializeEvolver(PVectorEvolver* evolver, PVector* vector) {
   // Need to hold a reference to the underlying vector to manage
   // the ref counting properly.
-  evolver->vector = vector;
-  Py_INCREF(vector);
-  evolver->root = vector->root;
-  evolver->tail = vector->tail;
+  evolver->originalVector = vector;
+  evolver->newVector = vector;
 }
 
 static PyObject * PVector_evolver(PyObject *self) {
@@ -501,7 +509,7 @@ static PyObject * PVector_evolver(PyObject *self) {
   
   PyObject_GC_Track(evolver);
   initializeEvolver(evolver, (PVector*)self);
-  Py_INCREF(evolver);
+  Py_INCREF(self);
   return (PyObject *)evolver;
 }
 
@@ -526,6 +534,7 @@ static PySequenceMethods PVector_sequence_methods = {
     (binaryfunc)PVector_extend,      /* sq_concat */
     (ssizeargfunc)PVector_repeat,    /* sq_repeat */
     (ssizeargfunc)PVector_get_item,  /* sq_item */
+    // TODO migth want to move the slice function to here
     NULL,                            /* sq_slice */
     NULL,                            /* sq_ass_item */
     NULL,                            /* sq_ass_slice */
@@ -629,6 +638,8 @@ static void incRefs(PyObject **obj) {
   }
 }
 
+
+// TODO this function may be redundant now...
 static PVector* newPvecWithTail(unsigned int count, unsigned int shift, VNode *root, VNode *tail) {
   PVector *pvec = PyObject_GC_New(PVector, &PVectorType);
   debug("pymem alloc_copy %x, ref cnt: %u\n", pvec, pvec->ob_refcnt);
@@ -882,6 +893,7 @@ static VNode* doSet(VNode* node, unsigned int level, unsigned int position, PyOb
     return theNewNode;
   }
 }
+
 
 static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argObj) {
   if(position < 0) {
@@ -1241,17 +1253,48 @@ static PyTypeObject PVectorEvolverType = {
 #define SET_DIRTY(node) (node->refCount |= DIRTY_BIT)
 #define CLEAR_DIRTY(node) (node->refCount &= REF_COUNT_MASK)
 
+
+// TODO Test with larger, multi level, vector where multiple nodes
+// have been manipulated.
+static void freezeNodeRecursively(VNode *node, int level) {
+  int i;
+  CLEAR_DIRTY(node);
+  node->refCount = 1;
+  if(level > 0) {
+    for(i = 0; i < BRANCH_FACTOR; i++) {
+      VNode *nextNode = (VNode*)node->items[i];
+      if((nextNode != NULL) && IS_DIRTY(nextNode)) {
+          freezeNodeRecursively(nextNode, level - SHIFT);
+      }
+    }
+  }
+}
+
+static void freezeVector(PVector *vector) {
+  if(IS_DIRTY(vector->tail)) {
+    freezeNodeRecursively(vector->tail, 0);
+  } else {
+    vector->tail->refCount++;
+  }
+
+  if(IS_DIRTY(vector->root)) {
+    freezeNodeRecursively(vector->root, vector->shift);
+  } else {
+    vector->root->refCount++;
+  }
+}
+
 static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
-  printf("Deallocatng\n");
   PyObject_GC_UnTrack(evolver);
-  printf("foo\n");
-  Py_DECREF(evolver->vector);
-  printf("bar\n");
+  Py_DECREF(evolver->originalVector);
 
-  // TODO: Deallocate all nodes that are dirty (with ref count = 1?)
+  if(evolver->originalVector != evolver->newVector) {
+    freezeVector(evolver->newVector);
+    Py_DECREF(evolver->newVector);
+  }
+
+  // TODO append list
   PyObject_GC_Del(evolver);
-  printf("baz\n");
-
 }
 
 static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
@@ -1270,25 +1313,53 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
     }
 
     if (pos < 0) {
-      pos += self->vector->count;
+      pos += self->newVector->count;
       // TODO: Include length of append list
     }
 
-    if(0 <= pos && pos < self->vector->count) {
-      if(pos >= TAIL_OFF(self->vector)) {
-        PyObject* obj = self->tail->items[pos & BIT_MASK];
-        Py_XINCREF(obj);
-        return obj;
-      } else {
-        return NULL;
-      }
+    if(0 <= pos && pos < self->newVector->count) {
+      return _get_item(self->newVector, pos);
     }
+    // TODO check append list
   }
   return NULL;
 }
 
+static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
+  VNode* resultNode;
+  if(level == 0) {
+    debug("doSetWithDirty(): level == 0\n");
+    if(!IS_DIRTY(node)) {
+      // TODO new node should not be required here, just allocNode
+      resultNode = newNode();
+      copyInsert(resultNode->items, node->items, position & BIT_MASK, value);
+      incRefs((PyObject**)resultNode->items);
+      SET_DIRTY(resultNode);
+    } else {
+      resultNode = node;
+      resultNode->items[position & BIT_MASK] = value;
+      Py_INCREF(value);
+    }
+  } else {
+    debug("doSetWithDirty(): level == %i\n", level);
+    if(!IS_DIRTY(node)) {
+      resultNode = copyNode(node);
+      SET_DIRTY(resultNode);
+    } else {
+      resultNode = node;
+    }
+    
+    Py_ssize_t index = (position >> level) & BIT_MASK;
+    resultNode->items[index] = doSetWithDirty(resultNode->items[index], level - SHIFT, position, value);
+  }
+
+  return resultNode;
+}
+
 static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
-  /* The n parses for size, the O parses for a python object */
+  // TODO: Could wait with initializing new vector until really needed
+  // here (if manipulating an index within the old vector)
+
   if (PyIndex_Check(item)) {
     Py_ssize_t position = PyNumber_AsSsize_t(item, PyExc_IndexError);
     if (position == -1 && PyErr_Occurred()) {
@@ -1296,43 +1367,22 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
     }
          
     if (position < 0) {
-      position += self->vector->count; // + PyList_GET_SIZE(self);
+      position += self->newVector->count; // + PyList_GET_SIZE(self);
     }
 
-    if((0 <= position) && (position < self->vector->count)) {
-      if(position >= TAIL_OFF(self->vector)) {
-        // Reuse the root, replace the tail
-        printf("Setting tail\n");
-        if(!IS_DIRTY(self->tail)) {
-          printf("Not dirty\n");
-          // Copy tail, set dirty
-          VNode* newTail = allocNode();
-          newTail->refCount = 0;
-          memcpy(newTail->items, self->tail->items, TAIL_SIZE(self->vector) * sizeof(void*));
-
-          // TODO Update ref count as a last step when all dirty nodes are cleared.
-
-          // No need to take care of the the original tail here. It will
-          // be deallocated when the source vector is deallocated.
-          self->tail = newTail;
-          SET_DIRTY(self->tail);
-          printf("Not dirty %x\n", self->tail->refCount);
-        }
-
-        self->tail->items[position & BIT_MASK] = (void*)value;
-        return 0;
-      } else {
-        // TODO
-        /* // Keep the tail, replace the root */
-        /* VNode *newRoot = doSet(self->root, self->shift, position, argObj); */
-        /* PVector *new_pvec = newPvec(self->count, self->shift, newRoot); */
-
-        /* // Free the tail and replace it with a reference to the tail of the original vector */
-        /* freeNode(new_pvec->tail); */
-        /* new_pvec->tail = self->tail; */
-        /* self->tail->refCount++; */
-        /* return (PyObject*)new_pvec; */
+    if((0 <= position) && (position < self->newVector->count)) {
+      if(self->originalVector == self->newVector) {
+        // Lazily create new vector since we're about to modify the original
+        self->newVector = rawCopyPVector(self->originalVector);
       }
+
+      if(position < TAIL_OFF(self->newVector)) {
+        self->newVector->root = doSetWithDirty(self->newVector->root, self->newVector->shift, position, value);
+      } else {
+        self->newVector->tail = doSetWithDirty(self->newVector->tail, 0, position, value);
+      }
+      
+      return 0;
     }
   }
 
@@ -1350,28 +1400,27 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   // constructed from and replace it with a reference to a new 
   // vector.
 
-  if(!IS_DIRTY(self->root) && !IS_DIRTY(self->tail)) {
-    printf("Non dirty\n");
-    Py_INCREF(self->vector);
-    return (PyObject*)self->vector;
+  PVector *resultVector;
+  if(self->newVector == self->originalVector) { // TODO List
+    resultVector = self->newVector;
+  } else {
+    freezeVector(self->newVector);
+    resultVector = self->newVector;
+    PVector *oldVector = self->originalVector;
+    initializeEvolver(self, resultVector);
+    Py_DECREF(oldVector);
   }
 
-  CLEAR_DIRTY(self->tail);
-  self->tail->refCount++;
-  self->root->refCount++;
-  PVector *oldPvector = self->vector;
-  PVector *newPvector = newPvecWithTail(self->vector->count, self->vector->shift,
-                                        self->root, self->tail);
-  initializeEvolver(self, newPvector);
-  Py_DECREF(oldPvector);
-
-  return (PyObject*)(self->vector);
-};
+  // TODO If append list exists append it and reset.
+  Py_INCREF(resultVector);  
+  return (PyObject*)resultVector;
+}
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
-    Py_VISIT(self->vector);
-    // TODO visit append list
-    return 0;
+  printf("Traversing...\n");
+  Py_VISIT(self->newVector);
+  // TODO visit append list
+  return 0;
 }
 
 
