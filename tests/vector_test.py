@@ -508,6 +508,23 @@ def test_evolver_simple_update_in_tree(pvector):
     assert v[10] == 10
 
 
+def test_evolver_multi_level_multi_update_in_tree(pvector):
+    # This test is mostly to detect memory issues in the native implementation
+    v = pvector(range(3500))
+    e = v.evolver()
+
+    # Update differs between first and second time since the
+    # corresponding node will be marked as dirty the first time only.
+    e[10] = -10
+    e[11] = -11
+    e[10] = -1000
+
+    assert e[10] == -1000
+    assert e[11] == -11
+    assert e.pvector()[10] == -1000
+    assert v[10] == 10
+
+
 def test_evolver_simple_update_in_tail(pvector):
     v = pvector(range(35))
     e = v.evolver()
@@ -516,6 +533,7 @@ def test_evolver_simple_update_in_tail(pvector):
     assert e[33] == -33
     assert e.pvector()[33] == -33
     assert v[33] == 33
+
 
 def test_evolver_simple_update_just_outside_vector():
     from pyrsistent import _pvector as pvector
@@ -529,7 +547,7 @@ def test_evolver_simple_update_just_outside_vector():
     assert len(v) == 0
 
 
-def test_evolver_append(pvector):
+def test_evolver_append():
     from pyrsistent import _pvector as pvector
 
     v = pvector()
@@ -565,8 +583,7 @@ def test_evolver_assign_and_read_with_negative_indices():
     assert list(e.pvector()) == [1, 2, 4, 11, 12, 33]
 
 
-def test_evolver_non_integral_access():
-    from pyrsistent import _pvector as pvector
+def test_evolver_non_integral_access(pvector):
     e = pvector([1]).evolver()
 
     with pytest.raises(TypeError):
@@ -580,16 +597,14 @@ def test_evolver_non_integral_assignment(pvector):
         e['foo'] = 1
 
 
-def test_evolver_out_of_bounds_access():
-    from pyrsistent import _pvector as pvector
+def test_evolver_out_of_bounds_access(pvector):
     e = pvector([1]).evolver()
 
     with pytest.raises(IndexError):
         x = e[1]
 
 
-def test_evolver_out_of_bounds_assignment():
-    from pyrsistent import _pvector as pvector
+def test_evolver_out_of_bounds_assignment(pvector):
     e = pvector([1]).evolver()
 
     with pytest.raises(IndexError):

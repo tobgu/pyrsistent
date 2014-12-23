@@ -1254,8 +1254,6 @@ static PyTypeObject PVectorEvolverType = {
 #define CLEAR_DIRTY(node) (node->refCount &= REF_COUNT_MASK)
 
 
-// TODO Test with larger, multi level, vector where multiple nodes
-// have been manipulated.
 static void freezeNodeRecursively(VNode *node, int level) {
   int i;
   CLEAR_DIRTY(node);
@@ -1319,9 +1317,16 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
 
     if(0 <= pos && pos < self->newVector->count) {
       return _get_item(self->newVector, pos);
+    } else {
+      PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
     // TODO check append list
+  } else {
+    PyErr_Format(PyExc_TypeError,
+                 "Indices must be integers, not %.200s",
+                 item->ob_type->tp_name);
   }
+
   return NULL;
 }
 
@@ -1330,13 +1335,13 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
   if(level == 0) {
     debug("doSetWithDirty(): level == 0\n");
     if(!IS_DIRTY(node)) {
-      // TODO new node should not be required here, just allocNode
-      resultNode = newNode();
+      resultNode = allocNode();
       copyInsert(resultNode->items, node->items, position & BIT_MASK, value);
       incRefs((PyObject**)resultNode->items);
       SET_DIRTY(resultNode);
     } else {
       resultNode = node;
+      Py_DECREF(resultNode->items[position & BIT_MASK]);
       resultNode->items[position & BIT_MASK] = value;
       Py_INCREF(value);
     }
@@ -1357,9 +1362,6 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
 }
 
 static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
-  // TODO: Could wait with initializing new vector until really needed
-  // here (if manipulating an index within the old vector)
-
   if (PyIndex_Check(item)) {
     Py_ssize_t position = PyNumber_AsSsize_t(item, PyExc_IndexError);
     if (position == -1 && PyErr_Occurred()) {
@@ -1372,7 +1374,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
 
     if((0 <= position) && (position < self->newVector->count)) {
       if(self->originalVector == self->newVector) {
-        // Lazily create new vector since we're about to modify the original
+        // Create new vector since we're about to modify the original
         self->newVector = rawCopyPVector(self->originalVector);
       }
 
@@ -1383,12 +1385,15 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
       }
       
       return 0;
+    } else {
+      PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
+    // TODO append list
+  } else {
+    PyErr_Format(PyExc_TypeError,
+                 "Indices must be integers, not %.200s",
+                 item->ob_type->tp_name);
   }
-
-  PyErr_Format(PyExc_TypeError,
-               "Indices must be integers, not %.200s",
-               item->ob_type->tp_name);
   return -1;
 }
 
@@ -1401,7 +1406,7 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   // vector.
 
   PVector *resultVector;
-  if(self->newVector == self->originalVector) { // TODO List
+  if(self->newVector == self->originalVector) { // TODO append list
     resultVector = self->newVector;
   } else {
     freezeVector(self->newVector);
