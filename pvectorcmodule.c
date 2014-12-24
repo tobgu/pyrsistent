@@ -164,12 +164,10 @@ static VNode* nodeFor(PVector *self, int i){
 
 static PyObject* _get_item(PVector *self, Py_ssize_t pos) {
   VNode* node = nodeFor((PVector*)self, pos);
-
   PyObject *result = NULL;
   if(node != NULL) {
     result = node->items[pos & BIT_MASK];
   }
-
   return result;
 }
 
@@ -196,6 +194,7 @@ static void releaseNode(int level, VNode *node) {
   int i;
 
   node->refCount--;
+  debug("Refcount when trying to release: %u\n", node->refCount);
   if(node->refCount == 0) {
     if(level > 0) {
       for(i = 0; i < BRANCH_FACTOR; i++) {
@@ -221,8 +220,8 @@ static void releaseNode(int level, VNode *node) {
  those if needed.
 */
 static void PVector_dealloc(PVector *self) {
-  debug("Dealloc(): self=%p, self->count=%i, tail->refCount=%i, root->refCount=%i, self->shift=%i, self->tail=%p, self->root=%p\n",
-   self, self->count, self->tail->refCount, self->root->refCount, self->shift, self->tail, self->root, self->root);
+  debug("Dealloc(): self=%p, self->count=%u, tail->refCount=%u, root->refCount=%u, self->shift=%u, self->tail=%p, self->root=%p\n",
+        self, self->count, self->tail->refCount, self->root->refCount, self->shift, self->tail, self->root);
 
   PyObject_GC_UnTrack((PyObject*)self);
   Py_TRASHCAN_SAFE_BEGIN(self)
@@ -1255,6 +1254,8 @@ static PyTypeObject PVectorEvolverType = {
 
 
 static void freezeNodeRecursively(VNode *node, int level) {
+  debug("Freezing recursively node=%p, level=%u\n", node, level);
+
   int i;
   CLEAR_DIRTY(node);
   node->refCount = 1;
@@ -1262,7 +1263,7 @@ static void freezeNodeRecursively(VNode *node, int level) {
     for(i = 0; i < BRANCH_FACTOR; i++) {
       VNode *nextNode = (VNode*)node->items[i];
       if((nextNode != NULL) && IS_DIRTY(nextNode)) {
-          freezeNodeRecursively(nextNode, level - SHIFT);
+        freezeNodeRecursively(nextNode, level - SHIFT);
       }
     }
   }
@@ -1284,12 +1285,13 @@ static void freezeVector(PVector *vector) {
 
 static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
   PyObject_GC_UnTrack(evolver);
-  Py_DECREF(evolver->originalVector);
 
   if(evolver->originalVector != evolver->newVector) {
     freezeVector(evolver->newVector);
     Py_DECREF(evolver->newVector);
   }
+
+  Py_DECREF(evolver->originalVector);
 
   // TODO append list
   PyObject_GC_Del(evolver);
@@ -1316,7 +1318,9 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
     }
 
     if(0 <= pos && pos < self->newVector->count) {
-      return _get_item(self->newVector, pos);
+      PyObject *result = _get_item(self->newVector, pos);
+      Py_XINCREF(result);
+      return result;
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
@@ -1332,8 +1336,8 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
 
 static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
   VNode* resultNode;
+  debug("doSetWithDirty(): level == %i\n", level);
   if(level == 0) {
-    debug("doSetWithDirty(): level == 0\n");
     if(!IS_DIRTY(node)) {
       resultNode = allocNode();
       copyInsert(resultNode->items, node->items, position & BIT_MASK, value);
@@ -1341,20 +1345,22 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
       SET_DIRTY(resultNode);
     } else {
       resultNode = node;
+      Py_INCREF(value);
       Py_DECREF(resultNode->items[position & BIT_MASK]);
       resultNode->items[position & BIT_MASK] = value;
-      Py_INCREF(value);
     }
   } else {
-    debug("doSetWithDirty(): level == %i\n", level);
+    Py_ssize_t index = (position >> level) & BIT_MASK;
     if(!IS_DIRTY(node)) {
       resultNode = copyNode(node);
+
+      // Drop reference to this node since we're about to replace it
+      ((VNode*)resultNode->items[index])->refCount--;
       SET_DIRTY(resultNode);
     } else {
       resultNode = node;
-    }
-    
-    Py_ssize_t index = (position >> level) & BIT_MASK;
+    }    
+
     resultNode->items[index] = doSetWithDirty(resultNode->items[index], level - SHIFT, position, value);
   }
 
@@ -1398,13 +1404,6 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
 }
 
 static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
-  printf("Calling pvector\n");
-  // Increment count on root/if they have not been modified?
-  // Increment reference count on object held by dirty nodes
-  // Lastly, decrement reference count on the vector that we were
-  // constructed from and replace it with a reference to a new 
-  // vector.
-
   PVector *resultVector;
   if(self->newVector == self->originalVector) { // TODO append list
     resultVector = self->newVector;
@@ -1422,7 +1421,6 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
 }
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
-  printf("Traversing...\n");
   Py_VISIT(self->newVector);
   // TODO visit append list
   return 0;

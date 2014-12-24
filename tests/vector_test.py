@@ -497,7 +497,7 @@ def test_evolver_no_update(pvector):
 
     assert v.evolver().pvector() == v
 
-
+# TODO: Test deallocation of evolver with dirty nodes in tree and tail
 def test_evolver_simple_update_in_tree(pvector):
     v = pvector(range(35))
     e = v.evolver()
@@ -505,7 +505,6 @@ def test_evolver_simple_update_in_tree(pvector):
 
     assert e[10] == -10
     assert e.pvector()[10] == -10
-    assert v[10] == 10
 
 
 def test_evolver_multi_level_multi_update_in_tree(pvector):
