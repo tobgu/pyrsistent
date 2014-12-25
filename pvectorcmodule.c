@@ -494,12 +494,17 @@ static PVector* rawCopyPVector(PVector* vector) {
   return newVector;
 }
 
-static void initializeEvolver(PVectorEvolver* evolver, PVector* vector) {
+static void initializeEvolver(PVectorEvolver* evolver, PVector* vector, PyObject* appendList) {
   // Need to hold a reference to the underlying vector to manage
   // the ref counting properly.
   evolver->originalVector = vector;
   evolver->newVector = vector;
-  evolver->appendList = PyList_New(0);
+
+  if(appendList == NULL) {
+    evolver->appendList = PyList_New(0);
+  } else {
+    evolver->appendList = appendList;
+  }
 }
 
 static PyObject * PVector_evolver(PyObject *self) {
@@ -509,7 +514,7 @@ static PyObject * PVector_evolver(PyObject *self) {
   }
   
   PyObject_GC_Track(evolver);
-  initializeEvolver(evolver, (PVector*)self);
+  initializeEvolver(evolver, (PVector*)self, NULL);
   Py_INCREF(self);
   return (PyObject *)evolver;
 }
@@ -554,7 +559,6 @@ static PyMappingMethods PVector_mapping_methods = {
 static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
 	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
-	{"__getitem__", (PyCFunction)PVector_subscript, METH_O|METH_COEXIST, "Subscript"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
 	{"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Insert an element in a nested structure"},
 	{"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
@@ -640,20 +644,15 @@ static void incRefs(PyObject **obj) {
 }
 
 
-// TODO this function may be redundant now...
-static PVector* newPvecWithTail(unsigned int count, unsigned int shift, VNode *root, VNode *tail) {
+static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
   PVector *pvec = PyObject_GC_New(PVector, &PVectorType);
   debug("pymem alloc_copy %x, ref cnt: %u\n", pvec, pvec->ob_refcnt);
   pvec->count = count;
   pvec->shift = shift;
   pvec->root = root;
-  pvec->tail = tail;
+  pvec->tail = newNode();
   PyObject_GC_Track((PyObject*)pvec);
   return pvec;
-}
-
-static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
-  return newPvecWithTail(count, shift, root, newNode());
 }
 
 static VNode* newPath(unsigned int level, VNode* node){
@@ -668,11 +667,11 @@ static VNode* newPath(unsigned int level, VNode* node){
 }
 
 static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VNode* tail) {
-  int sub_index = ((count - 1) >> level) & BIT_MASK;
+  int subIndex = ((count - 1) >> level) & BIT_MASK;
   VNode* result = copyNode(parent);
   VNode* nodeToInsert;
   VNode* child;
-  debug("pushTail(): count = %i, sub_index = %i\n", count, sub_index);
+  debug("pushTail(): count = %i, subIndex = %i\n", count, subIndex);
 
   if(level == SHIFT) {
     // We're at the bottom
@@ -680,7 +679,7 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
     nodeToInsert = tail;
   } else {
     // More levels available in the tree
-    child = parent->items[sub_index];
+    child = parent->items[subIndex];
 
     if(child != NULL) {
       nodeToInsert = pushTail(level - SHIFT, count, child, tail);
@@ -695,7 +694,7 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
     }
   }
   
-  result->items[sub_index] = nodeToInsert;
+  result->items[subIndex] = nodeToInsert;
   return result;
 }
 
@@ -877,14 +876,13 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
 }
 
 static VNode* doSet(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
+  debug("doSet(): level == %i\n", level);
   if(level == 0) {
-    debug("doSet(): level == 0\n");
     VNode* theNewNode = newNode();
     copyInsert(theNewNode->items, node->items, position & BIT_MASK, value);
     incRefs((PyObject**)theNewNode->items);
     return theNewNode;
   } else {
-    debug("doSet(): level == %i\n", level);
     VNode* theNewNode = copyNode(node);
     Py_ssize_t index = (position >> level) & BIT_MASK;
 
@@ -921,6 +919,7 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
       return (PyObject*)new_pvec;
     }
   } else if (position == self->count) {
+    // TODO Remove this case
     return PVector_append(self, argObj);
   } else {
     PyErr_SetString(PyExc_IndexError, "Index out of range");
@@ -1179,7 +1178,6 @@ static PyObject *PVectorIter_next(PVectorIter *it) {
 }
 
 
-
 /*********************** PVector Evolver **************************/
 
 /* 
@@ -1205,8 +1203,6 @@ static PyMappingMethods PVectorEvolver_mapping_methods = {
 static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
-        //	{"__getitem__", (PyCFunction)PVectorEvolver_subscript, METH_O|METH_COEXIST, "Subscript"},
-        //	{"__setitem__", (PyCFunction)PVectorEvolver_set_item, METH_VARARGS, "Inserts an element at the specified position"},   
         {"pvector",     (PyCFunction)PVectorEvolver_pvector, METH_NOARGS, "Create PVector from evolver"},
         {NULL,              NULL}           /* sentinel */
 };
@@ -1272,6 +1268,9 @@ static void freezeNodeRecursively(VNode *node, int level) {
 }
 
 static void freezeVector(PVector *vector) {
+  // Freezing the vector means that all dirty indications are cleared
+  // and that the nodes that were dirty get a ref count of 1 since
+  // they are brand new.
   if(IS_DIRTY(vector->tail)) {
     freezeNodeRecursively(vector->tail, 0);
   } else {
@@ -1313,30 +1312,28 @@ static PyObject *PVectorEvolver_extend(PVectorEvolver *self, PyObject *args) {
 
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) {
   if (PyIndex_Check(item)) {
-    Py_ssize_t pos = PyNumber_AsSsize_t(item, PyExc_IndexError);
-    if (pos == -1 && PyErr_Occurred()) {
+    Py_ssize_t position = PyNumber_AsSsize_t(item, PyExc_IndexError);
+    if (position == -1 && PyErr_Occurred()) {
       return NULL;
     }
 
-    if (pos < 0) {
-      pos += self->newVector->count + PyList_GET_SIZE(self->appendList);
+    if (position < 0) {
+      position += self->newVector->count + PyList_GET_SIZE(self->appendList);
     }
 
-    if(0 <= pos && pos < self->newVector->count) {
-      PyObject *result = _get_item(self->newVector, pos);
+    if(0 <= position && position < self->newVector->count) {
+      PyObject *result = _get_item(self->newVector, position);
       Py_XINCREF(result);
       return result;
-    } else if (0 <= pos && pos < (self->newVector->count + PyList_GET_SIZE(self->appendList))) {
-      PyObject *result = PyList_GetItem(self->appendList, pos - self->newVector->count);
+    } else if (0 <= position && position < (self->newVector->count + PyList_GET_SIZE(self->appendList))) {
+      PyObject *result = PyList_GetItem(self->appendList, position - self->newVector->count);
       Py_INCREF(result);
       return result;
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
   } else {
-    PyErr_Format(PyExc_TypeError,
-                 "Indices must be integers, not %.200s",
-                 item->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "Indices must be integers, not %.200s", item->ob_type->tp_name);
   }
 
   return NULL;
@@ -1366,12 +1363,13 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
     }    
 
     Py_ssize_t index = (position >> level) & BIT_MASK;
-    if(!IS_DIRTY((VNode*)resultNode->items[index])) {
-      // Drop reference to this node since we're about to replace it
-      ((VNode*)resultNode->items[index])->refCount--;
-    }
-
+    VNode* oldNode = (VNode*)resultNode->items[index];
     resultNode->items[index] = doSetWithDirty(resultNode->items[index], level - SHIFT, position, value);
+
+    if(resultNode->items[index] != oldNode) {
+      // Node replaced, drop references to old node
+      oldNode->refCount--;
+    }
   }
 
   return resultNode;
@@ -1407,7 +1405,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
         Py_INCREF(value);
       }
       return result;
-      } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))) {
+    } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))) {
       return PyList_Append(self->appendList, value); 
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
@@ -1430,31 +1428,25 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
     Py_DECREF(self->originalVector);
   }
 
-
   if(PyList_GET_SIZE(self->appendList)) {
     PVector *oldVector = resultVector;
     resultVector = (PVector*)PVector_extend(resultVector, self->appendList);
     Py_DECREF(oldVector);
+    Py_DECREF(self->appendList);
+    self->appendList = NULL;
   }
 
-  // TODO Shouldn't have to do this deallocation/allocation unless
-  // append list has been used...
-  Py_DECREF(self->appendList);
-  initializeEvolver(self, resultVector);
-
+  initializeEvolver(self, resultVector, self->appendList);
   Py_INCREF(resultVector);  
   return (PyObject*)resultVector;
 }
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
   Py_VISIT(self->newVector);
-  // TODO visit append list
+  if(self->originalVector != self->newVector) {
+    Py_VISIT(self->originalVector);
+  }
+
+  Py_VISIT(self->appendList);
   return 0;
 }
-
-
-// PyList_GET_SIZE(self);
-// PyList_SetItem
-// PyList_GetItem
-// PyList_Append
-// _PyList_Extend
