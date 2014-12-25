@@ -52,6 +52,7 @@ typedef struct {
   PyObject_HEAD
   PVector* originalVector;
   PVector* newVector;
+  PyObject* appendList;
 } PVectorEvolver;
 
 
@@ -498,6 +499,7 @@ static void initializeEvolver(PVectorEvolver* evolver, PVector* vector) {
   // the ref counting properly.
   evolver->originalVector = vector;
   evolver->newVector = vector;
+  evolver->appendList = PyList_New(0);
 }
 
 static PyObject * PVector_evolver(PyObject *self) {
@@ -743,40 +745,40 @@ static void extend_with_item(PVector *newVec, PyObject *item) {
 #endif
 
 static PyObject *PVector_subscript(PVector* self, PyObject* item) {
-    if (PyIndex_Check(item)) {
-      Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
-      if (i == -1 && PyErr_Occurred()) {
-         return NULL;
-      }
-
-      return PVector_get_item(self, i);
-    } else if (PySlice_Check(item)) {
-      Py_ssize_t start, stop, step, slicelength, cur, i;
-      if (PySlice_GetIndicesEx(SLICE_CAST item, self->count,
-             &start, &stop, &step, &slicelength) < 0) {
-         return NULL;
-      }
-
-      debug("start=%i, stop=%i, step=%i\n", start, stop, step);
-
-      if (slicelength <= 0) {
-        Py_INCREF(EMPTY_VECTOR);
-        return (PyObject*)EMPTY_VECTOR;
-      } else if((slicelength == self->count) && (step > 0)) {
-        Py_INCREF(self);
-        return (PyObject*)self;
-      } else {
-        PVector *newVec = copyPVector(EMPTY_VECTOR);
-        for (cur=start, i=0; i<slicelength; cur += (size_t)step, i++) {
-          extend_with_item(newVec, PVector_get_item(self, cur));
-        }
-
-        return (PyObject*)newVec;
-      }
-    } else {
-      PyErr_Format(PyExc_TypeError, "pvector indices must be integers, not %.200s", Py_TYPE(item)->tp_name);
+  if (PyIndex_Check(item)) {
+    Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+    if (i == -1 && PyErr_Occurred()) {
       return NULL;
     }
+    
+    return PVector_get_item(self, i);
+  } else if (PySlice_Check(item)) {
+    Py_ssize_t start, stop, step, slicelength, cur, i;
+    if (PySlice_GetIndicesEx(SLICE_CAST item, self->count,
+                             &start, &stop, &step, &slicelength) < 0) {
+      return NULL;
+    }
+    
+    debug("start=%i, stop=%i, step=%i\n", start, stop, step);
+    
+    if (slicelength <= 0) {
+      Py_INCREF(EMPTY_VECTOR);
+      return (PyObject*)EMPTY_VECTOR;
+    } else if((slicelength == self->count) && (step > 0)) {
+      Py_INCREF(self);
+      return (PyObject*)self;
+    } else {
+      PVector *newVec = copyPVector(EMPTY_VECTOR);
+      for (cur=start, i=0; i<slicelength; cur += (size_t)step, i++) {
+        extend_with_item(newVec, PVector_get_item(self, cur));
+      }
+      
+      return (PyObject*)newVec;
+    }
+  } else {
+    PyErr_Format(PyExc_TypeError, "pvector indices must be integers, not %.200s", Py_TYPE(item)->tp_name);
+    return NULL;
+  }
 } 
 
 /* A hack to get some of the error handling code away from the function
@@ -1292,12 +1294,16 @@ static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
   }
 
   Py_DECREF(evolver->originalVector);
+  Py_DECREF(evolver->appendList);
 
-  // TODO append list
   PyObject_GC_Del(evolver);
 }
 
 static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
+  if (PyList_Append(self->appendList, args) == 0) {
+    Py_RETURN_NONE;
+  }
+
   return NULL;
 }
 
@@ -1321,10 +1327,13 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
       PyObject *result = _get_item(self->newVector, pos);
       Py_XINCREF(result);
       return result;
+    } else if (0 <= pos && pos < (self->newVector->count + PyList_GET_SIZE(self->appendList))) {
+      PyObject *result = PyList_GetItem(self->appendList, pos - self->newVector->count);
+      Py_INCREF(result);
+      return result;
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
-    // TODO check append list
   } else {
     PyErr_Format(PyExc_TypeError,
                  "Indices must be integers, not %.200s",
@@ -1393,10 +1402,15 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
       }
       
       return 0;
+    } else if((0 <= position && position) < (self->newVector->count + PyList_GET_SIZE(self->appendList))) {
+      int result = PyList_SetItem(self->appendList, position - self->newVector->count, value); 
+      if(result == 0) {
+        Py_INCREF(value);
+      }
+      return result;
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
-    // TODO append list
   } else {
     PyErr_Format(PyExc_TypeError,
                  "Indices must be integers, not %.200s",
@@ -1407,17 +1421,26 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
 
 static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   PVector *resultVector;
-  if(self->newVector == self->originalVector) { // TODO append list
+  if(self->newVector == self->originalVector) {
     resultVector = self->newVector;
   } else {
     freezeVector(self->newVector);
     resultVector = self->newVector;
-    PVector *oldVector = self->originalVector;
-    initializeEvolver(self, resultVector);
+    Py_DECREF(self->originalVector);
+  }
+
+
+  if(PyList_GET_SIZE(self->appendList)) {
+    PVector *oldVector = resultVector;
+    resultVector = (PVector*)PVector_extend(resultVector, self->appendList);
     Py_DECREF(oldVector);
   }
 
-  // TODO If append list exists append it and reset.
+  // TODO Shouldn't have to do this deallocation/allocation unless
+  // append list has been used...
+  Py_DECREF(self->appendList);
+  initializeEvolver(self, resultVector);
+
   Py_INCREF(resultVector);  
   return (PyObject*)resultVector;
 }
@@ -1430,3 +1453,7 @@ static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *
 
 
 // PyList_GET_SIZE(self);
+// PyList_SetItem
+// PyList_GetItem
+// PyList_Append
+// _PyList_Extend

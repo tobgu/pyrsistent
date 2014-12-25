@@ -537,7 +537,7 @@ def test_evolver_multi_level_multi_update_in_tree(pvector):
     assert v2[50] == -5000
     assert v2[3000] == -30000
 
-    # AFter freezing
+    # After freezing
     assert e[10] == -1000
     assert e[11] == -11
     assert e[50] == -5000
@@ -571,14 +571,15 @@ def test_evolver_simple_update_just_outside_vector():
     assert len(v) == 0
 
 
-def test_evolver_append():
-    from pyrsistent import _pvector as pvector
-
+def test_evolver_append(pvector):
     v = pvector()
     e = v.evolver()
-    e.append(1)
+    e.append(1000)
+    assert e[0] == 1000
 
-    assert list(e.pvector()) == [1]
+    e[0] = 2000
+    assert e[0] == 2000
+    assert list(e.pvector()) == [2000]
     assert list(v) == []
 
 
