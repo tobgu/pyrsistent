@@ -508,7 +508,7 @@ def test_evolver_simple_update_in_tree(pvector):
 
 
 def test_evolver_multi_level_multi_update_in_tree(pvector):
-    # This test is mostly to detect memory issues in the native implementation
+    # This test is mostly to detect memory/ref count issues in the native implementation
     v = pvector(range(3500))
     e = v.evolver()
 
@@ -518,10 +518,35 @@ def test_evolver_multi_level_multi_update_in_tree(pvector):
     e[11] = -11
     e[10] = -1000
 
+    # Update in neighbour node
+    e[50] = -50
+    e[50] = -5000
+
+    # Update in node in other half of vector
+    e[3000] = -3000
+    e[3000] = -30000
+
+    # Before freezing
     assert e[10] == -1000
     assert e[11] == -11
-    assert e.pvector()[10] == -1000
+    assert e[50] == -5000
+    assert e[3000] == -30000
+
+    v2 = e.pvector()
+    assert v2[10] == -1000
+    assert v2[50] == -5000
+    assert v2[3000] == -30000
+
+    # AFter freezing
+    assert e[10] == -1000
+    assert e[11] == -11
+    assert e[50] == -5000
+    assert e[3000] == -30000
+
+    # Original stays the same
     assert v[10] == 10
+    assert v[50] == 50
+    assert v[3000] == 3000
 
 
 def test_evolver_simple_update_in_tail(pvector):

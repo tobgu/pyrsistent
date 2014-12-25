@@ -1248,9 +1248,9 @@ static PyTypeObject PVectorEvolverType = {
 // creating a pvector from the evolver.
 #define DIRTY_BIT 0x80000000
 #define REF_COUNT_MASK (~DIRTY_BIT)
-#define IS_DIRTY(node) (node->refCount & DIRTY_BIT)
-#define SET_DIRTY(node) (node->refCount |= DIRTY_BIT)
-#define CLEAR_DIRTY(node) (node->refCount &= REF_COUNT_MASK)
+#define IS_DIRTY(node) ((node)->refCount & DIRTY_BIT)
+#define SET_DIRTY(node) ((node)->refCount |= DIRTY_BIT)
+#define CLEAR_DIRTY(node) ((node)->refCount &= REF_COUNT_MASK)
 
 
 static void freezeNodeRecursively(VNode *node, int level) {
@@ -1350,16 +1350,18 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
       resultNode->items[position & BIT_MASK] = value;
     }
   } else {
-    Py_ssize_t index = (position >> level) & BIT_MASK;
     if(!IS_DIRTY(node)) {
       resultNode = copyNode(node);
-
-      // Drop reference to this node since we're about to replace it
-      ((VNode*)resultNode->items[index])->refCount--;
       SET_DIRTY(resultNode);
     } else {
       resultNode = node;
     }    
+
+    Py_ssize_t index = (position >> level) & BIT_MASK;
+    if(!IS_DIRTY((VNode*)resultNode->items[index])) {
+      // Drop reference to this node since we're about to replace it
+      ((VNode*)resultNode->items[index])->refCount--;
+    }
 
     resultNode->items[index] = doSetWithDirty(resultNode->items[index], level - SHIFT, position, value);
   }
