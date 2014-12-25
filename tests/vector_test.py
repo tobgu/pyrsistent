@@ -583,21 +583,17 @@ def test_evolver_append(pvector):
     assert list(v) == []
 
 
-def test_evolver_extend():
-    from pyrsistent import _pvector as pvector
-
-    v = pvector([1])
+def test_evolver_extend(pvector):
+    v = pvector([1000])
     e = v.evolver()
-    e.extend([2, 3])
-    e[2] = 4
+    e.extend([2000, 3000])
+    e[2] = 20000
 
-    assert list(e.pvector()) == [1, 2, 4]
-    assert list(v) == [1]
+    assert list(e.pvector()) == [1000, 2000, 20000]
+    assert list(v) == [1000]
 
 
-def test_evolver_assign_and_read_with_negative_indices():
-    from pyrsistent import _pvector as pvector
-
+def test_evolver_assign_and_read_with_negative_indices(pvector):
     v = pvector([1, 2, 3])
     e = v.evolver()
     e[-1] = 4

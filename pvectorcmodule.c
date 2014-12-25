@@ -1308,7 +1308,7 @@ static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
 }
 
 static PyObject *PVectorEvolver_extend(PVectorEvolver *self, PyObject *args) {
-  return NULL;
+  return _PyList_Extend((PyListObject *)self->appendList, args);
 }
 
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) {
@@ -1319,8 +1319,7 @@ static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) 
     }
 
     if (pos < 0) {
-      pos += self->newVector->count;
-      // TODO: Include length of append list
+      pos += self->newVector->count + PyList_GET_SIZE(self->appendList);
     }
 
     if(0 <= pos && pos < self->newVector->count) {
@@ -1386,7 +1385,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
     }
          
     if (position < 0) {
-      position += self->newVector->count; // + PyList_GET_SIZE(self);
+      position += self->newVector->count + PyList_GET_SIZE(self->appendList);
     }
 
     if((0 <= position) && (position < self->newVector->count)) {
