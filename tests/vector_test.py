@@ -497,7 +497,14 @@ def test_evolver_no_update(pvector):
 
     assert v.evolver().pvector() == v
 
-# TODO: Test deallocation of evolver with dirty nodes in tree and tail
+def test_evolver_deallocate_dirty_evolver(pvector):
+    # Ref count handling in native implementation
+    v = pvector(range(3220))
+    e = v.evolver()
+    e[10] = -10
+    e[3220] = -3220
+
+
 def test_evolver_simple_update_in_tree(pvector):
     v = pvector(range(35))
     e = v.evolver()
@@ -559,9 +566,7 @@ def test_evolver_simple_update_in_tail(pvector):
     assert v[33] == 33
 
 
-def test_evolver_simple_update_just_outside_vector():
-    from pyrsistent import _pvector as pvector
-
+def test_evolver_simple_update_just_outside_vector(pvector):
     v = pvector()
     e = v.evolver()
     e[0] = 1
@@ -632,9 +637,7 @@ def test_evolver_out_of_bounds_assignment(pvector):
         e[2] = 1
 
 
-def test_no_dependencies_between_evolvers_from_the_same_pvector():
-    from pyrsistent import _pvector as pvector
-
+def test_no_dependencies_between_evolvers_from_the_same_pvector(pvector):
     original_list = list(range(40))
     v = pvector(original_list)
     e1 = v.evolver()
@@ -658,9 +661,7 @@ def test_no_dependencies_between_evolvers_from_the_same_pvector():
     e2_expected[35] = -350
     assert list(e2.pvector()) == e2_expected
 
-def test_pvectors_produced_from_the_same_evolver_do_not_interfere():
-    from pyrsistent import _pvector as pvector
-
+def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
     original_list = list(range(40))
     v = pvector(original_list)
     e = v.evolver()

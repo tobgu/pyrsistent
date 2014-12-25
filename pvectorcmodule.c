@@ -1401,12 +1401,14 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
       }
       
       return 0;
-    } else if((0 <= position && position) < (self->newVector->count + PyList_GET_SIZE(self->appendList))) {
+    } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList)))) {
       int result = PyList_SetItem(self->appendList, position - self->newVector->count, value); 
       if(result == 0) {
         Py_INCREF(value);
       }
       return result;
+      } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))) {
+      return PyList_Append(self->appendList, value); 
     } else {
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
