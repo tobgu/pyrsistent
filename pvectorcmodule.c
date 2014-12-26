@@ -2,17 +2,20 @@
 #include <structmember.h>
 
 /*
-Persistent/Immutable data structures. Unfortunately I have not been able to come
-up with an implementation that is 100% immutable due to the ref counts used by
-Python internally so the GIL must still be at work...
+Persistent/Immutable/Functional vector and helper types. 
 
-To the end user they should appear immutable at least.
+Please note that they are anything but immutable at this level since
+there is a whole lot of reference counting going on. That's the way
+CPython works though and the GIL makes them appear immutable.
+
+To the programmer using them from Python they appear immutable and
+behave immutably at least.
 
 Naming conventions
 ------------------
 initpyrsistentc - This is the method that initializes the whole module
 pyrsistent_* -    Methods part of the interface
-Pvector_*    -    Instance methods of the PVector object
+<typename>_* -    Instance methods of types. For examle PVector_append(...)
 
 All other methods are camel cased without prefix. All methods are static, none should
 require to be exposed outside of this module. 
@@ -132,7 +135,7 @@ static VNode* copyNode(VNode* source) {
 
 static PVector* emptyNewPvec(void);
 static PVector* copyPVector(PVector *original);
-static void extend_with_item(PVector *newVec, PyObject *item);
+static void extendWithItem(PVector *newVec, PyObject *item);
 
 static Py_ssize_t PVector_len(PVector *self) {
   return self->count;
@@ -234,7 +237,7 @@ static void PVector_dealloc(PVector *self) {
   Py_TRASHCAN_SAFE_END(self)
 }
 
-static PyObject * to_list(PVector *self) {
+static PyObject *toList(PVector *self) {
   Py_ssize_t i;
   PyObject *list = PyList_New(self->count);
   for (i = 0; i < self->count; ++i) {
@@ -248,7 +251,7 @@ static PyObject * to_list(PVector *self) {
 
 static PyObject *PVector_repr(PVector *self) {
   // Reuse the list repr code, a bit less efficient but saves some code
-  PyObject *list = to_list(self);
+  PyObject *list = toList(self);
   PyObject *list_repr = PyObject_Repr(list);
   Py_DECREF(list);
 
@@ -387,7 +390,7 @@ static PyObject* PVector_repeat(PVector *self, Py_ssize_t n) {
     PVector *newVec = copyPVector(self);
     for(i=0; i<(n-1); i++) {
       for(j=0; j<self->count; j++) {
-        extend_with_item(newVec, PVector_get_item(self, j));
+        extendWithItem(newVec, PVector_get_item(self, j));
       }
     }
     return (PyObject*)newVec;
@@ -473,7 +476,7 @@ static PyObject* PVector_pickle_reduce(PVector *self) {
   PyObject* pvector_fn = PyObject_GetAttrString(module, "pvector");
   Py_DECREF(module);
 
-  PyObject *list = to_list(self);
+  PyObject *list = toList(self);
   PyObject *arg_tuple = PyTuple_New(1);
   PyTuple_SET_ITEM(arg_tuple, 0, list);
 
@@ -707,7 +710,7 @@ static PVector* copyPVector(PVector *original) {
 }
 
 /* Does not steal a reference, this must be managed outside of this function */
-static void extend_with_item(PVector *newVec, PyObject *item) {
+static void extendWithItem(PVector *newVec, PyObject *item) {
   unsigned int tail_size = TAIL_SIZE(newVec);
 
   if(tail_size >= BRANCH_FACTOR) {
@@ -769,7 +772,7 @@ static PyObject *PVector_subscript(PVector* self, PyObject* item) {
     } else {
       PVector *newVec = copyPVector(EMPTY_VECTOR);
       for (cur=start, i=0; i<slicelength; cur += (size_t)step, i++) {
-        extend_with_item(newVec, PVector_get_item(self, cur));
+        extendWithItem(newVec, PVector_get_item(self, cur));
       }
       
       return (PyObject*)newVec;
@@ -822,7 +825,7 @@ static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
     } else {
       PVector *newVec = copyPVector(self);
       while(item != NULL) {
-        extend_with_item(newVec, item);
+        extendWithItem(newVec, item);
         item = iternext(it);
       }
 
@@ -1134,7 +1137,7 @@ static PyTypeObject PVectorIterType = {
     0,                                          /* tp_members */
 };
 
-static PyObject * PVectorIter_iter(PyObject *seq) {
+static PyObject *PVectorIter_iter(PyObject *seq) {
     PVectorIter *it = PyObject_GC_New(PVectorIter, &PVectorIterType);
     if (it == NULL) {
         return NULL;
@@ -1243,7 +1246,7 @@ static PyTypeObject PVectorEvolverType = {
 
 // Indicate that a node is "dirty" (has been updated by the evolver)
 // by setting the MSB of the refCount. This will be cleared when
-// creating a pvector from the evolver.
+// creating a pvector from the evolver (freezing it).
 #define DIRTY_BIT 0x80000000
 #define REF_COUNT_MASK (~DIRTY_BIT)
 #define IS_DIRTY(node) ((node)->refCount & DIRTY_BIT)
@@ -1270,7 +1273,8 @@ static void freezeNodeRecursively(VNode *node, int level) {
 static void freezeVector(PVector *vector) {
   // Freezing the vector means that all dirty indications are cleared
   // and that the nodes that were dirty get a ref count of 1 since
-  // they are brand new.
+  // they are brand new. Once frozen the vector can be released into
+  // the wild.
   if(IS_DIRTY(vector->tail)) {
     freezeNodeRecursively(vector->tail, 0);
   } else {
@@ -1443,10 +1447,7 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
   Py_VISIT(self->newVector);
-  if(self->originalVector != self->newVector) {
-    Py_VISIT(self->originalVector);
-  }
-
+  Py_VISIT(self->originalVector);
   Py_VISIT(self->appendList);
   return 0;
 }

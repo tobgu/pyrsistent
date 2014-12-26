@@ -313,7 +313,6 @@ def test_is_hashable(pvector):
     assert isinstance(pvector(), Hashable)
 
 
-
 def test_refuses_to_hash_when_members_are_unhashable(pvector):
     v = pvector([1, 2, [1, 2]])
 
@@ -539,10 +538,18 @@ def test_evolver_multi_level_multi_update_in_tree(pvector):
     assert e[50] == -5000
     assert e[3000] == -30000
 
+    # Run a GC to provoke any potential misbehavior
+    import gc
+    gc.collect()
+
     v2 = e.pvector()
     assert v2[10] == -1000
     assert v2[50] == -5000
     assert v2[3000] == -30000
+
+    # Run a GC to provoke any potential misbehavior
+    import gc
+    gc.collect()
 
     # After freezing
     assert e[10] == -1000
