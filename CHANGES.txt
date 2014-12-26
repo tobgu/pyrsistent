@@ -60,9 +60,11 @@ v0.1.0, 2013-11-10
 TODO (in no particular order)
 -----------------------------
 - More convenience methods to simplify work with these data structures.
-- Create optimized function for replacing multiple elements in the same function call (massoc) that can
-  also be used by the PMap, "merge into".
 - Versioned data structure where the different versions can be accessed by index?
 - Ordered sets and maps
 - A good performance measurement suite
-
+- Provide additional package with literal syntax for pvector, pmap, pset?
+- Replace parts of the set_in implementation with standalone function
+- Evolver for map and set
+- Documentation for evolver
+- Setdefault for pmap

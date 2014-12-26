@@ -238,7 +238,7 @@ def random_access(s):
     return result
 
 def run_multiple_random_inserts():
-    from pyrsistent import _pvector
+    from pyrsistent import _pvector as _pvector
 
     indices = [2, 405, 56, 5067, 15063, 7045, 19999, 10022, 6000, 4023]
     for x in range(4):
@@ -247,8 +247,8 @@ def run_multiple_random_inserts():
     print "Number of accesses: %s" % len(indices)
     print "Number of elements in vector: %s" % max(indices)
 
-    original = _pvector(range(max(indices)))
-    original2 = _pvector(range(max(indices)))
+    original = _pvector(range(max(indices) + 1))
+    original2 = _pvector(range(max(indices) + 1))
 
     # Using ordinary set
     start = time.time()
@@ -257,7 +257,6 @@ def run_multiple_random_inserts():
         for i in indices:
             new = new.set(i, 0)
     print "Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices))
-
     assert original == original2
 
     # Using setter view
