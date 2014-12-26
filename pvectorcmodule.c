@@ -137,6 +137,9 @@ static PVector* emptyNewPvec(void);
 static PVector* copyPVector(PVector *original);
 static void extendWithItem(PVector *newVec, PyObject *item);
 
+static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
+static int PVectorEvolver_set_item(PVectorEvolver *, PyObject*, PyObject*);
+
 static Py_ssize_t PVector_len(PVector *self) {
   return self->count;
 }
@@ -510,14 +513,14 @@ static void initializeEvolver(PVectorEvolver* evolver, PVector* vector, PyObject
   }
 }
 
-static PyObject * PVector_evolver(PyObject *self) {
+static PyObject * PVector_evolver(PVector *self) {
   PVectorEvolver *evolver = PyObject_GC_New(PVectorEvolver, &PVectorEvolverType);
   if (evolver == NULL) {
     return NULL;
   }
   
   PyObject_GC_Track(evolver);
-  initializeEvolver(evolver, (PVector*)self, NULL);
+  initializeEvolver(evolver, self, NULL);
   Py_INCREF(self);
   return (PyObject *)evolver;
 }
@@ -534,6 +537,8 @@ static PyObject* PVector_set_in(PVector *self, PyObject *obj);
 
 static PyObject* PVector_set(PVector *self, PyObject *obj);
 
+static PyObject* PVector_mset(PVector *self, PyObject *args);
+
 static PyObject* PVector_subscript(PVector* self, PyObject* item);
 
 static PyObject* PVector_extend(PVector *self, PyObject *args);
@@ -543,7 +548,7 @@ static PySequenceMethods PVector_sequence_methods = {
     (binaryfunc)PVector_extend,      /* sq_concat */
     (ssizeargfunc)PVector_repeat,    /* sq_repeat */
     (ssizeargfunc)PVector_get_item,  /* sq_item */
-    // TODO migth want to move the slice function to here
+    // TODO might want to move the slice function to here
     NULL,                            /* sq_slice */
     NULL,                            /* sq_ass_item */
     NULL,                            /* sq_ass_slice */
@@ -568,6 +573,7 @@ static PyMethodDef PVector_methods[] = {
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
         {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
+	{"mset",        (PyCFunction)PVector_mset, METH_VARARGS, "Inserts multiple elements at the specified positions"},
 	{NULL}
 };
 
@@ -999,6 +1005,27 @@ static PyObject* PVector_set(PVector *self, PyObject *args) {
   return internalSet(self, position, argObj);
 }
 
+static PyObject* PVector_mset(PVector *self, PyObject *args) {
+  Py_ssize_t size = PyTuple_Size(args);
+  if(size % 2) {
+    PyErr_SetString(PyExc_TypeError, "mset expected an even number of arguments");
+    return NULL;
+  }
+
+  PVectorEvolver* evolver = (PVectorEvolver*)PVector_evolver(self);
+  Py_ssize_t i;
+  for(i=0; i<size; i+=2) {
+    if(PVectorEvolver_set_item(evolver, PyTuple_GetItem(args, i), PyTuple_GetItem(args, i + 1)) < 0) {
+      Py_DECREF(evolver);
+      return NULL;
+    }
+  }
+
+  PyObject* vector = PVectorEvolver_pvector(evolver);
+  Py_DECREF(evolver);
+  return vector;
+}
+
 
 static PyMethodDef PyrsistentMethods[] = {
   {"pvector", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
@@ -1191,7 +1218,6 @@ static void PVectorEvolver_dealloc(PVectorEvolver *);
 static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
-static int PVectorEvolver_set_item(PVectorEvolver *, PyObject*, PyObject*);
 static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg);
 
@@ -1415,9 +1441,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
       PyErr_SetString(PyExc_IndexError, "Index out of range");
     }
   } else {
-    PyErr_Format(PyExc_TypeError,
-                 "Indices must be integers, not %.200s",
-                 item->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "Indices must be integers, not %.200s", item->ob_type->tp_name);
   }
   return -1;
 }

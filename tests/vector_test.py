@@ -1,5 +1,5 @@
-import pytest
 import pickle
+import pytest
 
 @pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
 def pvector(request):
@@ -465,9 +465,7 @@ def test_pickling_non_empty_vector(pvector):
     assert pickle.loads(pickle.dumps(pvector([1, 'a']), -1)) == pvector([1, 'a'])
 
 
-def test_mset_basic_assignments():
-    from pyrsistent import _pvector as pvector
-
+def test_mset_basic_assignments(pvector):
     v1 = pvector(range(2000))
     v2 = v1.mset(1, -1, 505, -505, 1998, -1998)
 
@@ -482,12 +480,18 @@ def test_mset_basic_assignments():
     assert v2[1998] == -1998
 
 
-def test_mset_odd_number_of_arguments():
-    from pyrsistent import _pvector as pvector
+def test_mset_odd_number_of_arguments(pvector):
     v = pvector([0, 1])
 
     with pytest.raises(TypeError):
         v.mset(0, 10, 1)
+
+
+def test_mset_index_out_of_range(pvector):
+    v = pvector([0, 1])
+
+    with pytest.raises(IndexError):
+        v.mset(3, 10)
 
 
 def test_evolver_no_update(pvector):
@@ -495,6 +499,7 @@ def test_evolver_no_update(pvector):
     v = pvector(range(40))
 
     assert v.evolver().pvector() == v
+
 
 def test_evolver_deallocate_dirty_evolver(pvector):
     # Ref count handling in native implementation
@@ -548,7 +553,6 @@ def test_evolver_multi_level_multi_update_in_tree(pvector):
     assert v2[3000] == -30000
 
     # Run a GC to provoke any potential misbehavior
-    import gc
     gc.collect()
 
     # After freezing
