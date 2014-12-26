@@ -284,6 +284,9 @@ class PVector(object):
             self._reset(v)
             return v
 
+        def __len__(self):
+            return self._count + len(self._extra_tail)
+
     def evolver(self):
         return PVector._Evolver(self)
 

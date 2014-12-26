@@ -1219,11 +1219,11 @@ static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
+static Py_ssize_t PVectorEvolver_len(PVectorEvolver *);
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg);
 
 static PyMappingMethods PVectorEvolver_mapping_methods = {
-  // TODO:    (lenfunc)PVector_len,
-  0,
+  (lenfunc)PVectorEvolver_len,
   (binaryfunc)PVectorEvolver_subscript,
   (objobjargproc)PVectorEvolver_set_item,
 };
@@ -1467,6 +1467,10 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   initializeEvolver(self, resultVector, self->appendList);
   Py_INCREF(resultVector);  
   return (PyObject*)resultVector;
+}
+
+static Py_ssize_t PVectorEvolver_len(PVectorEvolver *self) {
+  return self->newVector->count + PyList_GET_SIZE(self->appendList);
 }
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {

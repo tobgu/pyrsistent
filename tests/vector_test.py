@@ -697,3 +697,9 @@ def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
 
     assert list(v1) == v1_expected
     assert list(v2) == v2_expected
+
+def test_evolver_len(pvector):
+    e = pvector([1, 2, 3]).evolver()
+    e.extend([4, 5])
+
+    assert len(e) == 5
