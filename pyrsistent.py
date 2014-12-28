@@ -584,13 +584,15 @@ class PMap(object):
         self._size = size
         self._buckets = buckets
 
-    def _get_bucket(self, key):
-        index = hash(key) % len(self._buckets)
-        bucket = self._buckets[index]
+    @staticmethod
+    def _get_bucket(buckets, key):
+        index = hash(key) % len(buckets)
+        bucket = buckets[index]
         return index, bucket
 
-    def __getitem__(self, key):
-        _, bucket = self._get_bucket(key)
+    @staticmethod
+    def _getitem(buckets, key):
+        _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
             for k, v in bucket:
                 if k == key:
@@ -598,8 +600,12 @@ class PMap(object):
 
         raise KeyError
 
-    def __contains__(self, key):
-        _, bucket = self._get_bucket(key)
+    def __getitem__(self, key):
+        return PMap._getitem(self._buckets, key)
+
+    @staticmethod
+    def _contains(buckets, key):
+        _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
             for k, _ in bucket:
                 if k == key:
@@ -608,6 +614,9 @@ class PMap(object):
             return False
 
         return False
+
+    def __contains__(self, key):
+        return self._contains(self._buckets, key)
 
     get = Mapping.get
 
@@ -672,7 +681,7 @@ class PMap(object):
         pmap({'a': 1, 'c': 4, 'b': 2})
         """
         kv = (key, val)
-        index, bucket = self._get_bucket(key)
+        index, bucket = self._get_bucket(self._buckets, key)
         if bucket:
             for k, v in bucket:
                 if k == key:
@@ -683,13 +692,11 @@ class PMap(object):
                         return PMap(self._size, self._buckets.set(index, new_bucket))
 
             if len(self._buckets) < 0.67 * self._size:
-                return PMap(self._size, self._reallocate(2 * len(self._buckets))).set(key, val)
+                return PMap(self._size, self._reallocate(2 * len(self._buckets), self._buckets)).set(key, val)
             else:
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
-                new_buckets = self._buckets.set(index, new_bucket)
-
-            return PMap(self._size + 1, new_buckets)
+                return PMap(self._size + 1, self._buckets.set(index, new_bucket))
 
         # Skip reallocation check if there was no conflict
         return PMap(self._size + 1, self._buckets.set(index, [kv]))
@@ -707,7 +714,7 @@ class PMap(object):
         """
 
         # Should shrinking of the map ever be done if it becomes very small?
-        index, bucket = self._get_bucket(key)
+        index, bucket = self._get_bucket(self._buckets, key)
 
         if bucket:
             new_bucket = [(k, v) for (k, v) in bucket if k != key]
@@ -734,7 +741,6 @@ class PMap(object):
         >>> m1.update(m(a=2, c=3), {'a': 17, 'd': 35})
         pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
         """
-        # Optimization opportunities here
         if not maps:
             return self
         elif len(maps) > 1:
@@ -744,11 +750,11 @@ class PMap(object):
         else:
             update_map = maps[0]
 
-        result = self
+        evolver = self.evolver()
         for k, v in update_map.items():
-            result = result.set(k, v)
+            evolver[k] = v
 
-        return result
+        return evolver.pmap()
 
     def merge_with(self, merge_fn, *maps):
         """
@@ -773,12 +779,12 @@ class PMap(object):
         >>> m1.update_with(lambda l, r: l, m(a=2), {'a':3})
         pmap({'a': 1})
         """
-        result = self
+        evolver = self.evolver()
         for map in maps:
             for key, value in map.items():
-                result = result.set(key, update_fn(result[key], value) if key in result else value)
+                evolver[key] = update_fn(evolver[key], value) if key in evolver else value
 
-        return result
+        return evolver.pmap()
 
     def set_in(self, keys, val):
         """
@@ -796,24 +802,77 @@ class PMap(object):
         else:
             return self.set(keys[0], self.get(keys[0], _EMPTY_PMAP).set_in(keys[1:], val))
 
-    def _reallocate_to_list(self, new_size):
+    @staticmethod
+    def _reallocate(buckets, new_size):
         new_list = new_size * [None]
-        for k, v in chain.from_iterable(x for x in self._buckets if x):
+        for k, v in chain.from_iterable(x for x in buckets if x):
             index = hash(k) % new_size
             if new_list[index]:
                 new_list[index].append((k, v))
             else:
                 new_list[index] = [(k, v)]
 
-        return new_list
-
-    def _reallocate(self, new_size):
-        return pvector(self._reallocate_to_list(new_size))
+        return pvector(new_list)
 
     def __reduce__(self):
         # Pickling support
         return pmap, (dict(self),)
 
+    class _Evolver(object):
+        def __init__(self, buckets, size):
+            self._buckets_evolver = buckets
+            self._size = size
+
+        def __getitem__(self, key):
+            return PMap._getitem(self._buckets_evolver, key)
+
+        def __setitem__(self, key, val):
+            kv = (key, val)
+            index, bucket = PMap._get_bucket(self._buckets_evolver, key)
+            if bucket:
+                for k, v in bucket:
+                    if k == key:
+                        if v is not val:
+                            new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
+                            self._buckets_evolver[index] = new_bucket
+
+                        return
+
+                new_bucket = [kv]
+                new_bucket.extend(bucket)
+                self._buckets_evolver[index] = new_bucket
+                self._size += 1
+
+                if len(self._buckets_evolver) < 0.67 * self._size:
+                    self._buckets_evolver = PMap._reallocate(self._buckets_evolver.pvector(),
+                                                             2 * len(self._buckets_evolver)).evolver()
+
+                return
+
+            # Skip reallocation check if there was no conflict
+            self._buckets_evolver[index] = [kv]
+            self._size += 1
+
+        def pmap(self):
+            return PMap(self._size, self._buckets_evolver.pvector())
+
+        def __len__(self):
+            return self._size
+
+        def __contains__(self, key):
+            return PMap._contains(self._buckets_evolver, key)
+
+        def remove(self, key):
+            index, bucket = PMap._get_bucket(self._buckets_evolver, key)
+
+            if bucket:
+                new_bucket = [(k, v) for (k, v) in bucket if k != key]
+                if len(bucket) > len(new_bucket):
+                    self._buckets_evolver[index] = new_bucket if new_bucket else None
+                    self._size -= 1
+
+    def evolver(self):
+        return PMap._Evolver(self._buckets.evolver(), self._size)
 
 Mapping.register(PMap)
 Hashable.register(PMap)

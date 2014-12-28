@@ -274,3 +274,33 @@ def test_pickling_empty_map():
 
 def test_pickling_non_empty_vector():
     assert pickle.loads(pickle.dumps(m(a=1, b=2), -1)) == m(a=1, b=2)
+
+
+def test_evolver_simple_update():
+    x = m(a=1000, b=2000)
+    e = x.evolver()
+    e['b'] = 3000
+
+    assert e['b'] == 3000
+    assert e.pmap()['b'] == 3000
+    assert x['b'] == 2000
+
+
+def test_evolver_update_with_relocation():
+    x = pmap({'a':1000}, pre_size=1)
+    e = x.evolver()
+    e['b'] = 3000
+    e['c'] = 4000
+    e['d'] = 5000
+    e['d'] = 6000
+
+    assert len(e) == 4
+    assert e.pmap() == pmap({'a': 1000, 'b': 3000, 'c': 4000, 'd': 6000})
+
+
+def test_evolver_remove_element():
+    e = m(a=1000, b=2000).evolver()
+    assert 'a' in e
+
+    e.remove('a')
+    assert 'a' not in e
