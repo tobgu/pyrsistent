@@ -1220,6 +1220,7 @@ static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
 static Py_ssize_t PVectorEvolver_len(PVectorEvolver *);
+static PyObject *PVectorEvolver_is_dirty(PVectorEvolver *);
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg);
 
 static PyMappingMethods PVectorEvolver_mapping_methods = {
@@ -1233,6 +1234,7 @@ static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
         {"pvector",     (PyCFunction)PVectorEvolver_pvector, METH_NOARGS, "Create PVector from evolver"},
+        {"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
         {NULL,              NULL}           /* sentinel */
 };
 
@@ -1471,6 +1473,16 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
 
 static Py_ssize_t PVectorEvolver_len(PVectorEvolver *self) {
   return self->newVector->count + PyList_GET_SIZE(self->appendList);
+}
+
+static PyObject* PVectorEvolver_is_dirty(PVectorEvolver *self) {
+  if((self->newVector != self->originalVector) || (PyList_GET_SIZE(self->appendList) > 0)) {
+    Py_INCREF(Py_True);
+    return Py_True;
+  }
+
+  Py_INCREF(Py_False);
+  return Py_False;
 }
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {

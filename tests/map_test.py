@@ -74,7 +74,7 @@ def test_initialization_with_many_elements():
     # Some NOP properties
     assert new_map.remove('18888') is new_map
     assert '19999' not in new_map
-    assert new_map['1500'] == 1500  
+    assert new_map['1500'] == 1500
     assert new_map.set('1500', new_map['1500']) is new_map
 
 
@@ -95,6 +95,7 @@ def test_overwrite_existing_element():
     assert len(map2) == 1
     assert map2['a'] == 3
 
+
 def test_supports_hash_and_equals():
     x = m(a=1, b=2, c=3)
     y = m(a=1, b=2, c=3)
@@ -102,6 +103,7 @@ def test_supports_hash_and_equals():
     assert hash(x) == hash(y)
     assert x == y
     assert not (x != y)
+
 
 def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     x = pmap(dict((x, x) for x in range(1000)))
@@ -114,6 +116,7 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     assert x == y
     assert hash(x) == hash(y)
 
+
 def test_update_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.
     x = m(a=1, b=2, c=3)    
@@ -121,33 +124,32 @@ def test_update_with_multiple_arguments():
 
     assert y == m(a=1, b=4, c=6)
 
+
 def test_update_one_argument():
     x = m(a=1)
 
     assert x.update(m(b=2)) == m(a=1, b=2)
+
 
 def test_update_no_arguments():
     x = m(a=1)
 
     assert x.update() is x
 
-def test_set_in_base_case():
-    # Works as set when called with only one key
-    x = m(a=1, b=2)
-    
-    assert x.set_in(['a'], 3) == m(a=3, b=2)
 
 def test_set_in_base_case():
     # Works as set when called with only one key
     x = m(a=1, b=2)
     
     assert x.set_in(['a'], 3) == m(a=3, b=2)
+
 
 def test_set_in_nested_maps():
     x = m(a=1, b=m(c=3, d=m(e=6, f=7)))
     
     assert x.set_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
-    
+
+
 def test_set_in_levels_missing():
     x = m(a=1, b=m(c=3))
     
@@ -274,6 +276,17 @@ def test_pickling_empty_map():
 
 def test_pickling_non_empty_vector():
     assert pickle.loads(pickle.dumps(m(a=1, b=2), -1)) == m(a=1, b=2)
+
+
+def test_set_with_relocation():
+    x = pmap({'a':1000}, pre_size=1)
+    x = x.set('b', 3000)
+    x = x.set('c', 4000)
+    x = x.set('d', 5000)
+    x = x.set('d', 6000)
+
+    assert len(x) == 4
+    assert x == pmap({'a': 1000, 'b': 3000, 'c': 4000, 'd': 6000})
 
 
 def test_evolver_simple_update():

@@ -672,6 +672,7 @@ def test_no_dependencies_between_evolvers_from_the_same_pvector(pvector):
     e2_expected[35] = -350
     assert list(e2.pvector()) == e2_expected
 
+
 def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
     original_list = list(range(40))
     v = pvector(original_list)
@@ -698,8 +699,26 @@ def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
     assert list(v1) == v1_expected
     assert list(v2) == v2_expected
 
+
 def test_evolver_len(pvector):
     e = pvector([1, 2, 3]).evolver()
     e.extend([4, 5])
 
     assert len(e) == 5
+
+
+def test_evolver_is_dirty(pvector):
+    e = pvector([1, 2, 3]).evolver()
+    assert not e.is_dirty()
+
+    e.append(4)
+    assert e.is_dirty
+
+    e.pvector()
+    assert not e.is_dirty()
+
+    e[2] = 2000
+    assert e.is_dirty
+
+    e.pvector()
+    assert not e.is_dirty()
