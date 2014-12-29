@@ -6,7 +6,6 @@ from numbers import Integral
 import sys
 
 import six
-import warnings
 
 
 def _bitcount(val):
@@ -706,13 +705,6 @@ class PMap(object):
         evolver.remove(key)
         return evolver.pmap()
 
-    def merge(self, *maps):
-        """
-        Deprecated, use update() instead!
-        """
-        warnings.warn("Deprecated! Use update() instead!", DeprecationWarning)
-        return self.update(*maps)
-
     def update(self, *maps):
         """
         Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
@@ -723,13 +715,6 @@ class PMap(object):
         pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
         """
         return self.update_with(lambda l, r: r, *maps)
-
-    def merge_with(self, merge_fn, *maps):
-        """
-        Deprecated, use update_with() instead!
-        """
-        warnings.warn("Deprecated! Use update_with() instead!", DeprecationWarning)
-        return self.update_with(merge_fn, *maps)
 
     def update_with(self, update_fn, *maps):
         """
