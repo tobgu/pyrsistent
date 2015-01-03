@@ -236,13 +236,13 @@ static void PVector_dealloc(PVector *self) {
         self, self->count, NODE_REF_COUNT(self->tail), NODE_REF_COUNT(self->root), self->shift, self->tail, self->root);
 
   PyObject_GC_UnTrack((PyObject*)self);
-  Py_TRASHCAN_SAFE_BEGIN(self)
+  Py_TRASHCAN_SAFE_BEGIN(self);
 
   releaseNode(0, self->tail);
   releaseNode(self->shift, self->root);
   
   PyObject_GC_Del(self);
-  Py_TRASHCAN_SAFE_END(self)
+  Py_TRASHCAN_SAFE_END(self);
 }
 
 static PyObject *toList(PVector *self) {
@@ -1321,18 +1321,20 @@ static void freezeVector(PVector *vector) {
   }
 }
 
-static void PVectorEvolver_dealloc(PVectorEvolver *evolver) {
-  PyObject_GC_UnTrack(evolver);
+static void PVectorEvolver_dealloc(PVectorEvolver *self) {
+  PyObject_GC_UnTrack(self);
+  Py_TRASHCAN_SAFE_BEGIN(self);
 
-  if(evolver->originalVector != evolver->newVector) {
-    freezeVector(evolver->newVector);
-    Py_DECREF(evolver->newVector);
+  if(self->originalVector != self->newVector) {
+    freezeVector(self->newVector);
+    Py_DECREF(self->newVector);
   }
 
-  Py_DECREF(evolver->originalVector);
-  Py_DECREF(evolver->appendList);
+  Py_DECREF(self->originalVector);
+  Py_DECREF(self->appendList);
 
-  PyObject_GC_Del(evolver);
+  PyObject_GC_Del(self);
+  Py_TRASHCAN_SAFE_END(self);
 }
 
 static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
