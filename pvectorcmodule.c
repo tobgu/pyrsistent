@@ -89,6 +89,11 @@ static PyMemberDef PVector_members[] = {
 #define debug(...)
 // #define debug printf
 
+#define NODE_REF_COUNT(n) ((n)->refCount)
+#define SET_NODE_REF_COUNT(n, c) (NODE_REF_COUNT(n) = (c))
+#define INC_NODE_REF_COUNT(n) (NODE_REF_COUNT(n)++)
+#define DEC_NODE_REF_COUNT(n) (NODE_REF_COUNT(n)--)
+
 static VNode* allocNode(void) {
   if(nodeCache.size > 0) {
     nodeCache.size--;
@@ -110,7 +115,7 @@ static void freeNode(VNode *node) {
 static VNode* newNode(void) {
   VNode* result = allocNode();
   memset(result, 0x0, sizeof(VNode));
-  result->refCount = 1;
+  SET_NODE_REF_COUNT(result, 1);
   debug("newNode() %p\n", result);
   return result;
 }
@@ -125,11 +130,11 @@ static VNode* copyNode(VNode* source) {
   
   for(i = 0; i < BRANCH_FACTOR; i++) {
     if(result->items[i] != NULL) {
-      ((VNode*)result->items[i])->refCount++;
+      INC_NODE_REF_COUNT((VNode*)result->items[i]);
     }
   }
 
-  result->refCount = 1;
+  SET_NODE_REF_COUNT(result, 1);
   return result;
 }
 
@@ -196,13 +201,13 @@ static void releaseNode(int level, VNode *node) {
     return;
   }
 
-  debug("releaseNode(): node=%p, level=%i, refCount=%i\n", node, level, node->refCount);
+  debug("releaseNode(): node=%p, level=%i, refCount=%i\n", node, level, NODE_REF_COUNT(node));
 
   int i;
 
-  node->refCount--;
-  debug("Refcount when trying to release: %u\n", node->refCount);
-  if(node->refCount == 0) {
+  DEC_NODE_REF_COUNT(node);
+  debug("Refcount when trying to release: %u\n", NODE_REF_COUNT(node));
+  if(NODE_REF_COUNT(node) == 0) {
     if(level > 0) {
       for(i = 0; i < BRANCH_FACTOR; i++) {
         if(node->items[i] != NULL) {
@@ -228,7 +233,7 @@ static void releaseNode(int level, VNode *node) {
 */
 static void PVector_dealloc(PVector *self) {
   debug("Dealloc(): self=%p, self->count=%u, tail->refCount=%u, root->refCount=%u, self->shift=%u, self->tail=%p, self->root=%p\n",
-        self, self->count, self->tail->refCount, self->root->refCount, self->shift, self->tail, self->root);
+        self, self->count, NODE_REF_COUNT(self->tail), NODE_REF_COUNT(self->root), self->shift, self->tail, self->root);
 
   PyObject_GC_UnTrack((PyObject*)self);
   Py_TRASHCAN_SAFE_BEGIN(self)
@@ -666,7 +671,7 @@ static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
 
 static VNode* newPath(unsigned int level, VNode* node){
   if(level == 0) {
-    node->refCount++;
+    INC_NODE_REF_COUNT(node);
     return node;
   }
   
@@ -684,7 +689,7 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
 
   if(level == SHIFT) {
     // We're at the bottom
-    tail->refCount++;
+    INC_NODE_REF_COUNT(tail);
     nodeToInsert = tail;
   } else {
     // More levels available in the tree
@@ -693,11 +698,11 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
     if(child != NULL) {
       nodeToInsert = pushTail(level - SHIFT, count, child, tail);
 
-      // Need to make an adjustment of the refCount for the child node here since
+      // Need to make an adjustment of the ref COUNT for the child node here since
       // it was incremented in an earlier stage when the node was copied. Now the child
       // node will be part of the path copy so the number of references to the original
       // child will not increase at all.
-      child->refCount--;
+      DEC_NODE_REF_COUNT(child);
     } else {
       nodeToInsert = newPath(level - SHIFT, tail);
     }
@@ -709,7 +714,7 @@ static VNode* pushTail(unsigned int level, unsigned int count, VNode* parent, VN
 
 static PVector* copyPVector(PVector *original) {
   PVector *newVec = newPvec(original->count, original->shift, original->root);
-  original->root->refCount++;
+  INC_NODE_REF_COUNT(original->root);
   memcpy(newVec->tail->items, original->tail->items, TAIL_SIZE(original) * sizeof(void*));
   incRefs((PyObject**)newVec->tail->items);
   return newVec;
@@ -733,9 +738,9 @@ static void extendWithItem(PVector *newVec, PyObject *item) {
 
     newVec->root = new_root;
 
-    // Need to adjust the refCount of the old tail here since no new references were
+    // Need to adjust the ref count of the old tail here since no new references were
     // actually created, we just moved the tail.
-    newVec->tail->refCount--;
+    DEC_NODE_REF_COUNT(newVec->tail);
     newVec->tail = newNode();
     tail_size = 0;
   }
@@ -853,7 +858,7 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   // Does the new object fit in the tail? If so, take a copy of the tail and
   // insert the new element in that.
   if(tail_size < BRANCH_FACTOR) {
-    self->root->refCount++;
+    INC_NODE_REF_COUNT(self->root);
     PVector *new_pvec = newPvec(self->count + 1, self->shift, self->root);
     copyInsert(new_pvec->tail->items, self->tail->items, tail_size, obj);
     incRefs((PyObject**)new_pvec->tail->items);
@@ -869,7 +874,7 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   if(ROOT_NODE_FULL(self)) {
     new_root = newNode();
     new_root->items[0] = self->root;
-    self->root->refCount++;
+    INC_NODE_REF_COUNT(self->root);
     new_root->items[1] = newPath(self->shift, self->tail);
     new_shift = self->shift + SHIFT;
   } else {
@@ -896,7 +901,7 @@ static VNode* doSet(VNode* node, unsigned int level, unsigned int position, PyOb
     Py_ssize_t index = (position >> level) & BIT_MASK;
 
     // Drop reference to this node since we're about to replace it
-    ((VNode*)theNewNode->items[index])->refCount--;
+    DEC_NODE_REF_COUNT((VNode*)theNewNode->items[index]);
     theNewNode->items[index] = doSet(node->items[index], level - SHIFT, position, value); 
     return theNewNode;
   }
@@ -911,7 +916,7 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
   if((0 <= position) && (position < self->count)) {
     if(position >= TAIL_OFF(self)) {
       // Reuse the root, replace the tail
-      self->root->refCount++;
+      INC_NODE_REF_COUNT(self->root);
       PVector *new_pvec = newPvec(self->count, self->shift, self->root);
       copyInsert(new_pvec->tail->items, self->tail->items, position & BIT_MASK, argObj);
       incRefs((PyObject**)new_pvec->tail->items);
@@ -924,11 +929,11 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
       // Free the tail and replace it with a reference to the tail of the original vector
       freeNode(new_pvec->tail);
       new_pvec->tail = self->tail;
-      self->tail->refCount++;
+      INC_NODE_REF_COUNT(self->tail);
       return (PyObject*)new_pvec;
     }
   } else if (position == self->count) {
-    // TODO Remove this case
+    // TODO Remove this case?
     return PVector_append(self, argObj);
   } else {
     PyErr_SetString(PyExc_IndexError, "Index out of range");
@@ -1274,7 +1279,7 @@ static PyTypeObject PVectorEvolverType = {
 
 // Indicate that a node is "dirty" (has been updated by the evolver)
 // by setting the MSB of the refCount. This will be cleared when
-// creating a pvector from the evolver (freezing it).
+// creating a pvector from the evolver (cleaning it).
 #define DIRTY_BIT 0x80000000
 #define REF_COUNT_MASK (~DIRTY_BIT)
 #define IS_DIRTY(node) ((node)->refCount & DIRTY_BIT)
@@ -1287,7 +1292,7 @@ static void freezeNodeRecursively(VNode *node, int level) {
 
   int i;
   CLEAR_DIRTY(node);
-  node->refCount = 1;
+  SET_NODE_REF_COUNT(node, 1);
   if(level > 0) {
     for(i = 0; i < BRANCH_FACTOR; i++) {
       VNode *nextNode = (VNode*)node->items[i];
@@ -1306,13 +1311,13 @@ static void freezeVector(PVector *vector) {
   if(IS_DIRTY(vector->tail)) {
     freezeNodeRecursively(vector->tail, 0);
   } else {
-    vector->tail->refCount++;
+    INC_NODE_REF_COUNT(vector->tail);
   }
 
   if(IS_DIRTY(vector->root)) {
     freezeNodeRecursively(vector->root, vector->shift);
   } else {
-    vector->root->refCount++;
+    INC_NODE_REF_COUNT(vector->root);
   }
 }
 
@@ -1400,7 +1405,7 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
 
     if(resultNode->items[index] != oldNode) {
       // Node replaced, drop references to old node
-      oldNode->refCount--;
+      DEC_NODE_REF_COUNT(oldNode);
     }
   }
 
