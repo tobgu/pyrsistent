@@ -702,7 +702,7 @@ class PMap(object):
         True
         """
         evolver = self.evolver()
-        evolver.remove(key)
+        del evolver[key]
         return evolver.pmap()
 
     def update(self, *maps):
@@ -805,8 +805,11 @@ class PMap(object):
 
             self._buckets_evolver = pvector(new_list).evolver()
 
+        def is_dirty(self):
+            return self._buckets_evolver.is_dirty()
+
         def pmap(self):
-            if self._buckets_evolver.is_dirty():
+            if self.is_dirty():
                 return PMap(self._size, self._buckets_evolver.pvector())
 
             return self._original_pmap
@@ -817,7 +820,7 @@ class PMap(object):
         def __contains__(self, key):
             return PMap._contains(self._buckets_evolver, key)
 
-        def remove(self, key):
+        def __delitem__(self, key):
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
 
             if bucket:
@@ -972,6 +975,31 @@ class PSet(object):
             return PSet(self._map.remove(element))
 
         return self
+
+    class _Evolver(object):
+        __slots__ = ('_original_pset', '_pmap_evolver')
+
+        def __init__(self, original_pset):
+            self._original_pset = original_pset
+            self._pmap_evolver = original_pset._map.evolver()
+
+        def add(self, element):
+            self._pmap_evolver[element] = True
+
+        def remove(self, element):
+            del self._pmap_evolver[element]
+
+        def is_dirty(self):
+            return self._pmap_evolver.is_dirty()
+
+        def pset(self):
+            if not self.is_dirty():
+                return  self._original_pset
+
+            return PSet(self._pmap_evolver.pmap())
+
+    def evolver(self):
+        return PSet._Evolver(self)
 
     # All the operations and comparisons you would expect on a set.
     #

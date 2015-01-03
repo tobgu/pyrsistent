@@ -8,6 +8,7 @@ def test_literalish_works():
     assert s() is pset()
     assert s(1, 2) == pset([1, 2])
 
+
 def test_supports_hash():
     assert hash(s(1, 2)) == hash(s(1, 2))
 
@@ -15,6 +16,7 @@ def test_supports_hash():
 def test_empty_truthiness():
     assert s(1)
     assert not s()
+
 
 def test_contains_elements_that_it_was_initialized_with():
     initial = [1, 2, 3]
@@ -35,10 +37,12 @@ def test_is_immutable():
     assert s2 == pset([1, 2])
     assert s3 == pset([2])
 
+
 def test_remove_when_not_present():
     s1 = s(1, 2, 3)
     with pytest.raises(KeyError):
         s1.remove(4)
+
 
 def test_discard():
     s1 = s(1, 2, 3)
@@ -95,6 +99,7 @@ def test_str():
     rep = str(pset([1, 2, 3]))
     assert rep == "pset([1, 2, 3])"
 
+
 def test_is_disjoint():
     s1 = pset([1, 2, 3])
     s2 = pset([3, 4, 5])
@@ -103,4 +108,31 @@ def test_is_disjoint():
     assert not s1.isdisjoint(s2)
     assert s1.isdisjoint(s3)
 
-pytest.main()
+
+def test_evolver_simple_add():
+    x = s(1, 2, 3)
+    e = x.evolver()
+    assert not e.is_dirty()
+
+    e.add(4)
+    assert e.is_dirty()
+
+    x2 = e.pset()
+    assert not e.is_dirty()
+    assert x2 == s(1, 2, 3, 4)
+    assert x == s(1, 2, 3)
+
+def test_evolver_simple_remove():
+    x = s(1, 2, 3)
+    e = x.evolver()
+    e.remove(2)
+
+    x2 = e.pset()
+    assert x2 == s(1, 3)
+    assert x == s(1, 2, 3)
+
+
+def test_evolver_no_update_produces_same_pset():
+    x = s(1, 2, 3)
+    e = x.evolver()
+    assert e.pset() is x

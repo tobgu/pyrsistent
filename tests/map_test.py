@@ -315,5 +315,5 @@ def test_evolver_remove_element():
     e = m(a=1000, b=2000).evolver()
     assert 'a' in e
 
-    e.remove('a')
+    del e['a']
     assert 'a' not in e
