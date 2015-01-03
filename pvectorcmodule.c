@@ -1287,7 +1287,7 @@ static PyTypeObject PVectorEvolverType = {
 #define CLEAR_DIRTY(node) ((node)->refCount &= REF_COUNT_MASK)
 
 
-static void freezeNodeRecursively(VNode *node, int level) {
+static void cleanNodeRecursively(VNode *node, int level) {
   debug("Freezing recursively node=%p, level=%u\n", node, level);
 
   int i;
@@ -1297,25 +1297,25 @@ static void freezeNodeRecursively(VNode *node, int level) {
     for(i = 0; i < BRANCH_FACTOR; i++) {
       VNode *nextNode = (VNode*)node->items[i];
       if((nextNode != NULL) && IS_DIRTY(nextNode)) {
-        freezeNodeRecursively(nextNode, level - SHIFT);
+        cleanNodeRecursively(nextNode, level - SHIFT);
       }
     }
   }
 }
 
-static void freezeVector(PVector *vector) {
+static void cleanVector(PVector *vector) {
   // Freezing the vector means that all dirty indications are cleared
   // and that the nodes that were dirty get a ref count of 1 since
   // they are brand new. Once frozen the vector can be released into
   // the wild.
   if(IS_DIRTY(vector->tail)) {
-    freezeNodeRecursively(vector->tail, 0);
+    cleanNodeRecursively(vector->tail, 0);
   } else {
     INC_NODE_REF_COUNT(vector->tail);
   }
 
   if(IS_DIRTY(vector->root)) {
-    freezeNodeRecursively(vector->root, vector->shift);
+    cleanNodeRecursively(vector->root, vector->shift);
   } else {
     INC_NODE_REF_COUNT(vector->root);
   }
@@ -1326,7 +1326,7 @@ static void PVectorEvolver_dealloc(PVectorEvolver *self) {
   Py_TRASHCAN_SAFE_BEGIN(self);
 
   if(self->originalVector != self->newVector) {
-    freezeVector(self->newVector);
+    cleanVector(self->newVector);
     Py_DECREF(self->newVector);
   }
 
@@ -1460,7 +1460,7 @@ static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
   if(self->newVector == self->originalVector) {
     resultVector = self->newVector;
   } else {
-    freezeVector(self->newVector);
+    cleanVector(self->newVector);
     resultVector = self->newVector;
     Py_DECREF(self->originalVector);
   }
