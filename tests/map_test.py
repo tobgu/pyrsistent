@@ -1,5 +1,6 @@
 from collections import Mapping, Hashable
 from operator import add
+import pytest
 from pyrsistent import pmap, m
 import pickle
 
@@ -28,12 +29,17 @@ def test_initialization_with_one_element():
     assert the_map.a == 2
     assert 'a' in the_map
     
-    assert the_map is the_map.remove('b')
+    assert the_map is the_map.discard('b')
     
     empty_map = the_map.remove('a')
     assert len(empty_map) == 0
     assert 'a' not in empty_map
 
+def test_remove_non_existing_element_raises_key_error():
+    m1 = m(a=1)
+
+    with pytest.raises(KeyError):
+        m1.remove('b')
 
 def test_various_iterations():
     assert set(['a', 'b']) == set(m(a=1, b=2))
@@ -72,7 +78,7 @@ def test_initialization_with_many_elements():
     assert new_map['1601'] == 1601
     
     # Some NOP properties
-    assert new_map.remove('18888') is new_map
+    assert new_map.discard('18888') is new_map
     assert '19999' not in new_map
     assert new_map['1500'] == 1500
     assert new_map.set('1500', new_map['1500']) is new_map
@@ -197,18 +203,18 @@ def test_hash_collision_is_correctly_resolved():
     assert map3[dummy3] == 3
     
     # Remove elements
-    map4 = map.remove(dummy2)
+    map4 = map.discard(dummy2)
     assert len(map4) == 2
     assert map4[dummy1] == 1
     assert dummy2 not in map4
     assert map4[dummy3] == 3
     
-    assert map.remove(dummy4) == map
+    assert map.discard(dummy4) is map
     
     # Empty map handling
     empty_map = map4.remove(dummy1).remove(dummy3)
     assert len(empty_map) == 0
-    assert empty_map.remove(dummy1) == empty_map
+    assert empty_map.discard(dummy1) is empty_map
     
 
 def test_bitmap_indexed_iteration():
@@ -317,3 +323,10 @@ def test_evolver_remove_element():
 
     del e['a']
     assert 'a' not in e
+
+
+def test_evolver_remove_element_not_present():
+    e = m(a=1000, b=2000).evolver()
+
+    with pytest.raises(KeyError):
+        del e['c']

@@ -692,18 +692,31 @@ class PMap(object):
 
     def remove(self, key):
         """
-        Return a new PMap without the element specified by key. Returns reference to itself
-        if element is not present.
-
+        Return a new PMap without the element specified by key. Raises KeyError if the element
+        is not present.
         >>> m1 = m(a=1, b=2)
         >>> m1.remove('a')
         pmap({'b': 2})
-        >>> m1 is m1.remove('c')
-        True
         """
         evolver = self.evolver()
         del evolver[key]
         return evolver.pmap()
+
+    def discard(self, key):
+        """
+        Return a new PMap without the element specified by key. Returns reference to itself
+        if element is not present.
+
+        >>> m1 = m(a=1, b=2)
+        >>> m1.discard('a')
+        pmap({'b': 2})
+        >>> m1 is m1.discard('c')
+        True
+        """
+        try:
+            return self.remove(key)
+        except KeyError:
+            return self
 
     def update(self, *maps):
         """
@@ -828,6 +841,9 @@ class PMap(object):
                 if len(bucket) > len(new_bucket):
                     self._buckets_evolver[index] = new_bucket if new_bucket else None
                     self._size -= 1
+                    return
+
+            raise KeyError('{0}'.format(key))
 
     def evolver(self):
         return PMap._Evolver(self)
