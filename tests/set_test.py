@@ -136,3 +136,9 @@ def test_evolver_no_update_produces_same_pset():
     x = s(1, 2, 3)
     e = x.evolver()
     assert e.pset() is x
+
+
+def test_evolver_len():
+    x = s(1, 2, 3)
+    e = x.evolver()
+    assert len(e) == 3

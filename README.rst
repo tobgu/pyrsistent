@@ -147,6 +147,70 @@ Random access and insert is log32(n) where n is the size of the set.
     >>> s1 < s(3, 4, 5)
     False
 
+Evolvers
+~~~~~~~~
+PVector, PMap and PSet all have support for a concept dubbed *evolvers*. An evolver acts like a mutable
+view of the underlying persistent data structure with "transaction like" semantics. No updates of the original
+data structure is ever performed, it is still fully immutable.
+
+The evolvers have a very limited API by design to discourage excessive, and inappropriate, usage as that would
+take us down the mutable road. In principle only basic mutation and element access functions are supported.
+Check out the documentation_ of each data structure for specific examples.
+
+Examples of when you may want to use an evolver instead of working directly with the data structure include:
+
+* Multiple updates are done to the same data structure and the intermediate results are of no
+  interest. In this case using an evolver may be a more efficient and easier to work with.
+* You need to pass a vector into a legacy function or a function that you have no control
+  over which performs in place mutations. In this case pass an evolver instance
+  instead and then create a new pvector from the evolver once the function returns.
+
+.. code:: python
+
+    >>> from pyrsistent import v
+
+    # In place mutation as when working with the built in counterpart
+    >>> v1 = v(1, 2, 3)
+    >>> e = v1.evolver()
+    >>> e[1] = 22
+    >>> e.append(4)
+    >>> e.extend([5, 6])
+    >>> e[5] += 1
+    >>> len(e)
+    6
+
+    # The evolver is considered *dirty* when it contains changes compared to the underlying vector
+    >>> e.is_dirty()
+    True
+
+    # But the underlying pvector still remains untouched
+    >>> v1
+    pvector([1, 2, 3])
+
+    # Once satisfied with the updates you can produce a new pvector containing the updates.
+    # The new pvector will share data with the original pvector in the same way that would have
+    # been done if only using operations on the pvector.
+    >>> v2 = e.pvector()
+    >>> v2
+    pvector([1, 22, 3, 4, 5, 7])
+
+    # The evolver is now no longer considered *dirty* as it contains no differences compared to the
+    # pvector just produced.
+    >>> e.is_dirty()
+    False
+
+    # You may continue to work with the same evolver without affecting the content of v2
+    >>> e[0] = 11
+
+    # Or create a new evolver from v2. The two evolvers can be updated independently but will both
+    # share data with v2 where possible.
+    >>> e2 = v2.evolver()
+    >>> e2[0] = 1111
+    >>> e.pvector()
+    pvector([11, 22, 3, 4, 5, 7])
+    >>> e2.pvector()
+    pvector([1111, 22, 3, 4, 5, 7])
+
 freeze and thaw
 ~~~~~~~~~~~~~~~
 These functions are great when your cozy immutable world has to interact with the evil mutable world outside.

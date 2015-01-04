@@ -290,13 +290,65 @@ class PVector(object):
             return self._dirty_nodes or self._extra_tail
 
     def evolver(self):
+        """
+        Create a new evolver for this pvector. The evolver acts as a mutable view of the vector
+        with "transaction like" semantics. No part of the underlying vector i updated, it is still
+        fully immutable. Furthermore multiple evolvers created from the same pvector do not
+        interfere with each other.
+
+        You may want to use an evolver instead of working directly with the pvector in the
+        following cases:
+
+        * Multiple updates are done to the same vector and the intermediate results are of no
+          interest. In this case using an evolver may be a more efficient and easier to work with.
+        * You need to pass a vector into a legacy function or a function that you have no control
+          over which performs in place mutations of lists. In this case pass an evolver instance
+          instead and then create a new pvector from the evolver once the function returns.
+
+        The following example illustrates a typical workflow when working with evolvers. It also
+        displays most of the API (which i kept small by design, you should not be tempted to
+        use evolvers in excess ;-)).
+
+        Create the evolver and perform various mutating updates to it:
+        >>> v1 = v(1, 2, 3, 4, 5)
+        >>> e = v1.evolver()
+        >>> e[1] = 22
+        >>> e.append(6)
+        >>> e.extend([7, 8, 9])
+        >>> e[8] += 1
+        >>> len(e)
+        9
+
+        The underlying pvector remains the same:
+        >>> v1
+        pvector([1, 2, 3, 4, 5])
+
+        The changes are kept in the evolver. An updated pvector can be created using the
+        pvector() function on the evolver.
+        >>> v2 = e.pvector()
+        >>> v2
+        pvector([1, 22, 3, 4, 5, 6, 7, 8, 10])
+
+        The new pvector will share data with the original pvector in the same way that would have
+        been done if only using operations on the pvector.
+        """
         return PVector._Evolver(self)
 
     def mset(self, *args):
+        """
+        Return a new vector with elements in specified positions replaced by values (multi set).
+
+        Elements on even positions in the argument list are interpreted as indexes while
+        elements on odd positions are considered values.
+
+        >>> v1 = v(1, 2, 3)
+        >>> v1.mset(0, 11, 2, 33)
+        pvector([11, 2, 33])
+        """
         if len(args) % 2:
             raise TypeError("mset expected an even number of arguments")
 
-        evolver = PVector._Evolver(self)
+        evolver = self.evolver()
         for i in range(0, len(args), 2):
             evolver[args[i]] = args[i+1]
 
@@ -846,6 +898,31 @@ class PMap(object):
             raise KeyError('{0}'.format(key))
 
     def evolver(self):
+        """
+        Create a new evolver for this pmap. For a discussion on evolvers in general see the
+        documentation for the pvector evolver.
+
+        Create the evolver and perform various mutating updates to it:
+        >>> m1 = m(a=1, b=2)
+        >>> e = m1.evolver()
+        >>> e['c'] = 3
+        >>> len(e)
+        3
+        >>> del e['a']
+
+        The underlying pmap remains the same:
+        >>> m1
+        pmap({'a': 1, 'b': 2})
+
+        The changes are kept in the evolver. An updated pmap can be created using the
+        pmap() function on the evolver.
+        >>> m2 = e.pmap()
+        >>> m2
+        pmap({'c': 3, 'b': 2})
+
+        The new pmap will share data with the original pmap in the same way that would have
+        been done if only using operations on the pmap.
+        """
         return PMap._Evolver(self)
 
 Mapping.register(PMap)
@@ -1014,7 +1091,35 @@ class PSet(object):
 
             return PSet(self._pmap_evolver.pmap())
 
+        def __len__(self):
+            return len(self._pmap_evolver)
+
     def evolver(self):
+        """
+        Create a new evolver for this pset. For a discussion on evolvers in general see the
+        documentation for the pvector evolver.
+
+        Create the evolver and perform various mutating updates to it:
+        >>> s1 = s(1, 2, 3)
+        >>> e = s1.evolver()
+        >>> e.add(4)
+        >>> len(e)
+        4
+        >>> e.remove(1)
+
+        The underlying pset remains the same:
+        >>> s1
+        pset([1, 2, 3])
+
+        The changes are kept in the evolver. An updated pmap can be created using the
+        pset() function on the evolver.
+        >>> s2 = e.pset()
+        >>> s2
+        pset([2, 3, 4])
+
+        The new pset will share data with the original pset in the same way that would have
+        been done if only using operations on the pset.
+        """
         return PSet._Evolver(self)
 
     # All the operations and comparisons you would expect on a set.

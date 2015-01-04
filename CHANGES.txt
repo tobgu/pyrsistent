@@ -1,5 +1,16 @@
 Revision history
 ----------------
+v0.7.0, 2015-01-..
+  No 1.0, instead a bunch of new stuff and one API breaking change to PMap.remove().
+  * Evolvers for pvector, pmap and pset to allow simple and efficient updates of multiple elements
+    in the collection. See the documentation for a closer description.
+  * New method mset on pvector to update multiple values in one operation
+  * Remove deprecated methods merge and merge_with on PMap
+  * Change behavior of PMap.remove, it will now raise a KeyError if the element is not present.
+    New method PMap.discard will instead return the original pmap if the element is not present.
+    This aligns the PMap with how things are done in the PSet and is closer to the behavior of the
+    built in counterparts.
+
 v0.6.3, 2014-11-27
   * Python 2.6 support, thanks @wrmsr!
   * PMap.merge/merge_with renamed to update/update_with. merge/merge_with remains but will be
@@ -59,12 +70,8 @@ v0.1.0, 2013-11-10
 
 TODO (in no particular order)
 -----------------------------
-- More convenience methods to simplify work with these data structures.
 - Versioned data structure where the different versions can be accessed by index?
 - Ordered sets and maps
 - A good performance measurement suite
 - Provide additional package with literal syntax for pvector, pmap, pset?
 - Replace parts of the set_in implementation with standalone function
-- Evolver for map and set
-- Documentation for evolver
-- Setdefault for pmap
