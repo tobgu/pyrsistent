@@ -54,11 +54,11 @@ WARNING: Could not build the %s.
                                                   "the compilation "
                                                   "failed."))
 
-__version__ = "0.6.3"
+__version__ = "0.7.0"
 setup(
     name='pyrsistent',
     version=__version__,
-    description='Persistent data structures',
+    description='Persistent/Functional/Immutable data structures',
     long_description=readme,
     author='Tobias Gustafsson',
     author_email='tobias.l.gustafsson@gmail.com',

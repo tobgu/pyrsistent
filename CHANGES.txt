@@ -1,7 +1,6 @@
 Revision history
 ----------------
-v0.7.0, 2015-01-..
-  No 1.0, instead a bunch of new stuff and one API breaking change to PMap.remove().
+v0.7.0, 2015-01-04, No 1.0, instead a bunch of new stuff and one API breaking change to PMap.remove().
   * Evolvers for pvector, pmap and pset to allow simple and efficient updates of multiple elements
     in the collection. See the documentation for a closer description.
   * New method mset on pvector to update multiple values in one operation
