@@ -2194,3 +2194,31 @@ def dq(*elements):
     pdeque([1, 2, 3])
     """
     return pdeque(elements)
+
+
+###### PRecord ######
+class PRecord(PMap):
+    pass
+
+
+def record(*fields, **_typed_fields):
+    typed_fields = {k: v if isinstance(v, set) else {v} for k, v in _typed_fields.items()}
+
+    def transplant(obj):
+        return Record(obj._size, obj._buckets)
+
+    class Record(PRecord):
+        def set(self, key, val):
+            if key in typed_fields:
+                assert type(val) == typed_fields[key] or type(val) in typed_fields[key]
+            else:
+                assert key in fields
+
+            return transplant(super(Record, self).set(key, val))
+
+        def __repr__(self):
+            return 'record({0})({1})'.format(repr(fields), str(dict(self)))
+
+    def create_record(**initial):
+        return transplant(pmap(initial))
+    return create_record
