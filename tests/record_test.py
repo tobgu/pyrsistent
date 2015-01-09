@@ -1,31 +1,28 @@
-from pyrsistent import record, PRecord
+import pytest
+from pyrsistent import precord, PRecord
 
 
 def test_multiple_types_and_transplant():
-    ARecord = record('a', b={int, float})
+    ARecord = precord('a', b=set([int, float]))
     foo = ARecord(a=1)
     assert isinstance(foo.set('b', 1), PRecord)
     assert isinstance(foo.set('b', 1.0), PRecord)
-    try:
+    with pytest.raises(TypeError):
         foo.set('b', 'asd')
-        assert False
-    except AssertionError:
-        pass
 
 
 def test_single_type_and_transplant():
-    ARecord = record(b=int)
+    ARecord = precord(b=int)
     foo = ARecord()
     assert isinstance(foo.set('b', 1), PRecord)
-    try:
+    with pytest.raises(TypeError):
         foo.set('b', 'asd')
-        assert False
-    except AssertionError:
-        pass
+    with pytest.raises(AttributeError):
+        foo.set('q', 'asd')
 
 
 def test_untyped_field():
-    ARecord = record('a')
+    ARecord = precord('a')
     foo = ARecord(a=1)
     foo.set('a', 1)
     foo.set('a', 1.0)
@@ -33,11 +30,10 @@ def test_untyped_field():
 
 
 def test_constructor():
-    ARecord = record(b=int)
+    ARecord = precord(b=int)
     ARecord(b=1)
-    try:
+    with pytest.raises(TypeError):
+        ARecord(b='asd')
+    with pytest.raises(AttributeError):
         ARecord(a=1)
-        assert False
-    except AssertionError:
-        pass
 

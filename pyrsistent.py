@@ -2197,12 +2197,17 @@ def dq(*elements):
 
 
 ###### PRecord ######
+
+# TODO:  Possible to bypass type and field checks by using for example update() and update_with(). Should be possible to override these without too much hassle.
+# TODO: Should fix evolver support somehow
+
+
 class PRecord(PMap):
     pass
 
 
-def record(*fields, **_typed_fields):
-    typed_fields = {k: v if isinstance(v, set) else {v} for k, v in _typed_fields.items()}
+def precord(*fields, **_typed_fields):
+    typed_fields = dict([(k, v if isinstance(v, set) else set([v])) for k, v in _typed_fields.items()])
 
     def transplant(obj):
         return Record(obj._size, obj._buckets)
@@ -2210,15 +2215,23 @@ def record(*fields, **_typed_fields):
     class Record(PRecord):
         def set(self, key, val):
             if key in typed_fields:
-                assert type(val) == typed_fields[key] or type(val) in typed_fields[key]
+                if type(val) != typed_fields[key] and type(val) not in typed_fields[key]:
+                    raise TypeError()
             else:
-                assert key in fields
+                if key not in fields:
+                    raise AttributeError()
 
             return transplant(super(Record, self).set(key, val))
 
+        def delete(self, key):
+            return transplant(super(Record, self).delete(key))
+
         def __repr__(self):
-            return 'record({0})({1})'.format(repr(fields), str(dict(self)))
+            return 'precord({0})({1})'.format(repr(fields), str(dict(self)))
 
     def create_record(**initial):
-        return transplant(pmap(initial))
+        result = transplant(pmap())
+        for k, v in initial.items():
+            result = result.set(k, v)
+        return result
     return create_record
