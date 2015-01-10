@@ -280,7 +280,7 @@ def test_pickling_empty_map():
     assert pickle.loads(pickle.dumps(m(), -1)) == m()
 
 
-def test_pickling_non_empty_vector():
+def test_pickling_non_empty_map():
     assert pickle.loads(pickle.dumps(m(a=1, b=2), -1)) == m(a=1, b=2)
 
 
