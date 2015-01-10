@@ -2233,9 +2233,9 @@ def precord(*_fields, **_typed_fields):
 
         def __repr__(self):
             untyped_repr = ', '.join("'{0}'".format(f) for f in fields)
-            typed_repr = ', '.join("{0}={1}".format(k, "({0},)".format(', '.join(t.__name__ for t in v))) for k, v in typed_fields.items())
+            typed_repr = ', '.join("{0}={1}".format(k, "({0},)".format(', '.join(sorted(t.__name__ for t in v)))) for k, v in typed_fields.items())
             field_repr = ', '.join(r for r in (untyped_repr, typed_repr) if r)
-            arg_repr = ', '.join("{0}={1}".format(k, repr(v)) for k, v in self.items())
+            arg_repr = ', '.join("{0}={1}".format(k, repr(v)) for k, v in sorted(self.items()))
             return 'precord({0})({1})'.format(field_repr, arg_repr)
 
         def __reduce__(self):
