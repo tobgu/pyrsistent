@@ -718,7 +718,9 @@ class PMap(object):
 
     __eq__ = Mapping.__eq__
     __ne__ = Mapping.__ne__
-    __str__ = __repr__
+
+    def __str__(self):
+        return self.__repr__()
 
     def __hash__(self):
         # This hashing algorithm is probably not the speediest
@@ -923,7 +925,7 @@ class PMap(object):
         The new pmap will share data with the original pmap in the same way that would have
         been done if only using operations on the pmap.
         """
-        return PMap._Evolver(self)
+        return self._Evolver(self)
 
 Mapping.register(PMap)
 Hashable.register(PMap)
@@ -2197,41 +2199,53 @@ def dq(*elements):
 
 
 ###### PRecord ######
-
-# TODO:  Possible to bypass type and field checks by using for example update() and update_with(). Should be possible to override these without too much hassle.
-# TODO: Should fix evolver support somehow
-
-
+# TODO
+# - Documentation
+# - Update evolver interface to have one united "freeze", "persist" or similar regardless of type
+# - Could a nifty syntax be invented to specify the record as a class?
 class PRecord(PMap):
     pass
 
+def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
+    return precord(*orig_fields, **orig_typed_fields)(**kwargs)
 
-def precord(*fields, **_typed_fields):
-    typed_fields = dict([(k, v if isinstance(v, set) else set([v])) for k, v in _typed_fields.items()])
+def precord(*_fields, **_typed_fields):
+    fields = frozenset(_fields)
+    typed_fields = dict([(k, frozenset(v) if isinstance(v, Iterable) else frozenset([v])) for k, v in _typed_fields.items()])
 
     def transplant(obj):
         return Record(obj._size, obj._buckets)
 
     class Record(PRecord):
-        def set(self, key, val):
-            if key in typed_fields:
-                if type(val) != typed_fields[key] and type(val) not in typed_fields[key]:
-                    raise TypeError()
-            else:
-                if key not in fields:
-                    raise AttributeError()
+        class _Evolver(PMap._Evolver):
+            def pmap(self):
+                return transplant(super(Record._Evolver, self).pmap())
 
-            return transplant(super(Record, self).set(key, val))
+            def __setitem__(self, key, value):
+                if key in typed_fields:
+                    if not any(isinstance(value, t) for t in typed_fields[key]):
+                        raise TypeError("Invalid type for field '{0}'".format(key))
+                else:
+                    if key not in fields:
+                        raise AttributeError("'{0}' is not among the specified fields".format(key))
 
-        def delete(self, key):
-            return transplant(super(Record, self).delete(key))
+                super(Record._Evolver, self).__setitem__(key, value)
 
         def __repr__(self):
-            return 'precord({0})({1})'.format(repr(fields), str(dict(self)))
+            untyped_repr = ', '.join("'{0}'".format(f) for f in fields)
+            typed_repr = ', '.join("{0}={1}".format(k, "({0},)".format(', '.join(t.__name__ for t in v))) for k, v in typed_fields.items())
+            field_repr = ', '.join(r for r in (untyped_repr, typed_repr) if r)
+            arg_repr = ', '.join("{0}={1}".format(k, repr(v)) for k, v in self.items())
+            return 'precord({0})({1})'.format(field_repr, arg_repr)
+
+        def __reduce__(self):
+            # Pickling support
+            return _reconstruct_precord, (dict(self), fields, typed_fields)
 
     def create_record(**initial):
-        result = transplant(pmap())
+        e = transplant(pmap()).evolver()
         for k, v in initial.items():
-            result = result.set(k, v)
-        return result
+            e[k] = v
+        return e.pmap()
+
     return create_record
