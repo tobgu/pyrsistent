@@ -2255,11 +2255,11 @@ def precord(*_fields, **_typed_fields):
 
 class _PRecMeta(type):
     def __new__(mcs, name, bases, dct):
-        dct['_prec_fields'] = dict(sum([b.__dict__.get('_prec_fields', {}).items() for b in bases], []))
+        dct['_prec_fields'] = dict(sum([list(b.__dict__.get('_prec_fields', {}).items()) for b in bases], []))
 
         is_base_class = all(b is PMap for b in bases)
         if not is_base_class:
-            for k, v in dct.items():
+            for k, v in list(dct.items()):
                 if k not in ('__module__', '_prec_fields'):
                     dct['_prec_fields'][k] = frozenset(v) if isinstance(v, Iterable) else frozenset([v])
                     del dct[k]
@@ -2274,9 +2274,8 @@ class _PRecMeta(type):
 # - Documentation
 # - Constants for the special case _prec?
 # - Change name to PRecord?
+@six.add_metaclass(_PRecMeta)
 class PRec(PMap):
-    __metaclass__ = _PRecMeta
-
     class _PRecEvolver(PMap._Evolver):
         __slots__ = ('_destination_cls',)
 
@@ -2288,9 +2287,9 @@ class PRec(PMap):
             fields = self._destination_cls._prec_fields
             if key in fields:
                 if fields[key] and not any(isinstance(value, t) for t in fields[key]):
-                    raise TypeError()
+                    raise TypeError("Invalid type for field '{0}'".format(key))
             else:
-                raise AttributeError()
+                raise AttributeError("'{0}' is not among the specified fields".format(key))
 
             super(PRec._PRecEvolver, self).__setitem__(key, value)
 
