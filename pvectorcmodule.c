@@ -142,7 +142,7 @@ static PVector* emptyNewPvec(void);
 static PVector* copyPVector(PVector *original);
 static void extendWithItem(PVector *newVec, PyObject *item);
 
-static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
+static PyObject *PVectorEvolver_persistent(PVectorEvolver *);
 static int PVectorEvolver_set_item(PVectorEvolver *, PyObject*, PyObject*);
 
 static Py_ssize_t PVector_len(PVector *self) {
@@ -1026,7 +1026,7 @@ static PyObject* PVector_mset(PVector *self, PyObject *args) {
     }
   }
 
-  PyObject* vector = PVectorEvolver_pvector(evolver);
+  PyObject* vector = PVectorEvolver_persistent(evolver);
   Py_DECREF(evolver);
   return vector;
 }
@@ -1223,7 +1223,7 @@ static void PVectorEvolver_dealloc(PVectorEvolver *);
 static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
-static PyObject *PVectorEvolver_pvector(PVectorEvolver *);
+static PyObject *PVectorEvolver_persistent(PVectorEvolver *);
 static Py_ssize_t PVectorEvolver_len(PVectorEvolver *);
 static PyObject *PVectorEvolver_is_dirty(PVectorEvolver *);
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg);
@@ -1238,7 +1238,7 @@ static PyMappingMethods PVectorEvolver_mapping_methods = {
 static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
-        {"pvector",     (PyCFunction)PVectorEvolver_pvector, METH_NOARGS, "Create PVector from evolver"},
+        {"persistent",  (PyCFunction)PVectorEvolver_persistent, METH_NOARGS, "Create PVector from evolver"},
         {"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
         {NULL,              NULL}           /* sentinel */
 };
@@ -1455,7 +1455,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
   return -1;
 }
 
-static PyObject *PVectorEvolver_pvector(PVectorEvolver *self) {
+static PyObject *PVectorEvolver_persistent(PVectorEvolver *self) {
   PVector *resultVector;
   if(self->newVector == self->originalVector) {
     resultVector = self->newVector;

@@ -1,5 +1,12 @@
 Revision history
 ----------------
+v0.8.0, 2015-01-..
+  * New type PRecord. Subtype of PMap that allows field and type specification
+  * Transformations...
+  * Breaking change to the evolver interface. What used to be .pvector(), .pmap() and .pset()
+    on the different evolvers has now been unified so that all evolvers have one method .persistent()
+    to produce the persistent counterpart. Sorry for any inconvenience.
+  
 v0.7.0, 2015-01-04, No 1.0, instead a bunch of new stuff and one API breaking change to PMap.remove().
   * Evolvers for pvector, pmap and pset to allow simple and efficient updates of multiple elements
     in the collection. See the documentation for a closer description.
@@ -74,3 +81,4 @@ TODO (in no particular order)
 - A good performance measurement suite
 - Provide additional package with literal syntax for pvector, pmap, pset?
 - Replace parts of the set_in implementation with standalone function
+- Refactor to split pyrsistent.py into multiple files

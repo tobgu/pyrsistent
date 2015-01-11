@@ -315,7 +315,7 @@ def run_multiple_inserts_in_pmap():
     e3 = m3.evolver()
     for x in test_range():
         e3[x] = x
-    m3 = e3.pmap()
+    m3 = e3.persistent()
     print "Done evolving, time=%s s, count=%s" % (time.time() - start, COUNT)
 
     assert m3 == m2

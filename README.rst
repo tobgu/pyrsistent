@@ -190,7 +190,7 @@ Examples of when you may want to use an evolver instead of working directly with
     # Once satisfied with the updates you can produce a new pvector containing the updates.
     # The new pvector will share data with the original pvector in the same way that would have
     # been done if only using operations on the pvector.
-    >>> v2 = e.pvector()
+    >>> v2 = e.persistent()
     >>> v2
     pvector([1, 22, 3, 4, 5, 7])
 
@@ -206,9 +206,9 @@ Examples of when you may want to use an evolver instead of working directly with
     # share data with v2 where possible.
     >>> e2 = v2.evolver()
     >>> e2[0] = 1111
-    >>> e.pvector()
+    >>> e.persistent()
     pvector([11, 22, 3, 4, 5, 7])
-    >>> e2.pvector()
+    >>> e2.persistent()
     pvector([1111, 22, 3, 4, 5, 7])
 
 freeze and thaw

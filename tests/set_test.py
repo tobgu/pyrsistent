@@ -117,7 +117,7 @@ def test_evolver_simple_add():
     e.add(4)
     assert e.is_dirty()
 
-    x2 = e.pset()
+    x2 = e.persistent()
     assert not e.is_dirty()
     assert x2 == s(1, 2, 3, 4)
     assert x == s(1, 2, 3)
@@ -127,7 +127,7 @@ def test_evolver_simple_remove():
     e = x.evolver()
     e.remove(2)
 
-    x2 = e.pset()
+    x2 = e.persistent()
     assert x2 == s(1, 3)
     assert x == s(1, 2, 3)
 
@@ -135,7 +135,7 @@ def test_evolver_simple_remove():
 def test_evolver_no_update_produces_same_pset():
     x = s(1, 2, 3)
     e = x.evolver()
-    assert e.pset() is x
+    assert e.persistent() is x
 
 
 def test_evolver_len():

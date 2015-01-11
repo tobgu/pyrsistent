@@ -498,7 +498,7 @@ def test_evolver_no_update(pvector):
     # This is mostly a test against memory leaks in the C implementation
     v = pvector(range(40))
 
-    assert v.evolver().pvector() == v
+    assert v.evolver().persistent() == v
 
 
 def test_evolver_deallocate_dirty_evolver(pvector):
@@ -515,7 +515,7 @@ def test_evolver_simple_update_in_tree(pvector):
     e[10] = -10
 
     assert e[10] == -10
-    assert e.pvector()[10] == -10
+    assert e.persistent()[10] == -10
 
 
 def test_evolver_multi_level_multi_update_in_tree(pvector):
@@ -547,7 +547,7 @@ def test_evolver_multi_level_multi_update_in_tree(pvector):
     import gc
     gc.collect()
 
-    v2 = e.pvector()
+    v2 = e.persistent()
     assert v2[10] == -1000
     assert v2[50] == -5000
     assert v2[3000] == -30000
@@ -573,7 +573,7 @@ def test_evolver_simple_update_in_tail(pvector):
     e[33] = -33
 
     assert e[33] == -33
-    assert e.pvector()[33] == -33
+    assert e.persistent()[33] == -33
     assert v[33] == 33
 
 
@@ -583,7 +583,7 @@ def test_evolver_simple_update_just_outside_vector(pvector):
     e[0] = 1
 
     assert e[0] == 1
-    assert e.pvector()[0] == 1
+    assert e.persistent()[0] == 1
     assert len(v) == 0
 
 
@@ -595,7 +595,7 @@ def test_evolver_append(pvector):
 
     e[0] = 2000
     assert e[0] == 2000
-    assert list(e.pvector()) == [2000]
+    assert list(e.persistent()) == [2000]
     assert list(v) == []
 
 
@@ -605,7 +605,7 @@ def test_evolver_extend(pvector):
     e.extend([2000, 3000])
     e[2] = 20000
 
-    assert list(e.pvector()) == [1000, 2000, 20000]
+    assert list(e.persistent()) == [1000, 2000, 20000]
     assert list(v) == [1000]
 
 
@@ -617,7 +617,7 @@ def test_evolver_assign_and_read_with_negative_indices(pvector):
     e[-1] = 33
 
     assert e[-1] == 33
-    assert list(e.pvector()) == [1, 2, 4, 11, 12, 33]
+    assert list(e.persistent()) == [1, 2, 4, 11, 12, 33]
 
 
 def test_evolver_non_integral_access(pvector):
@@ -665,12 +665,12 @@ def test_no_dependencies_between_evolvers_from_the_same_pvector(pvector):
     e1_expected = original_list + [1, 2, 3]
     e1_expected[2] = 20
     e1_expected[35] = 350
-    assert list(e1.pvector()) == e1_expected
+    assert list(e1.persistent()) == e1_expected
 
     e2_expected = original_list + [-1, -2, -3]
     e2_expected[2] = -20
     e2_expected[35] = -350
-    assert list(e2.pvector()) == e2_expected
+    assert list(e2.persistent()) == e2_expected
 
 
 def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
@@ -682,7 +682,7 @@ def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
     e[2] = 20
     e[35] = 350
 
-    v1 = e.pvector()
+    v1 = e.persistent()
     v1_expected = original_list + [1, 2, 3]
     v1_expected[2] = 20
     v1_expected[35] = 350
@@ -691,7 +691,7 @@ def test_pvectors_produced_from_the_same_evolver_do_not_interfere(pvector):
     e[3] = -30
     e[36] = -360
 
-    v2 = e.pvector()
+    v2 = e.persistent()
     v2_expected = v1_expected + [-1, -2, -3]
     v2_expected[3] = -30
     v2_expected[36] = -360
@@ -714,11 +714,11 @@ def test_evolver_is_dirty(pvector):
     e.append(4)
     assert e.is_dirty
 
-    e.pvector()
+    e.persistent()
     assert not e.is_dirty()
 
     e[2] = 2000
     assert e.is_dirty
 
-    e.pvector()
+    e.persistent()
     assert not e.is_dirty()

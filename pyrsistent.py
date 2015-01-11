@@ -278,7 +278,7 @@ class PVector(object):
 
             return ret
 
-        def pvector(self):
+        def persistent(self):
             v = PVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
             self._reset(v)
             return v
@@ -325,7 +325,7 @@ class PVector(object):
 
         The changes are kept in the evolver. An updated pvector can be created using the
         pvector() function on the evolver.
-        >>> v2 = e.pvector()
+        >>> v2 = e.persistent()
         >>> v2
         pvector([1, 22, 3, 4, 5, 6, 7, 8, 10])
 
@@ -352,7 +352,7 @@ class PVector(object):
         for i in range(0, len(args), 2):
             evolver[args[i]] = args[i+1]
 
-        return evolver.pvector()
+        return evolver.persistent()
 
     def set(self, i, val):
         """
@@ -742,7 +742,7 @@ class PMap(object):
         """
         evolver = self.evolver()
         evolver[key] = val
-        return evolver.pmap()
+        return evolver.persistent()
 
     def remove(self, key):
         """
@@ -754,7 +754,7 @@ class PMap(object):
         """
         evolver = self.evolver()
         del evolver[key]
-        return evolver.pmap()
+        return evolver.persistent()
 
     def discard(self, key):
         """
@@ -804,7 +804,7 @@ class PMap(object):
             for key, value in map.items():
                 evolver[key] = update_fn(evolver[key], value) if key in evolver else value
 
-        return evolver.pmap()
+        return evolver.persistent()
 
     def set_in(self, keys, val):
         """
@@ -862,7 +862,7 @@ class PMap(object):
 
         def _reallocate(self, new_size):
             new_list = new_size * [None]
-            buckets = self._buckets_evolver.pvector()
+            buckets = self._buckets_evolver.persistent()
             for k, v in chain.from_iterable(x for x in buckets if x):
                 index = hash(k) % new_size
                 if new_list[index]:
@@ -875,9 +875,9 @@ class PMap(object):
         def is_dirty(self):
             return self._buckets_evolver.is_dirty()
 
-        def pmap(self):
+        def persistent(self):
             if self.is_dirty():
-                return PMap(self._size, self._buckets_evolver.pvector())
+                return PMap(self._size, self._buckets_evolver.persistent())
 
             return self._original_pmap
 
@@ -918,7 +918,7 @@ class PMap(object):
 
         The changes are kept in the evolver. An updated pmap can be created using the
         pmap() function on the evolver.
-        >>> m2 = e.pmap()
+        >>> m2 = e.persistent()
         >>> m2
         pmap({'c': 3, 'b': 2})
 
@@ -1087,11 +1087,11 @@ class PSet(object):
         def is_dirty(self):
             return self._pmap_evolver.is_dirty()
 
-        def pset(self):
+        def persistent(self):
             if not self.is_dirty():
                 return  self._original_pset
 
-            return PSet(self._pmap_evolver.pmap())
+            return PSet(self._pmap_evolver.persistent())
 
         def __len__(self):
             return len(self._pmap_evolver)
@@ -1115,7 +1115,7 @@ class PSet(object):
 
         The changes are kept in the evolver. An updated pmap can be created using the
         pset() function on the evolver.
-        >>> s2 = e.pset()
+        >>> s2 = e.persistent()
         >>> s2
         pset([2, 3, 4])
 
@@ -2201,10 +2201,9 @@ def dq(*elements):
 ###### PRecord ######
 # TODO
 # - Documentation
-# - Update evolver interface to have one united "freeze", "persist" or similar regardless of type
 # - Could a nifty syntax be invented to specify the record as a class?
 class PRecord(PMap):
-    pass
+    __slots__ = ()
 
 def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
     return precord(*orig_fields, **orig_typed_fields)(**kwargs)
@@ -2217,9 +2216,11 @@ def precord(*_fields, **_typed_fields):
         return Record(obj._size, obj._buckets)
 
     class Record(PRecord):
+        __slots__ = ()
+
         class _Evolver(PMap._Evolver):
-            def pmap(self):
-                return transplant(super(Record._Evolver, self).pmap())
+            def persistent(self):
+                return transplant(super(Record._Evolver, self).persistent())
 
             def __setitem__(self, key, value):
                 if key in typed_fields:
@@ -2246,6 +2247,6 @@ def precord(*_fields, **_typed_fields):
         e = transplant(pmap()).evolver()
         for k, v in initial.items():
             e[k] = v
-        return e.pmap()
+        return e.persistent()
 
     return create_record

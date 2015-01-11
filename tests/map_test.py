@@ -301,7 +301,7 @@ def test_evolver_simple_update():
     e['b'] = 3000
 
     assert e['b'] == 3000
-    assert e.pmap()['b'] == 3000
+    assert e.persistent()['b'] == 3000
     assert x['b'] == 2000
 
 
@@ -314,7 +314,7 @@ def test_evolver_update_with_relocation():
     e['d'] = 6000
 
     assert len(e) == 4
-    assert e.pmap() == pmap({'a': 1000, 'b': 3000, 'c': 4000, 'd': 6000})
+    assert e.persistent() == pmap({'a': 1000, 'b': 3000, 'c': 4000, 'd': 6000})
 
 
 def test_evolver_remove_element():
