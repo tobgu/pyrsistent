@@ -1,6 +1,6 @@
 import pickle
 import pytest
-from pyrsistent import precord, PRecord
+from pyrsistent import precord, PRecord, PRec
 
 
 def test_multiple_types_and_transplant():
@@ -82,3 +82,77 @@ def test_pickling():
 
     with pytest.raises(TypeError):
         ARecord(b='asd')
+
+class ARecord(PRec):
+    x = (int, float)
+    y = ()
+
+
+def test_prec_create():
+    r = ARecord(x=1, y='foo')
+    assert r.x == 1
+    assert r.y == 'foo'
+    assert isinstance(r, ARecord)
+
+
+def test_prec_correct_assignment():
+    r = ARecord(x=1, y='foo')
+    r2 = r.set('x', 2.0)
+    r3 = r2.set('y', 'bar')
+
+    assert r2 == {'x': 2.0, 'y': 'foo'}
+    assert r3 == {'x': 2.0, 'y': 'bar'}
+    assert isinstance(r3, ARecord)
+
+
+def test_prec_direct_assignment_not_possible():
+    with pytest.raises(AttributeError):
+        ARecord().x = 1
+
+
+def test_prec_cannot_assign_undeclared_fields():
+    with pytest.raises(AttributeError):
+        ARecord().set('z', 5)
+
+
+def test_prec_cannot_assign_wrong_type_to_fields():
+    with pytest.raises(TypeError):
+        ARecord().set('x', 'foo')
+
+
+def test_prec_cannot_construct_with_undeclared_fields():
+    with pytest.raises(AttributeError):
+        ARecord(z=5)
+
+
+def test_prec_cannot_construct_with_fields_of_wrong_type():
+    with pytest.raises(TypeError):
+        ARecord(x='foo')
+
+
+def test_prec_support_record_inheritance():
+    class BRecord(ARecord):
+        z = ()
+
+    r = BRecord(x=1, y='foo', z='bar')
+
+    assert isinstance(r, BRecord)
+    assert isinstance(r, ARecord)
+    assert r == {'x': 1, 'y': 'foo', 'z': 'bar'}
+
+def test_single_type_spec():
+    class A(PRec):
+        x = int
+
+    r = A(x=1)
+    assert r.x == 1
+
+    with pytest.raises(TypeError):
+        r.set('x', 'foo')
+
+def test_prec_remove():
+    r = ARecord(x=1, y='foo')
+    r2 = r.remove('y')
+
+    assert isinstance(r2, ARecord)
+    assert r2 == {'x': 1}

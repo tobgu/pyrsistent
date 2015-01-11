@@ -638,9 +638,11 @@ class PMap(object):
     """
     __slots__ = ('_size', '_buckets')
 
-    def __init__(self, size, buckets):
+    def __new__(cls, size, buckets):
+        self = super(PMap, cls).__new__(cls)
         self._size = size
         self._buckets = buckets
+        return self
 
     @staticmethod
     def _get_bucket(buckets, key):
@@ -2201,7 +2203,7 @@ def dq(*elements):
 ###### PRecord ######
 # TODO
 # - Documentation
-# - Could a nifty syntax be invented to specify the record as a class?
+# - Should this construction remain now that a more explicit version exists?
 class PRecord(PMap):
     __slots__ = ()
 
@@ -2250,3 +2252,65 @@ def precord(*_fields, **_typed_fields):
         return e.persistent()
 
     return create_record
+
+class _PRecMeta(type):
+    def __new__(mcs, name, bases, dct):
+        dct['_prec_fields'] = dict(sum([b.__dict__.get('_prec_fields', {}).items() for b in bases], []))
+
+        is_base_class = all(b is PMap for b in bases)
+        if not is_base_class:
+            for k, v in dct.items():
+                if k not in ('__module__', '_prec_fields'):
+                    dct['_prec_fields'][k] = frozenset(v) if isinstance(v, Iterable) else frozenset([v])
+                    del dct[k]
+
+        dct['__slots__'] = ()
+        return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
+
+
+# TODO
+# - Pickling
+# - __repr__
+# - Documentation
+# - Constants for the special case _prec?
+# - Change name to PRecord?
+class PRec(PMap):
+    __metaclass__ = _PRecMeta
+
+    class _PRecEvolver(PMap._Evolver):
+        __slots__ = ('_destination_cls',)
+
+        def __init__(self, cls, *args):
+            super(PRec._PRecEvolver, self).__init__(*args)
+            self._destination_cls = cls
+
+        def __setitem__(self, key, value):
+            fields = self._destination_cls._prec_fields
+            if key in fields:
+                if fields[key] and not any(isinstance(value, t) for t in fields[key]):
+                    raise TypeError()
+            else:
+                raise AttributeError()
+
+            super(PRec._PRecEvolver, self).__setitem__(key, value)
+
+        def persistent(self):
+            pm = super(PRec._PRecEvolver, self).persistent()
+            return self._destination_cls(_prec_buckets=pm._buckets, _prec_size=pm._size)
+
+
+    def __new__(cls, **kwargs):
+        # Hack total! If these two special attributes exist that means we've can create
+        # ourselves. Otherwise we need to go through the Evolver to create the structures
+        # for us.
+        if '_prec_buckets' in kwargs and '_prec_size' in kwargs:
+            return super(PRec, cls).__new__(cls, kwargs['_prec_size'], kwargs['_prec_buckets'])
+
+        e = PRec._PRecEvolver(cls, pmap())
+        for k, v in kwargs.items():
+            e[k] = v
+
+        return e.persistent()
+
+    def evolver(self):
+        return self._PRecEvolver(self.__class__, self)
