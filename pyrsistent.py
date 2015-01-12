@@ -2261,13 +2261,17 @@ class _PRecMeta(type):
         if not is_base_class:
             for k, v in list(dct.items()):
                 # TODO replace this list of exceptions with a proper type for field
-                if k not in ('__module__', '__qualname__', '_prec_fields', '_prec_mandatory_fields', '__slots__', '__invariant__'):
+                if k not in ('__module__', '__qualname__', '_prec_fields', '_prec_mandatory_fields',
+                             '__slots__', '__invariant__', '_prec_initial_values'):
                     dct['_prec_fields'][k] = v
                     del dct[k]
 
+        # TODO: Invariant inheritance?
         dct['__invariant__'] = dct.get('__invariant__')
         dct['_prec_mandatory_fields'] = \
             set(name for name, field in dct['_prec_fields'].items() if field['mandatory'])
+        dct['_prec_initial_values'] = \
+            dict((k, field['initial']) for k, field in dct['_prec_fields'].items() if field['initial'] is not _PRECORD_NO_INITIAL)
         dct['__slots__'] = ()
         return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
 
@@ -2291,7 +2295,7 @@ class InvariantException(Exception):
         self.missing_fields = missing_fields
         super(InvariantException, self).__init__(*args, **kwargs)
 
-def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INVARIANT, mandatory=False):
+def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL, mandatory=False):
     # TODO: Validate input data..., make proper type
     return {'type': set(type) if isinstance(type, Iterable) else set([type]),
             'invariant': invariant,
@@ -2350,8 +2354,13 @@ class PRec(PMap):
         if '_prec_buckets' in kwargs and '_prec_size' in kwargs:
             return super(PRec, cls).__new__(cls, kwargs['_prec_size'], kwargs['_prec_buckets'])
 
+        initial_values = kwargs
+        if cls._prec_initial_values:
+            initial_values = dict(cls._prec_initial_values)
+            initial_values.update(kwargs)
+
         e = PRec._PRecEvolver(cls, pmap())
-        for k, v in kwargs.items():
+        for k, v in initial_values.items():
             e[k] = v
 
         return e.persistent()

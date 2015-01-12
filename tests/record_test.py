@@ -192,3 +192,12 @@ def test_prec_set_multiple_fields():
     b = a.set(x=2, y='bar')
 
     assert b == {'x': 2, 'y': 'bar'}
+
+def test_prec_initial_value():
+    class BRecord(PRec):
+        x = field(initial=1)
+        y = field(initial=2)
+
+    a = BRecord()
+    assert a.x == 1
+    assert a.y == 2
