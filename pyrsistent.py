@@ -2260,10 +2260,14 @@ class _PRecMeta(type):
         is_base_class = all(b is PMap for b in bases)
         if not is_base_class:
             for k, v in list(dct.items()):
-                if k not in ('__module__', '_prec_fields'):
-                    dct['_prec_fields'][k] = frozenset(v) if isinstance(v, Iterable) else frozenset([v])
+                # TODO replace this list of exceptions with a proper type for field
+                if k not in ('__module__', '__qualname__', '_prec_fields', '_prec_mandatory_fields', '__slots__', '__invariant__'):
+                    dct['_prec_fields'][k] = v
                     del dct[k]
 
+        dct['__invariant__'] = dct.get('__invariant__')
+        dct['_prec_mandatory_fields'] = \
+            set(name for name, field in dct['_prec_fields'].items() if field['mandatory'])
         dct['__slots__'] = ()
         return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
 
@@ -2272,34 +2276,75 @@ class _PRecMeta(type):
 # - Pickling
 # - __repr__
 # - Documentation
-# - Constants for the special case _prec?
+# - Constants for the special case _prec? Prefix with _pyrsistent for sake of safety...
 # - Change name to PRecord?
+# - Store type information on the class in a clearer format for introspection purposes?
+# - Disallow callables? Or is there some way to incorporate these in a nice way?
+# - Move evolver to outside to avoid cluttering the class
+_PRECORD_NO_TYPE = ()
+_PRECORD_NO_INVARIANT = lambda _: (True, None)
+_PRECORD_NO_INITIAL = object()
+
+class InvariantException(Exception):
+    def __init__(self, error_codes, missing_fields, *args, **kwargs):
+        self.error_codes = error_codes
+        self.missing_fields = missing_fields
+        super(InvariantException, self).__init__(*args, **kwargs)
+
+def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INVARIANT, mandatory=False):
+    # TODO: Validate input data..., make proper type
+    return {'type': set(type) if isinstance(type, Iterable) else set([type]),
+            'invariant': invariant,
+            'initial': initial,
+            'mandatory': mandatory}
+
 @six.add_metaclass(_PRecMeta)
 class PRec(PMap):
     class _PRecEvolver(PMap._Evolver):
-        __slots__ = ('_destination_cls',)
+        __slots__ = ('_destination_cls', '_invariant_error_codes')
 
         def __init__(self, cls, *args):
             super(PRec._PRecEvolver, self).__init__(*args)
             self._destination_cls = cls
+            self._invariant_error_codes = []
 
         def __setitem__(self, key, value):
             fields = self._destination_cls._prec_fields
             if key in fields:
-                if fields[key] and not any(isinstance(value, t) for t in fields[key]):
-                    raise TypeError("Invalid type for field '{0}'".format(key))
+                if fields[key]['type'] and not any(isinstance(value, t) for t in fields[key]['type']):
+                    raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
+
+                is_ok, error_code = fields[key]['invariant'](value)
+                if not is_ok:
+                    self._invariant_error_codes.append(error_code)
             else:
                 raise AttributeError("'{0}' is not among the specified fields".format(key))
 
             super(PRec._PRecEvolver, self).__setitem__(key, value)
 
         def persistent(self):
+            cls = self._destination_cls
             pm = super(PRec._PRecEvolver, self).persistent()
-            return self._destination_cls(_prec_buckets=pm._buckets, _prec_size=pm._size)
+            result = cls(_prec_buckets=pm._buckets, _prec_size=pm._size)
+
+            missing_fields = ()
+            if cls._prec_mandatory_fields:
+                missing_fields = tuple(cls._prec_mandatory_fields - set(result.keys()))
+
+            if self._invariant_error_codes or missing_fields:
+                raise InvariantException(error_codes=tuple(self._invariant_error_codes),
+                                         missing_fields=missing_fields)
+
+            if cls.__invariant__:
+                is_ok, error_code = cls.__invariant__(result)
+                if not is_ok:
+                    raise InvariantException(error_codes=(error_code,), missing_fields=())
+
+            return result
 
 
     def __new__(cls, **kwargs):
-        # Hack total! If these two special attributes exist that means we've can create
+        # Hack total! If these two special attributes exist that means we can create
         # ourselves. Otherwise we need to go through the Evolver to create the structures
         # for us.
         if '_prec_buckets' in kwargs and '_prec_size' in kwargs:
@@ -2310,6 +2355,15 @@ class PRec(PMap):
             e[k] = v
 
         return e.persistent()
+
+    def set(self, *args, **kwargs):
+        # The PRecord can accept kwargs since all fields that have been declared are
+        # valid python identifiers. Also allow multiple fields to be set in one operation.
+        if args:
+            return super(PRec, self).set(args[0], args[1])
+
+        return self.update(kwargs)
+
 
     def evolver(self):
         return self._PRecEvolver(self.__class__, self)

@@ -1,6 +1,6 @@
 import pickle
 import pytest
-from pyrsistent import precord, PRecord, PRec
+from pyrsistent import precord, PRecord, PRec, field, InvariantException
 
 
 def test_multiple_types_and_transplant():
@@ -84,8 +84,8 @@ def test_pickling():
         ARecord(b='asd')
 
 class ARecord(PRec):
-    x = (int, float)
-    y = ()
+    x = field(type=(int, float))
+    y = field()
 
 
 def test_prec_create():
@@ -132,7 +132,7 @@ def test_prec_cannot_construct_with_fields_of_wrong_type():
 
 def test_prec_support_record_inheritance():
     class BRecord(ARecord):
-        z = ()
+        z = field()
 
     r = BRecord(x=1, y='foo', z='bar')
 
@@ -140,9 +140,10 @@ def test_prec_support_record_inheritance():
     assert isinstance(r, ARecord)
     assert r == {'x': 1, 'y': 'foo', 'z': 'bar'}
 
-def test_single_type_spec():
+
+def test_prec_single_type_spec():
     class A(PRec):
-        x = int
+        x = field(type=int)
 
     r = A(x=1)
     assert r.x == 1
@@ -150,9 +151,44 @@ def test_single_type_spec():
     with pytest.raises(TypeError):
         r.set('x', 'foo')
 
+
 def test_prec_remove():
     r = ARecord(x=1, y='foo')
     r2 = r.remove('y')
 
     assert isinstance(r2, ARecord)
     assert r2 == {'x': 1}
+
+
+def test_prec_field_invariant_must_hold():
+    class BRecord(PRec):
+        x = field(invariant=lambda x: (x > 1, 'x too small'))
+        y = field(mandatory=True)
+
+    try:
+        BRecord(x=1)
+        assert False
+    except InvariantException as e:
+        assert e.error_codes == ('x too small',)
+        assert e.missing_fields == ('y',)
+
+def test_prec_global_invariant_must_hold():
+    class BRecord(PRec):
+        __invariant__ = lambda r: (r.x <= r.y, 'y smaller than x')
+        x = field()
+        y = field()
+
+    BRecord(x=1, y=2)
+
+    try:
+        BRecord(x=2, y=1)
+        assert False
+    except InvariantException as e:
+        assert e.error_codes == ('y smaller than x',)
+        assert e.missing_fields == ()
+
+def test_prec_set_multiple_fields():
+    a = ARecord(x=1, y='foo')
+    b = a.set(x=2, y='bar')
+
+    assert b == {'x': 2, 'y': 'bar'}
