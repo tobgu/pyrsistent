@@ -2277,49 +2277,6 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
 
 @six.add_metaclass(_PRecMeta)
 class PRecord(PMap):
-    class _PRecEvolver(PMap._Evolver):
-        __slots__ = ('_destination_cls', '_invariant_error_codes')
-
-        def __init__(self, cls, *args):
-            super(PRecord._PRecEvolver, self).__init__(*args)
-            self._destination_cls = cls
-            self._invariant_error_codes = []
-
-        def __setitem__(self, key, value):
-            fields = self._destination_cls._precord_fields
-            if key in fields:
-                if fields[key].type and not any(isinstance(value, t) for t in fields[key].type):
-                    raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
-
-                is_ok, error_code = fields[key].invariant(value)
-                if not is_ok:
-                    self._invariant_error_codes.append(error_code)
-            else:
-                raise AttributeError("'{0}' is not among the specified fields".format(key))
-
-            super(PRecord._PRecEvolver, self).__setitem__(key, value)
-
-        def persistent(self):
-            cls = self._destination_cls
-            pm = super(PRecord._PRecEvolver, self).persistent()
-            result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
-
-            missing_fields = ()
-            if cls._precord_mandatory_fields:
-                missing_fields = tuple(cls._precord_mandatory_fields - set(result.keys()))
-
-            if self._invariant_error_codes or missing_fields:
-                raise InvariantException(error_codes=tuple(self._invariant_error_codes),
-                                         missing_fields=missing_fields)
-
-            error_codes = tuple(error_code for is_ok, error_code in
-                                (invariant(result) for invariant in cls._precord_invariants) if not is_ok)
-            if error_codes:
-                raise InvariantException(error_codes=error_codes, missing_fields=())
-
-            return result
-
-
     def __new__(cls, **kwargs):
         # Hack total! If these two special attributes exist that means we can create
         # ourselves. Otherwise we need to go through the Evolver to create the structures
@@ -2332,7 +2289,7 @@ class PRecord(PMap):
             initial_values = dict(cls._precord_initial_values)
             initial_values.update(kwargs)
 
-        e = PRecord._PRecEvolver(cls, pmap())
+        e = _PRecordEvolver(cls, pmap())
         for k, v in initial_values.items():
             e[k] = v
 
@@ -2347,4 +2304,47 @@ class PRecord(PMap):
         return self.update(kwargs)
 
     def evolver(self):
-        return self._PRecEvolver(self.__class__, self)
+        return _PRecordEvolver(self.__class__, self)
+
+class _PRecordEvolver(PMap._Evolver):
+    __slots__ = ('_destination_cls', '_invariant_error_codes')
+
+    def __init__(self, cls, *args):
+        super(_PRecordEvolver, self).__init__(*args)
+        self._destination_cls = cls
+        self._invariant_error_codes = []
+
+    def __setitem__(self, key, value):
+        fields = self._destination_cls._precord_fields
+        if key in fields:
+            if fields[key].type and not any(isinstance(value, t) for t in fields[key].type):
+                raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
+
+            is_ok, error_code = fields[key].invariant(value)
+            if not is_ok:
+                self._invariant_error_codes.append(error_code)
+        else:
+            raise AttributeError("'{0}' is not among the specified fields".format(key))
+
+        super(_PRecordEvolver, self).__setitem__(key, value)
+
+    def persistent(self):
+        cls = self._destination_cls
+        pm = super(_PRecordEvolver, self).persistent()
+        result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
+
+        missing_fields = ()
+        if cls._precord_mandatory_fields:
+            missing_fields = tuple(cls._precord_mandatory_fields - set(result.keys()))
+
+        if self._invariant_error_codes or missing_fields:
+            raise InvariantException(error_codes=tuple(self._invariant_error_codes),
+                                     missing_fields=missing_fields)
+
+        error_codes = tuple(error_code for is_ok, error_code in
+                            (invariant(result) for invariant in cls._precord_invariants) if not is_ok)
+        if error_codes:
+            raise InvariantException(error_codes=error_codes, missing_fields=())
+
+        return result
+
