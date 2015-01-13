@@ -2201,57 +2201,9 @@ def dq(*elements):
 
 
 ###### PRecord ######
-# TODO
-# - Documentation
-# - Should this construction remain now that a more explicit version exists?
-class PRecord(PMap):
-    __slots__ = ()
 
-def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
-    return precord(*orig_fields, **orig_typed_fields)(**kwargs)
-
-def precord(*_fields, **_typed_fields):
-    fields = frozenset(_fields)
-    typed_fields = dict([(k, frozenset(v) if isinstance(v, Iterable) else frozenset([v])) for k, v in _typed_fields.items()])
-
-    def transplant(obj):
-        return Record(obj._size, obj._buckets)
-
-    class Record(PRecord):
-        __slots__ = ()
-
-        class _Evolver(PMap._Evolver):
-            def persistent(self):
-                return transplant(super(Record._Evolver, self).persistent())
-
-            def __setitem__(self, key, value):
-                if key in typed_fields:
-                    if not any(isinstance(value, t) for t in typed_fields[key]):
-                        raise TypeError("Invalid type for field '{0}'".format(key))
-                else:
-                    if key not in fields:
-                        raise AttributeError("'{0}' is not among the specified fields".format(key))
-
-                super(Record._Evolver, self).__setitem__(key, value)
-
-        def __repr__(self):
-            untyped_repr = ', '.join("'{0}'".format(f) for f in fields)
-            typed_repr = ', '.join("{0}={1}".format(k, "({0},)".format(', '.join(sorted(t.__name__ for t in v)))) for k, v in typed_fields.items())
-            field_repr = ', '.join(r for r in (untyped_repr, typed_repr) if r)
-            arg_repr = ', '.join("{0}={1}".format(k, repr(v)) for k, v in sorted(self.items()))
-            return 'precord({0})({1})'.format(field_repr, arg_repr)
-
-        def __reduce__(self):
-            # Pickling support
-            return _reconstruct_precord, (dict(self), fields, typed_fields)
-
-    def create_record(**initial):
-        e = transplant(pmap()).evolver()
-        for k, v in initial.items():
-            e[k] = v
-        return e.persistent()
-
-    return create_record
+#def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
+#    return precord(*orig_fields, **orig_typed_fields)(**kwargs)
 
 class _PRecMeta(type):
     def __new__(mcs, name, bases, dct):
@@ -2324,12 +2276,12 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
     return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory)
 
 @six.add_metaclass(_PRecMeta)
-class PRec(PMap):
+class PRecord(PMap):
     class _PRecEvolver(PMap._Evolver):
         __slots__ = ('_destination_cls', '_invariant_error_codes')
 
         def __init__(self, cls, *args):
-            super(PRec._PRecEvolver, self).__init__(*args)
+            super(PRecord._PRecEvolver, self).__init__(*args)
             self._destination_cls = cls
             self._invariant_error_codes = []
 
@@ -2345,11 +2297,11 @@ class PRec(PMap):
             else:
                 raise AttributeError("'{0}' is not among the specified fields".format(key))
 
-            super(PRec._PRecEvolver, self).__setitem__(key, value)
+            super(PRecord._PRecEvolver, self).__setitem__(key, value)
 
         def persistent(self):
             cls = self._destination_cls
-            pm = super(PRec._PRecEvolver, self).persistent()
+            pm = super(PRecord._PRecEvolver, self).persistent()
             result = cls(_prec_buckets=pm._buckets, _prec_size=pm._size)
 
             missing_fields = ()
@@ -2373,14 +2325,14 @@ class PRec(PMap):
         # ourselves. Otherwise we need to go through the Evolver to create the structures
         # for us.
         if '_prec_buckets' in kwargs and '_prec_size' in kwargs:
-            return super(PRec, cls).__new__(cls, kwargs['_prec_size'], kwargs['_prec_buckets'])
+            return super(PRecord, cls).__new__(cls, kwargs['_prec_size'], kwargs['_prec_buckets'])
 
         initial_values = kwargs
         if cls._prec_initial_values:
             initial_values = dict(cls._prec_initial_values)
             initial_values.update(kwargs)
 
-        e = PRec._PRecEvolver(cls, pmap())
+        e = PRecord._PRecEvolver(cls, pmap())
         for k, v in initial_values.items():
             e[k] = v
 
@@ -2390,7 +2342,7 @@ class PRec(PMap):
         # The PRecord can accept kwargs since all fields that have been declared are
         # valid python identifiers. Also allow multiple fields to be set in one operation.
         if args:
-            return super(PRec, self).set(args[0], args[1])
+            return super(PRecord, self).set(args[0], args[1])
 
         return self.update(kwargs)
 
