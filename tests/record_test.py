@@ -162,6 +162,11 @@ def test_global_invariants_must_be_callable():
         class CRecord(PRecord):
             __invariant__ = 1
 
+def test_repr():
+    r = ARecord(x=1, y=2)
+    assert repr(r) == 'ARecord(x=1, y=2)' or repr(r) == 'ARecord(y=2, x=1)'
+
+
 #def test_pickling():
 #    ARecord = precord('a', b=(int, float))
 #    x = ARecord(a='bar', b=2.0)

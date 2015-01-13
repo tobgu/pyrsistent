@@ -2205,16 +2205,14 @@ def dq(*elements):
 #def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
 #    return precord(*orig_fields, **orig_typed_fields)(**kwargs)
 
-class _PRecMeta(type):
+class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         dct['_precord_fields'] = dict(sum([list(b.__dict__.get('_precord_fields', {}).items()) for b in bases], []))
 
-        is_base_class = all(b is PMap for b in bases)
-        if not is_base_class:
-            for k, v in list(dct.items()):
-                if isinstance(v, _PRecordField):
-                    dct['_precord_fields'][k] = v
-                    del dct[k]
+        for k, v in list(dct.items()):
+            if isinstance(v, _PRecordField):
+                dct['_precord_fields'][k] = v
+                del dct[k]
 
         # Global invariants are inherited
         dct['_precord_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
@@ -2224,21 +2222,20 @@ class _PRecMeta(type):
 
         dct['_precord_mandatory_fields'] = \
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
+
         dct['_precord_initial_values'] = \
             dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not _PRECORD_NO_INITIAL)
+
         dct['__slots__'] = ()
 
-        return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
+        return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
 
 
 # TODO
 # - Pickling
-# - __repr__
 # - Documentation
-# - Constants for the special case _prec? Prefix with _pyrsistent for sake of safety...
-# - Change name to PRecord?
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
-# - Move evolver to outside to avoid cluttering the class
+# - transform, return same instance if no transformation takes place
 _PRECORD_NO_TYPE = ()
 _PRECORD_NO_INVARIANT = lambda _: (True, None)
 _PRECORD_NO_INITIAL = object()
@@ -2275,7 +2272,7 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
     _check_field_parameters(types, invariant, initial)
     return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory)
 
-@six.add_metaclass(_PRecMeta)
+@six.add_metaclass(_PRecordMeta)
 class PRecord(PMap):
     def __new__(cls, **kwargs):
         # Hack total! If these two special attributes exist that means we can create
@@ -2296,7 +2293,7 @@ class PRecord(PMap):
         return e.persistent()
 
     def set(self, *args, **kwargs):
-        # The PRecord can accept kwargs since all fields that have been declared are
+        # The PRecord set() can accept kwargs since all fields that have been declared are
         # valid python identifiers. Also allow multiple fields to be set in one operation.
         if args:
             return super(PRecord, self).set(args[0], args[1])
@@ -2305,6 +2302,10 @@ class PRecord(PMap):
 
     def evolver(self):
         return _PRecordEvolver(self.__class__, self)
+
+    def __repr__(self):
+        return "{0}({1})".format(self.__class__.__name__,
+                                 ', '.join('{0}={1}'.format(k, v) for k, v in self.items()))
 
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes')
