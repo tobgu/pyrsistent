@@ -2260,19 +2260,22 @@ class _PRecMeta(type):
         is_base_class = all(b is PMap for b in bases)
         if not is_base_class:
             for k, v in list(dct.items()):
-                # TODO replace this list of exceptions with a proper type for field
-                if k not in ('__module__', '__qualname__', '_prec_fields', '_prec_mandatory_fields',
-                             '__slots__', '__invariant__', '_prec_initial_values'):
+                if isinstance(v, _PRecordField):
                     dct['_prec_fields'][k] = v
                     del dct[k]
 
-        # TODO: Invariant inheritance?
-        dct['__invariant__'] = dct.get('__invariant__')
+        # Global invariants are inherited
+        dct['_prec_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
+        dct['_prec_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
+        if not all(callable(invariant) for invariant in dct['_prec_invariants']):
+            raise TypeError('Global invariants must be callable')
+
         dct['_prec_mandatory_fields'] = \
-            set(name for name, field in dct['_prec_fields'].items() if field['mandatory'])
+            set(name for name, field in dct['_prec_fields'].items() if field.mandatory)
         dct['_prec_initial_values'] = \
-            dict((k, field['initial']) for k, field in dct['_prec_fields'].items() if field['initial'] is not _PRECORD_NO_INITIAL)
+            dict((k, field.initial) for k, field in dct['_prec_fields'].items() if field.initial is not _PRECORD_NO_INITIAL)
         dct['__slots__'] = ()
+
         return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
 
 
@@ -2282,7 +2285,6 @@ class _PRecMeta(type):
 # - Documentation
 # - Constants for the special case _prec? Prefix with _pyrsistent for sake of safety...
 # - Change name to PRecord?
-# - Store type information on the class in a clearer format for introspection purposes?
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
 # - Move evolver to outside to avoid cluttering the class
 _PRECORD_NO_TYPE = ()
@@ -2295,12 +2297,31 @@ class InvariantException(Exception):
         self.missing_fields = missing_fields
         super(InvariantException, self).__init__(*args, **kwargs)
 
+class _PRecordField(object):
+    __slots__ = ('type', 'invariant', 'initial', 'mandatory')
+
+    def __init__(self, type, invariant, initial, mandatory):
+        self.type = type
+        self.invariant = invariant
+        self.initial = initial
+        self.mandatory = mandatory
+
+def _check_field_parameters(types, invariant, initial):
+    for t in types:
+        if not isinstance(t, type):
+            raise TypeError('Type paramenter expected, not {0}'.format(type(t)))
+
+    if initial is not _PRECORD_NO_INITIAL and types and not any(isinstance(initial, t) for t in types):
+        raise TypeError('Initial has invalid type {0}'.format(type(t)))
+
+    if not callable(invariant):
+        raise TypeError('Invariant must be callable')
+
+
 def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL, mandatory=False):
-    # TODO: Validate input data..., make proper type
-    return {'type': set(type) if isinstance(type, Iterable) else set([type]),
-            'invariant': invariant,
-            'initial': initial,
-            'mandatory': mandatory}
+    types = set(type) if isinstance(type, Iterable) else set([type])
+    _check_field_parameters(types, invariant, initial)
+    return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory)
 
 @six.add_metaclass(_PRecMeta)
 class PRec(PMap):
@@ -2315,10 +2336,10 @@ class PRec(PMap):
         def __setitem__(self, key, value):
             fields = self._destination_cls._prec_fields
             if key in fields:
-                if fields[key]['type'] and not any(isinstance(value, t) for t in fields[key]['type']):
+                if fields[key].type and not any(isinstance(value, t) for t in fields[key].type):
                     raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
 
-                is_ok, error_code = fields[key]['invariant'](value)
+                is_ok, error_code = fields[key].invariant(value)
                 if not is_ok:
                     self._invariant_error_codes.append(error_code)
             else:
@@ -2339,10 +2360,10 @@ class PRec(PMap):
                 raise InvariantException(error_codes=tuple(self._invariant_error_codes),
                                          missing_fields=missing_fields)
 
-            if cls.__invariant__:
-                is_ok, error_code = cls.__invariant__(result)
-                if not is_ok:
-                    raise InvariantException(error_codes=(error_code,), missing_fields=())
+            error_codes = tuple(error_code for is_ok, error_code in
+                                (invariant(result) for invariant in cls._prec_invariants) if not is_ok)
+            if error_codes:
+                raise InvariantException(error_codes=error_codes, missing_fields=())
 
             return result
 
@@ -2372,7 +2393,6 @@ class PRec(PMap):
             return super(PRec, self).set(args[0], args[1])
 
         return self.update(kwargs)
-
 
     def evolver(self):
         return self._PRecEvolver(self.__class__, self)

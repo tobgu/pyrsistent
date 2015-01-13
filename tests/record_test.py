@@ -187,11 +187,13 @@ def test_prec_global_invariant_must_hold():
         assert e.error_codes == ('y smaller than x',)
         assert e.missing_fields == ()
 
+
 def test_prec_set_multiple_fields():
     a = ARecord(x=1, y='foo')
     b = a.set(x=2, y='bar')
 
     assert b == {'x': 2, 'y': 'bar'}
+
 
 def test_prec_initial_value():
     class BRecord(PRec):
@@ -201,3 +203,42 @@ def test_prec_initial_value():
     a = BRecord()
     assert a.x == 1
     assert a.y == 2
+
+
+def test_prec_type_specification_must_be_a_type():
+    with pytest.raises(TypeError):
+        class BRecord(PRec):
+            x = field(type=1)
+
+
+def test_prec_initial_must_be_of_correct_type():
+    with pytest.raises(TypeError):
+        class BRecord(PRec):
+            x = field(type=int, initial='foo')
+
+
+def test_prec_invariant_must_be_callable():
+    with pytest.raises(TypeError):
+        class BRecord(PRec):
+            x = field(invariant='foo')
+
+
+def test_prec_global_invariants_are_inherited():
+    class BRecord(PRec):
+        __invariant__ = lambda r: (r.x % r.y == 0, 'modulo')
+        x = field()
+        y = field()
+
+    class CRecord(BRecord):
+        __invariant__ = lambda r: (r.x > r.y, 'size')
+
+    try:
+        CRecord(x=5, y=3)
+        assert False
+    except InvariantException as e:
+        assert e.error_codes == ('modulo',)
+
+def test_global_invariants_must_be_callable():
+    with pytest.raises(TypeError):
+        class CRecord(PRec):
+            __invariant__ = 1
