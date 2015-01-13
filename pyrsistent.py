@@ -2207,25 +2207,25 @@ def dq(*elements):
 
 class _PRecMeta(type):
     def __new__(mcs, name, bases, dct):
-        dct['_prec_fields'] = dict(sum([list(b.__dict__.get('_prec_fields', {}).items()) for b in bases], []))
+        dct['_precord_fields'] = dict(sum([list(b.__dict__.get('_precord_fields', {}).items()) for b in bases], []))
 
         is_base_class = all(b is PMap for b in bases)
         if not is_base_class:
             for k, v in list(dct.items()):
                 if isinstance(v, _PRecordField):
-                    dct['_prec_fields'][k] = v
+                    dct['_precord_fields'][k] = v
                     del dct[k]
 
         # Global invariants are inherited
-        dct['_prec_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
-        dct['_prec_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
-        if not all(callable(invariant) for invariant in dct['_prec_invariants']):
+        dct['_precord_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
+        dct['_precord_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
+        if not all(callable(invariant) for invariant in dct['_precord_invariants']):
             raise TypeError('Global invariants must be callable')
 
-        dct['_prec_mandatory_fields'] = \
-            set(name for name, field in dct['_prec_fields'].items() if field.mandatory)
-        dct['_prec_initial_values'] = \
-            dict((k, field.initial) for k, field in dct['_prec_fields'].items() if field.initial is not _PRECORD_NO_INITIAL)
+        dct['_precord_mandatory_fields'] = \
+            set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
+        dct['_precord_initial_values'] = \
+            dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not _PRECORD_NO_INITIAL)
         dct['__slots__'] = ()
 
         return super(_PRecMeta, mcs).__new__(mcs, name, bases, dct)
@@ -2286,7 +2286,7 @@ class PRecord(PMap):
             self._invariant_error_codes = []
 
         def __setitem__(self, key, value):
-            fields = self._destination_cls._prec_fields
+            fields = self._destination_cls._precord_fields
             if key in fields:
                 if fields[key].type and not any(isinstance(value, t) for t in fields[key].type):
                     raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
@@ -2302,18 +2302,18 @@ class PRecord(PMap):
         def persistent(self):
             cls = self._destination_cls
             pm = super(PRecord._PRecEvolver, self).persistent()
-            result = cls(_prec_buckets=pm._buckets, _prec_size=pm._size)
+            result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
 
             missing_fields = ()
-            if cls._prec_mandatory_fields:
-                missing_fields = tuple(cls._prec_mandatory_fields - set(result.keys()))
+            if cls._precord_mandatory_fields:
+                missing_fields = tuple(cls._precord_mandatory_fields - set(result.keys()))
 
             if self._invariant_error_codes or missing_fields:
                 raise InvariantException(error_codes=tuple(self._invariant_error_codes),
                                          missing_fields=missing_fields)
 
             error_codes = tuple(error_code for is_ok, error_code in
-                                (invariant(result) for invariant in cls._prec_invariants) if not is_ok)
+                                (invariant(result) for invariant in cls._precord_invariants) if not is_ok)
             if error_codes:
                 raise InvariantException(error_codes=error_codes, missing_fields=())
 
@@ -2324,12 +2324,12 @@ class PRecord(PMap):
         # Hack total! If these two special attributes exist that means we can create
         # ourselves. Otherwise we need to go through the Evolver to create the structures
         # for us.
-        if '_prec_buckets' in kwargs and '_prec_size' in kwargs:
-            return super(PRecord, cls).__new__(cls, kwargs['_prec_size'], kwargs['_prec_buckets'])
+        if '_precord_size' in kwargs and '_precord_buckets' in kwargs:
+            return super(PRecord, cls).__new__(cls, kwargs['_precord_size'], kwargs['_precord_buckets'])
 
         initial_values = kwargs
-        if cls._prec_initial_values:
-            initial_values = dict(cls._prec_initial_values)
+        if cls._precord_initial_values:
+            initial_values = dict(cls._precord_initial_values)
             initial_values.update(kwargs)
 
         e = PRecord._PRecEvolver(cls, pmap())
