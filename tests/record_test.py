@@ -166,6 +166,29 @@ def test_repr():
     r = ARecord(x=1, y=2)
     assert repr(r) == 'ARecord(x=1, y=2)' or repr(r) == 'ARecord(y=2, x=1)'
 
+def test_factory():
+    class BRecord(PRecord):
+        x = field(type=int, factory=int)
+
+    assert BRecord(x=2.5) == {'x': 2}
+
+def test_factory_must_be_callable():
+    with pytest.raises(TypeError):
+        class BRecord(PRecord):
+            x = field(type=int, factory=1)
+
+def test_nested_record_construction():
+    class BRecord(PRecord):
+        x = field(int, factory=int)
+
+    class CRecord(PRecord):
+        a = field()
+        b = field(type=BRecord)
+
+    r = CRecord.create({'a': 'foo', 'b': {'x': '5'}})
+    assert isinstance(r, CRecord)
+    assert isinstance(r.b, BRecord)
+    assert r == {'a': 'foo', 'b': {'x': 5}}
 
 #def test_pickling():
 #    ARecord = precord('a', b=(int, float))

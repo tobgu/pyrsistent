@@ -2236,9 +2236,6 @@ class _PRecordMeta(type):
 # - Documentation
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
 # - transform, return same instance if no transformation takes place
-_PRECORD_NO_TYPE = ()
-_PRECORD_NO_INVARIANT = lambda _: (True, None)
-_PRECORD_NO_INITIAL = object()
 
 class InvariantException(Exception):
     def __init__(self, error_codes, missing_fields, *args, **kwargs):
@@ -2247,15 +2244,35 @@ class InvariantException(Exception):
         super(InvariantException, self).__init__(*args, **kwargs)
 
 class _PRecordField(object):
-    __slots__ = ('type', 'invariant', 'initial', 'mandatory')
+    __slots__ = ('type', 'invariant', 'initial', 'mandatory', 'factory')
 
-    def __init__(self, type, invariant, initial, mandatory):
+    def __init__(self, type, invariant, initial, mandatory, factory):
         self.type = type
         self.invariant = invariant
         self.initial = initial
         self.mandatory = mandatory
+        self.factory = factory
 
-def _check_field_parameters(types, invariant, initial):
+_PRECORD_NO_TYPE = ()
+_PRECORD_NO_INVARIANT = lambda _: (True, None)
+_PRECORD_NO_FACTORY = lambda x: x
+_PRECORD_NO_INITIAL = object()
+
+
+def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL,
+          mandatory=False, factory=_PRECORD_NO_FACTORY):
+    types = set(type) if isinstance(type, Iterable) else set([type])
+
+    # If no factory is specified and the type is another PRecord use the factory method
+    # of that PRecord
+    if factory is _PRECORD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], PRecord):
+        factory = tuple(types)[0].create
+
+    _check_field_parameters(types, invariant, initial, factory)
+    return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory, factory=factory)
+
+
+def _check_field_parameters(types, invariant, initial, factory):
     for t in types:
         if not isinstance(t, type):
             raise TypeError('Type paramenter expected, not {0}'.format(type(t)))
@@ -2266,11 +2283,8 @@ def _check_field_parameters(types, invariant, initial):
     if not callable(invariant):
         raise TypeError('Invariant must be callable')
 
-
-def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL, mandatory=False):
-    types = set(type) if isinstance(type, Iterable) else set([type])
-    _check_field_parameters(types, invariant, initial)
-    return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory)
+    if not callable(factory):
+        raise TypeError('Factory must be callable')
 
 @six.add_metaclass(_PRecordMeta)
 class PRecord(PMap):
@@ -2307,6 +2321,10 @@ class PRecord(PMap):
         return "{0}({1})".format(self.__class__.__name__,
                                  ', '.join('{0}={1}'.format(k, v) for k, v in self.items()))
 
+    @classmethod
+    def create(cls, kwargs):
+        return cls(**kwargs)
+
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes')
 
@@ -2315,19 +2333,20 @@ class _PRecordEvolver(PMap._Evolver):
         self._destination_cls = cls
         self._invariant_error_codes = []
 
-    def __setitem__(self, key, value):
-        fields = self._destination_cls._precord_fields
-        if key in fields:
-            if fields[key].type and not any(isinstance(value, t) for t in fields[key].type):
+    def __setitem__(self, key, original_value):
+        field = self._destination_cls._precord_fields.get(key)
+        if field:
+            value = field.factory(original_value)
+            if field.type and not any(isinstance(value, t) for t in field.type):
                 raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
 
-            is_ok, error_code = fields[key].invariant(value)
+            is_ok, error_code = field.invariant(value)
             if not is_ok:
                 self._invariant_error_codes.append(error_code)
+
+            super(_PRecordEvolver, self).__setitem__(key, value)
         else:
             raise AttributeError("'{0}' is not among the specified fields".format(key))
-
-        super(_PRecordEvolver, self).__setitem__(key, value)
 
     def persistent(self):
         cls = self._destination_cls
