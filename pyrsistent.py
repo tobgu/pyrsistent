@@ -2232,7 +2232,6 @@ class _PRecordMeta(type):
 
 
 # TODO
-# - Pickling
 # - Documentation
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
 # - transform, return same instance if no transformation takes place
@@ -2324,6 +2323,11 @@ class PRecord(PMap):
     @classmethod
     def create(cls, kwargs):
         return cls(**kwargs)
+
+    def __reduce__(self):
+        # Pickling support
+        return self.__class__.create, (dict(self),)
+
 
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes')

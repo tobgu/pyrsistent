@@ -190,13 +190,12 @@ def test_nested_record_construction():
     assert isinstance(r.b, BRecord)
     assert r == {'a': 'foo', 'b': {'x': 5}}
 
-#def test_pickling():
-#    ARecord = precord('a', b=(int, float))
-#    x = ARecord(a='bar', b=2.0)
-#    y = pickle.loads(pickle.dumps(x, -1))
-#
-#    assert x == y
-#    assert isinstance(y, PRecord)
+def test_pickling():
+    x = ARecord( x=2.0, y='bar')
+    y = pickle.loads(pickle.dumps(x, -1))
+
+    assert x == y
+    assert isinstance(y, ARecord)
 
 #    # Field and type checks should remain
 #    with pytest.raises(AttributeError):
