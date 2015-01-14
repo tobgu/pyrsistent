@@ -2285,6 +2285,11 @@ def _check_field_parameters(types, invariant, initial, factory):
     if not callable(factory):
         raise TypeError('Factory must be callable')
 
+
+def _restore_pickle(cls, data):
+    return cls.create(data)
+
+
 @six.add_metaclass(_PRecordMeta)
 class PRecord(PMap):
     def __new__(cls, **kwargs):
@@ -2326,7 +2331,7 @@ class PRecord(PMap):
 
     def __reduce__(self):
         # Pickling support
-        return self.__class__.create, (dict(self),)
+        return _restore_pickle, (self.__class__, dict(self),)
 
 
 class _PRecordEvolver(PMap._Evolver):
