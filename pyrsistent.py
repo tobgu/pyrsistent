@@ -2235,7 +2235,7 @@ class _PRecordMeta(type):
 # - Documentation
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
 # - transform, return same instance if no transformation takes place
-
+# - Serialize
 class InvariantException(Exception):
     def __init__(self, error_codes, missing_fields, *args, **kwargs):
         self.error_codes = error_codes
@@ -2327,25 +2327,34 @@ class PRecord(PMap):
 
     @classmethod
     def create(cls, kwargs):
+        if isinstance(kwargs, cls):
+            return kwargs
+
         return cls(**kwargs)
 
     def __reduce__(self):
         # Pickling support
         return _restore_pickle, (self.__class__, dict(self),)
 
-
 class _PRecordEvolver(PMap._Evolver):
-    __slots__ = ('_destination_cls', '_invariant_error_codes')
+    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields')
 
     def __init__(self, cls, *args):
         super(_PRecordEvolver, self).__init__(*args)
         self._destination_cls = cls
         self._invariant_error_codes = []
+        self._missing_fields = []
 
     def __setitem__(self, key, original_value):
         field = self._destination_cls._precord_fields.get(key)
         if field:
-            value = field.factory(original_value)
+            try:
+                value = field.factory(original_value)
+            except InvariantException as e:
+                self._invariant_error_codes += e.error_codes
+                self._missing_fields += e.missing_fields
+                return
+
             if field.type and not any(isinstance(value, t) for t in field.type):
                 raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
 
@@ -2362,18 +2371,18 @@ class _PRecordEvolver(PMap._Evolver):
         pm = super(_PRecordEvolver, self).persistent()
         result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
 
-        missing_fields = ()
         if cls._precord_mandatory_fields:
-            missing_fields = tuple(cls._precord_mandatory_fields - set(result.keys()))
+            self._missing_fields += tuple('{0}.{1}'.format(cls.__name__, f) for f
+                                          in (cls._precord_mandatory_fields - set(result.keys())))
 
-        if self._invariant_error_codes or missing_fields:
-            raise InvariantException(error_codes=tuple(self._invariant_error_codes),
-                                     missing_fields=missing_fields)
+        if self._invariant_error_codes or self._missing_fields:
+            raise InvariantException(tuple(self._invariant_error_codes), tuple(self._missing_fields),
+                                     'Field invariant failed'.format(self._original_pmap))
 
         error_codes = tuple(error_code for is_ok, error_code in
                             (invariant(result) for invariant in cls._precord_invariants) if not is_ok)
         if error_codes:
-            raise InvariantException(error_codes=error_codes, missing_fields=())
+            raise InvariantException(error_codes, (), 'Global invariant failed')
 
         return result
 

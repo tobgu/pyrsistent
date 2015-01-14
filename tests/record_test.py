@@ -89,7 +89,7 @@ def test_field_invariant_must_hold():
         assert False
     except InvariantException as e:
         assert e.error_codes == ('x too small',)
-        assert e.missing_fields == ('y',)
+        assert e.missing_fields == ('BRecord.y',)
 
 def test_global_invariant_must_hold():
     class BRecord(PRecord):
@@ -197,10 +197,27 @@ def test_pickling():
     assert x == y
     assert isinstance(y, ARecord)
 
-#    # Field and type checks should remain
-#    with pytest.raises(AttributeError):
-#        ARecord(c='asd')
-#
-#    with pytest.raises(TypeError):
-#        ARecord(b='asd')
-#
+def test_all_invariant_errors_reported():
+    class BRecord(PRecord):
+        x = field(factory=int, invariant=lambda x: (x >= 0, 'x negative'))
+        y = field(mandatory=True)
+
+    class CRecord(PRecord):
+        a = field(invariant=lambda x: (x != 0, 'a zero'))
+        b = field(type=BRecord)
+
+    try:
+        CRecord.create({'a': 0, 'b': {'x': -5}})
+        assert False
+    except InvariantException as e:
+        assert set(e.error_codes) == set(['x negative', 'a zero'])
+        assert e.missing_fields == ('BRecord.y',)
+
+
+def test_precord_factory_method_is_idempotent():
+    class BRecord(PRecord):
+        x = field()
+        y = field()
+
+    r = BRecord(x=1, y=2)
+    assert BRecord.create(r) is r
