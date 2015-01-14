@@ -1,4 +1,5 @@
 import pickle
+import datetime
 import pytest
 from pyrsistent import PRecord, field, InvariantException
 
@@ -221,3 +222,29 @@ def test_precord_factory_method_is_idempotent():
 
     r = BRecord(x=1, y=2)
     assert BRecord.create(r) is r
+
+def test_serialize():
+    class BRecord(PRecord):
+        d = field(type=datetime.date,
+                  factory=lambda d: datetime.datetime.strptime(d, "%d%m%Y").date(),
+                  serializer=lambda format, d: d.strftime('%Y-%m-%d') if format=='ISO' else d.strftime('%d%m%Y'))
+
+    assert BRecord(d='14012015').serialize('ISO') == {'d': '2015-01-14'}
+    assert BRecord(d='14012015').serialize('other') == {'d': '14012015'}
+
+def test_nested_serialize():
+    class BRecord(PRecord):
+        d = field(serializer=lambda format, d: format)
+
+    class CRecord(PRecord):
+        b = field()
+
+    serialized = CRecord(b=BRecord(d='foo')).serialize('bar')
+
+    assert serialized == {'b': {'d': 'bar'}}
+    assert isinstance(serialized, dict)
+
+def test_serializer_must_be_callable():
+    with pytest.raises(TypeError):
+        class CRecord(PRecord):
+            x = field(serializer=1)

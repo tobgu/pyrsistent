@@ -2243,23 +2243,24 @@ class InvariantException(Exception):
         super(InvariantException, self).__init__(*args, **kwargs)
 
 class _PRecordField(object):
-    __slots__ = ('type', 'invariant', 'initial', 'mandatory', 'factory')
+    __slots__ = ('type', 'invariant', 'initial', 'mandatory', 'factory', 'serializer')
 
-    def __init__(self, type, invariant, initial, mandatory, factory):
+    def __init__(self, type, invariant, initial, mandatory, factory, serializer):
         self.type = type
         self.invariant = invariant
         self.initial = initial
         self.mandatory = mandatory
         self.factory = factory
+        self.serializer = serializer
 
 _PRECORD_NO_TYPE = ()
 _PRECORD_NO_INVARIANT = lambda _: (True, None)
 _PRECORD_NO_FACTORY = lambda x: x
 _PRECORD_NO_INITIAL = object()
-
+_PRECORD_NO_SERIALIZER = lambda _, value: value
 
 def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL,
-          mandatory=False, factory=_PRECORD_NO_FACTORY):
+          mandatory=False, factory=_PRECORD_NO_FACTORY, serializer=_PRECORD_NO_SERIALIZER):
     types = set(type) if isinstance(type, Iterable) else set([type])
 
     # If no factory is specified and the type is another PRecord use the factory method
@@ -2267,24 +2268,29 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
     if factory is _PRECORD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], PRecord):
         factory = tuple(types)[0].create
 
-    _check_field_parameters(types, invariant, initial, factory)
-    return _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory, factory=factory)
+    field = _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
+                          factory=factory, serializer=serializer)
 
+    _check_field_parameters(field)
 
-def _check_field_parameters(types, invariant, initial, factory):
-    for t in types:
+    return field
+
+def _check_field_parameters(field):
+    for t in field.type:
         if not isinstance(t, type):
             raise TypeError('Type paramenter expected, not {0}'.format(type(t)))
 
-    if initial is not _PRECORD_NO_INITIAL and types and not any(isinstance(initial, t) for t in types):
+    if field.initial is not _PRECORD_NO_INITIAL and field.type and not any(isinstance(field.initial, t) for t in field.type):
         raise TypeError('Initial has invalid type {0}'.format(type(t)))
 
-    if not callable(invariant):
+    if not callable(field.invariant):
         raise TypeError('Invariant must be callable')
 
-    if not callable(factory):
+    if not callable(field.factory):
         raise TypeError('Factory must be callable')
 
+    if not callable(field.serializer):
+        raise TypeError('Serializer must be callable')
 
 def _restore_pickle(cls, data):
     return cls.create(data)
@@ -2335,6 +2341,16 @@ class PRecord(PMap):
     def __reduce__(self):
         # Pickling support
         return _restore_pickle, (self.__class__, dict(self),)
+
+    def serialize(self, format=None):
+        def _serialize(k, v):
+            serializer = self.__class__._precord_fields[k].serializer
+            if isinstance(v, PRecord) and serializer is _PRECORD_NO_SERIALIZER:
+                return v.serialize(format)
+
+            return serializer(format, v)
+
+        return dict((k, _serialize(k, v)) for k, v in self.items())
 
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields')
