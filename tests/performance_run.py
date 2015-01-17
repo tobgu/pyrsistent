@@ -244,8 +244,8 @@ def run_multiple_random_inserts():
     for x in range(4):
         indices.extend([i+318 for i in indices])
 
-    print "Number of accesses: %s" % len(indices)
-    print "Number of elements in vector: %s" % max(indices)
+    print("Number of accesses: %s" % len(indices))
+    print("Number of elements in vector: %s" % max(indices))
 
     original = _pvector(range(max(indices) + 1))
     original2 = _pvector(range(max(indices) + 1))
@@ -256,7 +256,7 @@ def run_multiple_random_inserts():
     for r in range(10000):
         for i in indices:
             new = new.set(i, 0)
-    print "Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices))
+    print("Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
     assert original == original2
 
     # Using setter view
@@ -265,8 +265,8 @@ def run_multiple_random_inserts():
     for r in range(10000):
         for i in indices:
             evolver[i] = 0
-    new2 = evolver.pvector()
-    print "Done evolver, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices))
+    new2 = evolver.persistent()
+    print("Done evolver, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
 
     assert original == original2
 
@@ -281,7 +281,7 @@ def run_multiple_random_inserts():
     args = list(interleave(indices, repeat(0)))
     for _ in range(10000):
         new3 = new3.mset(*args)
-    print "Done mset, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(args)/2)
+    print("Done mset, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(args)/2))
 
     assert list(new) == list(new2)
     assert list(new2) == list(new3)
@@ -299,14 +299,14 @@ def run_multiple_inserts_in_pmap():
     # Using ordinary set
     start = time.time()
     m1 = pmap(elements)
-    print "Done initalizing, time=%s s, count=%s" % (time.time() - start, COUNT)
+    print("Done initalizing, time=%s s, count=%s" % (time.time() - start, COUNT))
 
 
     start = time.time()
     m2 = pmap()
     for x in test_range():
         m2 = m2.set(x, x)
-    print "Done setting, time=%s s, count=%s" % (time.time() - start, COUNT)
+    print("Done setting, time=%s s, count=%s" % (time.time() - start, COUNT))
 
     assert m1 == m2
 
@@ -316,7 +316,7 @@ def run_multiple_inserts_in_pmap():
     for x in test_range():
         e3[x] = x
     m3 = e3.persistent()
-    print "Done evolving, time=%s s, count=%s" % (time.time() - start, COUNT)
+    print("Done evolving, time=%s s, count=%s" % (time.time() - start, COUNT))
 
     assert m3 == m2
 
@@ -324,7 +324,7 @@ def run_multiple_inserts_in_pmap():
     m4 = pmap()
     m4 = m4.update(elements)
     m4 = m4.update(elements)
-    print "Done updating, time=%s s, count=%s" % (time.time() - start, COUNT)
+    print("Done updating, time=%s s, count=%s" % (time.time() - start, COUNT))
 
     assert m4 == m3
 
@@ -332,14 +332,15 @@ def run_multiple_inserts_in_pmap():
     m5 = pmap()
     m5 = m5.update_with(lambda l, r: r, elements)
     m5 = m5.update_with(lambda l, r: r, elements)
-    print "Done updating with, time=%s s, count=%s" % (time.time() - start, COUNT)
+    print("Done updating with, time=%s s, count=%s" % (time.time() - start, COUNT))
 
     assert m5 == m4
 
 
 if __name__ == "__main__":
-    run_multiple_inserts_in_pmap()
-    run_multiple_random_inserts()
+    pass
+#    run_multiple_inserts_in_pmap()
+#    run_multiple_random_inserts()
 #    run_big_list_initialization()
 #    run_big_iterator_initialization()
 #    run_slicing_performance()
