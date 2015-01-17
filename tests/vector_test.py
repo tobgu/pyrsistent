@@ -722,3 +722,9 @@ def test_evolver_is_dirty(pvector):
 
     e.persistent()
     assert not e.is_dirty()
+
+def test_vector_insert_one_step_beyond_end(pvector):
+    # This test exists to get the transform functionality under memory
+    # leak supervision. Most of the transformation tests are in test_transform.py.
+    v = pvector([1, 2])
+    assert v.transform([2], 3) == pvector([1, 2, 3])

@@ -4,6 +4,7 @@ from functools import wraps, reduce
 from itertools import chain, islice
 from numbers import Integral
 import sys
+import re
 
 import six
 
@@ -562,6 +563,9 @@ class PVector(object):
         # Pickling support
         return _pvector, (self._tolist(),)
 
+    def transform(self, *transformations):
+        return _transform(self, transformations)
+
 
 Sequence.register(PVector)
 Hashable.register(PVector)
@@ -827,6 +831,9 @@ class PMap(object):
     def __reduce__(self):
         # Pickling support
         return pmap, (dict(self),)
+
+    def transform(self, *transformations):
+        return _transform(self, transformations)
 
     class _Evolver(object):
         __slots__ = ('_buckets_evolver', '_size', '_original_pmap')
@@ -2202,9 +2209,6 @@ def dq(*elements):
 
 ###### PRecord ######
 
-#def _reconstruct_precord(kwargs, orig_fields, orig_typed_fields):
-#    return precord(*orig_fields, **orig_typed_fields)(**kwargs)
-
 class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         dct['_precord_fields'] = dict(sum([list(b.__dict__.get('_precord_fields', {}).items()) for b in bases], []))
@@ -2234,8 +2238,6 @@ class _PRecordMeta(type):
 # TODO
 # - Documentation
 # - Disallow callables? Or is there some way to incorporate these in a nice way?
-# - transform, return same instance if no transformation takes place
-# - Serialize
 class InvariantException(Exception):
     def __init__(self, error_codes, missing_fields, *args, **kwargs):
         self.error_codes = error_codes
@@ -2402,3 +2404,75 @@ class _PRecordEvolver(PMap._Evolver):
 
         return result
 
+
+############## Transform ##################
+
+# Transformations
+inc = lambda x: x + 1
+dec = lambda x: x - 1
+
+def discard(evolver, key):
+    try:
+        del evolver[key]
+    except KeyError:
+        pass
+
+
+# Matchers
+def rex(expr):
+    r = re.compile(expr)
+    return lambda key: isinstance(key, six.string_types) and r.match(key)
+
+
+ny = lambda _: True
+
+# Support functions
+def _chunks(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
+def _transform(structure, transformations):
+    r = structure
+    for path, command in _chunks(transformations, 2):
+        r = _do_to_path(r, path, command)
+    return r
+
+
+def _do_to_path(structure, path, command):
+    if not path:
+        return command(structure) if callable(command) else command
+
+    kvs = _get_keys_and_values(structure, path[0])
+    return _update_structure(structure, kvs, path[1:], command)
+
+
+def _items(structure):
+    try:
+        return structure.items()
+    except AttributeError:
+        return list(enumerate(structure))
+
+
+def _get(structure, key, default):
+    try:
+        return structure[key]
+    except (IndexError, KeyError):
+        return default
+
+
+def _get_keys_and_values(structure, key_spec):
+    if callable(key_spec):
+        return [(k, v) for k, v in _items(structure) if key_spec(k)]
+
+    return [(key_spec, _get(structure, key_spec, pmap()))]
+
+
+def _update_structure(structure, kvs, path, command):
+    e = structure.evolver()
+    for k, v in kvs:
+        if not path and command is discard:
+            discard(e, k)
+        else:
+            e[k] = _do_to_path(v, path, command)
+    return e.persistent()

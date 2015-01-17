@@ -81,6 +81,18 @@ static PyObject* setInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject* 
   return newMap;
 }
 
+static PyObject* transform_fn = NULL;
+
+static PyObject* transform(PVector* self, PyObject* args) {
+  if(transform_fn == NULL) {
+    // transform to avoid circular import problems
+    transform_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent"), "_transform");
+  }
+
+  return PyObject_CallFunctionObjArgs(transform_fn, self, args, NULL);
+}
+
+
 // No access to internal members
 static PyMemberDef PVector_members[] = {
 	{NULL}  /* Sentinel */
@@ -540,6 +552,8 @@ static PyObject* PVector_append(PVector *self, PyObject *obj);
 
 static PyObject* PVector_set_in(PVector *self, PyObject *obj);
 
+static PyObject* PVector_transform(PVector *self, PyObject *obj);
+
 static PyObject* PVector_set(PVector *self, PyObject *obj);
 
 static PyObject* PVector_mset(PVector *self, PyObject *args);
@@ -574,7 +588,8 @@ static PyMethodDef PVector_methods[] = {
 	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
 	{"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Insert an element in a nested structure"},
-	{"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
+        {"transform",   (PyCFunction)PVector_transform, METH_VARARGS, "Apply one or more transformations"},
+        {"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
         {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
@@ -994,6 +1009,13 @@ static PyObject* PVector_set_in(PVector *self, PyObject *args) {
     }
   }
 }
+
+
+static PyObject* PVector_transform(PVector *self, PyObject *obj) {
+  return transform(self, obj);
+}
+
+
 
 /*
  Steals a reference to the object that is inserted in the vector.
