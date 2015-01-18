@@ -1,7 +1,8 @@
 import pickle
 import datetime
 import pytest
-from pyrsistent import PRecord, field, InvariantException
+from pyrsistent import PRecord, field, InvariantException, ny
+
 
 class ARecord(PRecord):
     x = field(type=(int, float))
@@ -192,7 +193,7 @@ def test_nested_record_construction():
     assert r == {'a': 'foo', 'b': {'x': 5}}
 
 def test_pickling():
-    x = ARecord( x=2.0, y='bar')
+    x = ARecord(x=2.0, y='bar')
     y = pickle.loads(pickle.dumps(x, -1))
 
     assert x == y
@@ -248,3 +249,7 @@ def test_serializer_must_be_callable():
     with pytest.raises(TypeError):
         class CRecord(PRecord):
             x = field(serializer=1)
+
+def test_transform_without_update_returns_same_precord():
+    r = ARecord(x=2.0, y='bar')
+    assert r.transform([ny], lambda x: x) is r

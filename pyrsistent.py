@@ -204,7 +204,8 @@ class PVector(object):
         return hash(self._totuple())
 
     class _Evolver(object):
-        __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes', '_extra_tail', '_cached_leafs')
+        __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes',
+                     '_extra_tail', '_cached_leafs', '_orig_vector')
 
         def __init__(self, v):
             self._reset(v)
@@ -230,6 +231,7 @@ class PVector(object):
             self._dirty_nodes = {}
             self._cached_leafs = {}
             self._extra_tail = []
+            self._orig_vector = v
 
         def append(self, element):
             self._extra_tail.append(element)
@@ -280,9 +282,12 @@ class PVector(object):
             return ret
 
         def persistent(self):
-            v = PVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
-            self._reset(v)
-            return v
+            result = self._orig_vector
+            if self.is_dirty():
+                result = PVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
+                self._reset(result)
+
+            return result
 
         def __len__(self):
             return self._count + len(self._extra_tail)
@@ -2365,6 +2370,7 @@ class _PRecordEvolver(PMap._Evolver):
 
     def __setitem__(self, key, original_value):
         field = self._destination_cls._precord_fields.get(key)
+        print "Setting item.."
         if field:
             try:
                 value = field.factory(original_value)
@@ -2386,8 +2392,12 @@ class _PRecordEvolver(PMap._Evolver):
 
     def persistent(self):
         cls = self._destination_cls
+        is_dirty = self.is_dirty()
         pm = super(_PRecordEvolver, self).persistent()
-        result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
+        if is_dirty or not isinstance(pm, cls):
+            result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
+        else:
+            result = pm
 
         if cls._precord_mandatory_fields:
             self._missing_fields += tuple('{0}.{1}'.format(cls.__name__, f) for f
@@ -2407,15 +2417,16 @@ class _PRecordEvolver(PMap._Evolver):
 
 ############## Transform ##################
 
-# Transformations
-inc = lambda x: x + 1
-dec = lambda x: x - 1
-
-def discard(evolver, key):
+def _discard(evolver, key):
     try:
         del evolver[key]
     except KeyError:
         pass
+
+# Transformations
+inc = lambda x: x + 1
+dec = lambda x: x - 1
+discard = _discard
 
 
 # Matchers
@@ -2474,5 +2485,7 @@ def _update_structure(structure, kvs, path, command):
         if not path and command is discard:
             discard(e, k)
         else:
-            e[k] = _do_to_path(v, path, command)
+            result = _do_to_path(v, path, command)
+            if result is not v:
+                e[k] = result
     return e.persistent()

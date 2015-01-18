@@ -1479,13 +1479,12 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
 
 static PyObject *PVectorEvolver_persistent(PVectorEvolver *self) {
   PVector *resultVector;
-  if(self->newVector == self->originalVector) {
-    resultVector = self->newVector;
-  } else {
+  if(self->newVector != self->originalVector) {
     cleanVector(self->newVector);
-    resultVector = self->newVector;
     Py_DECREF(self->originalVector);
   }
+
+  resultVector = self->newVector;
 
   if(PyList_GET_SIZE(self->appendList)) {
     PVector *oldVector = resultVector;

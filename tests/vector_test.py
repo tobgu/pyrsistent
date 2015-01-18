@@ -728,3 +728,7 @@ def test_vector_insert_one_step_beyond_end(pvector):
     # leak supervision. Most of the transformation tests are in test_transform.py.
     v = pvector([1, 2])
     assert v.transform([2], 3) == pvector([1, 2, 3])
+
+def test_evolver_with_no_updates_returns_same_pvector(pvector):
+    v = pvector([1, 2])
+    assert v.evolver().persistent() is v

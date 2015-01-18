@@ -61,3 +61,7 @@ def test_vector_insert_map_one_step_beyond_end():
 def test_multiple_transformations():
     v = freeze([1, 2])
     assert v.transform([2, 'foo'], 3, [2, 'foo'], inc) == freeze([1, 2, {'foo': 4}])
+
+def test_no_transformation_returns_the_same_structure():
+    v = freeze([{'foo': 1}, {'bar': 2}])
+    assert v.transform([ny, ny], lambda x: x) is v
