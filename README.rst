@@ -1,5 +1,5 @@
-Pyrsistent introduction
-=======================
+Introduction
+============
 
 Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in 
 the sense that they are immutable.
@@ -27,14 +27,23 @@ Examples
 .. _collections: https://docs.python.org/3/library/collections.abc.html
 .. _documentation: http://pyrsistent.readthedocs.org/
 
-The collection types currently implemented are PVector (similar to a python list), PMap (similar to
-dict), PSet (similar to set), PBag (similar to collections.Counter), PList (a classic
-singly linked list) and PDeque (similar to collections.deque). There is also an immutable object type (pclass)
-built on the named tuple as well as freeze and thaw functions to convert between pythons standard collections
-and pyrsistent collections.
+The collection types and key features currently implemented are:
 
-Below are examples of common usage patterns for some of the structures. More information and
+* PVector_, similar to a python list
+* PMap_, similar to dict
+* PSet_, similar to set
+* PRecord_, a PMap on steroids with fixed fields, optional type and invariant checking and much more
+* PBag, similar to collections.Counter
+* PList, a classic singly linked list
+* PDeque, similar to collections.deque
+* Immutable object type (pclass) built on the named tuple
+* freeze_ and thaw_ functions to convert between pythons standard collections and pyrsistent collections.
+* Flexible transformations_ of arbitrarily complex structures built from PMaps and PVectors.
+
+Below are examples of common usage patterns for some of the structures and features. More information and
 full documentation for all data structures is available in the documentation_.
+
+.. _PVector:
 
 PVector
 ~~~~~~~
@@ -73,6 +82,8 @@ Appends are amortized O(1). Random access and insert is log32(n) where n is the 
     [2, 6, 4, 5]
     >>> pvector(2 * x for x in range(3))
     pvector([0, 2, 4])
+
+.. _PMap:
 
 PMap
 ~~~~
@@ -115,6 +126,8 @@ Random access and insert is log32(n) where n is the size of the map.
     >>> list(m3)
     ['a', 'c', 'b']
 
+.. _PSet:
+
 PSet
 ~~~~
 With full support for the Set_ protocol PSet is meant as a drop in replacement to the built in set from a readers point
@@ -146,6 +159,197 @@ Random access and insert is log32(n) where n is the size of the set.
     True
     >>> s1 < s(3, 4, 5)
     False
+
+.. _PRecord:
+
+PRecord
+~~~~~~~
+A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
+from PRecord. Because it is a PMap it has full support for mapping methods such as various forms of iteration
+and element access using subscript notation.
+
+.. code:: python
+
+    >>> from pyrsistent import PRecord, field
+    >>> class ARecord(PRecord):
+    ...     x = field()
+    ...
+    >>> r = ARecord(x=3)
+    >>> r
+    ARecord(x=3)
+    >>> r.x
+    3
+    >>> r.set(x=2)
+    ARecord(x=2)
+    >>> r.set(y=2)
+    Traceback (most recent call last):
+    AttributeError: 'y' is not among the specified fields for ARecord
+
+Type information
+****************
+It is possible to add type information to the record to enforce type checks. Multiple allowed types can be specified
+by providing an iterable of types.
+
+.. code:: python
+
+    >>> class BRecord(PRecord):
+    ...     x = field(type=int)
+    ...     y = field(type=(int, type(None)))
+    ...
+    >>> BRecord(x=3, y=None)
+    BRecord(y=None, x=3)
+    >>> BRecord(x=3.0)
+    Traceback (most recent call last):
+    TypeError: Invalid type for field BRecord.x, was <type 'float'>
+
+Mandatory fields
+****************
+Fields are not mandatory by default but can be specified as such. If fields are missing an
+*InvariantException* will be thrown which contains information about the missing fields.
+
+.. code:: python
+
+    >>> from pyrsistent import InvariantException
+    >>> class CRecord(PRecord):
+    ...     x = field(mandatory=True)
+    ...
+    >>> r = CRecord(x=3)
+    >>> try:
+    ...    r.discard('x')
+    ... except InvariantException as e:
+    ...    print(e.missing_fields)
+    ...
+    ('CRecord.x',)
+
+Invariants
+**********
+It is possible to add invariants that must hold when evolving the record. Invariants can be
+specified on both field and record level. If invariants fail an *InvariantException* will be
+thrown which contains information about the failing invariants. An invariant function should
+return a tuple consisting of a boolean that tells if the invariant holds or not and an object
+describing the invariant. This object can later be used to identify which invariant that failed.
+
+The global invariant function is only executed if all field invariants hold.
+
+Global invariants are inherited to subclasses.
+
+.. code:: python
+
+    >>> class RestrictedVector(PRecord):
+    ...     __invariant__ = lambda r: (r.y >= r.x, 'x larger than y')
+    ...     x = field(invariant=lambda x: (x > 0, 'x negative'))
+    ...     y = field(invariant=lambda y: (y > 0, 'y negative'))
+    ...
+    >>> r = RestrictedVector(y=3, x=2)
+    >>> try:
+    ...    r.set(x=-1, y=-2)
+    ... except InvariantException as e:
+    ...    print(e.invariant_errors)
+    ...
+    ('y negative', 'x negative')
+    >>> try:
+    ...    r.set(x=2, y=1)
+    ... except InvariantException as e:
+    ...    print(e.invariant_errors)
+    ...
+    ('x larger than y',)
+
+Factories
+*********
+It's possible to specify factory functions for fields. The factory function receives whatever
+is supplied as field value and the actual returned by the factory is assigned to the field
+given that any type and invariant checks hold.
+PRecords have a default factory specified as a static function on the class, create(). It takes
+a *Mapping* as argument and returns an instance of the specific record.
+If a record has fields of type PRecord the create() method of that record will
+be called to create the "sub record" if no factory has explicitly been specified to override
+this behaviour.
+
+.. code:: python
+
+    >>> class DRecord(PRecord):
+    ...     x = field(factory=int)
+    ...
+    >>> class ERecord(PRecord):
+    ...     d = field(type=DRecord)
+    ...
+    >>> ERecord.create({'d': {'x': '1'}})
+    ERecord(d=DRecord(x=1))
+
+Serialization
+*************
+PRecords support serialization back to dicts. Default serialization will take keys and values
+"as is" and output them into a dict. It is possible to specify custom serialization functions
+to take care of fields that require special treatment.
+
+.. code:: python
+
+    >>> from datetime import date
+    >>> class Person(PRecord):
+    ...     name = field(type=unicode)
+    ...     birth_date = field(type=date,
+    ...                        serializer=lambda format, d: d.strftime(format['date']))
+    ...
+    >>> john = Person(name=u'John', birth_date=date(1985, 10, 21))
+    >>> john.serialize({'date': '%Y-%m-%d'})
+    {'birth_date': '1985-10-21', 'name': u'John'}
+
+
+.. _instar: https://github.com/boxed/instar/
+.. _transformations: https://github.com/boxed/instar/
+
+Transformations
+~~~~~~~~~~~~~~~
+Transformations are inspired by the cool library instar_ for Clojure. They let you evolve PMaps and PVectors
+with arbitrarily deep/complex nesting using simple syntax and flexible matching syntax.
+
+The first argument to transformation is the path that points out the value to transform. The
+second is the transformation to perform. If the transformation is callable it will be applied
+to the value(s) matching the path. The path may also contain callables. In that case they are
+treated as matchers. If the matcher returns True for a specific key it is considered for transformation.
+
+.. code:: python
+
+    # Basic examples
+    >>> from pyrsistent import inc, freeze, thaw, rex, ny, discard
+    >>> v1 = freeze([1, 2, 3, 4, 5])
+    >>> v1.transform([2], inc)
+    pvector([1, 2, 4, 4, 5])
+    >>> v1.transform([lambda ix: 0 < ix < 4], 8)
+    pvector([1, 8, 8, 8, 5])
+
+    # The (a)ny matcher can be used to match anything
+    >>> v1.transform([ny], 8)
+    pvector([8, 8, 8, 8, 8])
+
+    # Regular expressions can be used for mathing
+    >>> scores = freeze({'John': 12, 'Joseph': 34, 'Sara': 23})
+    >>> scores.transform([rex('^Jo')], 0)
+    pmap({'Joseph': 0, 'Sara': 23, 'John': 0})
+
+    # Transformations can be done on arbitrarily deep structures
+    >>> news_paper = freeze({'articles': [{'author': 'Sara', 'content': 'A short article'},
+    ...                                   {'author': 'Steve', 'content': 'A slightly longer article'}],
+    ...                      'weather': {'temperature': '11C', 'wind': '5m/s'}})
+    >>> short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:25] + '...' if len(c) > 25 else c)
+    >>> very_short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:15] + '...' if len(c) > 15 else c)
+    >>> very_short_news.articles[0].content
+    'A short article'
+    >>> very_short_news.articles[1].content
+    'A slightly long...'
+
+    # When nothing has been transformed the original data structure is kept
+    >>> short_news is news_paper
+    True
+    >>> very_short_news is news_paper
+    False
+    >>> very_short_news.articles[0] is news_paper.articles[0]
+    True
+
+    # There is a special transformation that can be used to discard elements. Also
+    # multiple transformations can be applied in one call
+    >>> thaw(news_paper.transform(['weather'], discard, ['articles', ny, 'content'], discard))
+    {'articles': [{'author': 'Sara'}, {'author': 'Steve'}]}
 
 Evolvers
 ~~~~~~~~
@@ -211,6 +415,9 @@ Examples of when you may want to use an evolver instead of working directly with
     >>> e2.persistent()
     pvector([1111, 22, 3, 4, 5, 7])
 
+.. _freeze:
+.. _thaw:
+
 freeze and thaw
 ~~~~~~~~~~~~~~~
 These functions are great when your cozy immutable world has to interact with the evil mutable world outside.
@@ -261,6 +468,9 @@ Contributors
 Tobias Gustafsson https://github.com/tobgu
 
 Christopher Armstrong https://github.com/radix
+
+Anders Hovmöller https://github.com/boxed
+
 
 Contributing
 ------------

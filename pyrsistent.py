@@ -293,7 +293,7 @@ class PVector(object):
             return self._count + len(self._extra_tail)
 
         def is_dirty(self):
-            return self._dirty_nodes or self._extra_tail
+            return bool(self._dirty_nodes or self._extra_tail)
 
     def evolver(self):
         """
@@ -759,6 +759,7 @@ class PMap(object):
         """
         Return a new PMap without the element specified by key. Raises KeyError if the element
         is not present.
+
         >>> m1 = m(a=1, b=2)
         >>> m1.remove('a')
         pmap({'b': 2})
@@ -2240,12 +2241,9 @@ class _PRecordMeta(type):
         return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
 
 
-# TODO
-# - Documentation
-# - Disallow callables? Or is there some way to incorporate these in a nice way?
 class InvariantException(Exception):
     def __init__(self, error_codes, missing_fields, *args, **kwargs):
-        self.error_codes = error_codes
+        self.invariant_errors = error_codes
         self.missing_fields = missing_fields
         super(InvariantException, self).__init__(*args, **kwargs)
 
@@ -2370,17 +2368,16 @@ class _PRecordEvolver(PMap._Evolver):
 
     def __setitem__(self, key, original_value):
         field = self._destination_cls._precord_fields.get(key)
-        print "Setting item.."
         if field:
             try:
                 value = field.factory(original_value)
             except InvariantException as e:
-                self._invariant_error_codes += e.error_codes
+                self._invariant_error_codes += e.invariant_errors
                 self._missing_fields += e.missing_fields
                 return
 
             if field.type and not any(isinstance(value, t) for t in field.type):
-                raise TypeError("Invalid type for field '{0}', was {1}".format(key, type(value)))
+                raise TypeError("Invalid type for field {0}.{1}, was {2}".format(self._destination_cls.__name__, key, type(value)))
 
             is_ok, error_code = field.invariant(value)
             if not is_ok:
@@ -2388,7 +2385,7 @@ class _PRecordEvolver(PMap._Evolver):
 
             super(_PRecordEvolver, self).__setitem__(key, value)
         else:
-            raise AttributeError("'{0}' is not among the specified fields".format(key))
+            raise AttributeError("'{0}' is not among the specified fields for {1}".format(key, self._destination_cls.__name__))
 
     def persistent(self):
         cls = self._destination_cls
@@ -2405,7 +2402,7 @@ class _PRecordEvolver(PMap._Evolver):
 
         if self._invariant_error_codes or self._missing_fields:
             raise InvariantException(tuple(self._invariant_error_codes), tuple(self._missing_fields),
-                                     'Field invariant failed'.format(self._original_pmap))
+                                     'Field invariant failed')
 
         error_codes = tuple(error_code for is_ok, error_code in
                             (invariant(result) for invariant in cls._precord_invariants) if not is_ok)

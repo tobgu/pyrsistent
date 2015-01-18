@@ -90,7 +90,7 @@ def test_field_invariant_must_hold():
         BRecord(x=1)
         assert False
     except InvariantException as e:
-        assert e.error_codes == ('x too small',)
+        assert e.invariant_errors == ('x too small',)
         assert e.missing_fields == ('BRecord.y',)
 
 def test_global_invariant_must_hold():
@@ -105,7 +105,7 @@ def test_global_invariant_must_hold():
         BRecord(x=2, y=1)
         assert False
     except InvariantException as e:
-        assert e.error_codes == ('y smaller than x',)
+        assert e.invariant_errors == ('y smaller than x',)
         assert e.missing_fields == ()
 
 
@@ -157,7 +157,7 @@ def test_global_invariants_are_inherited():
         CRecord(x=5, y=3)
         assert False
     except InvariantException as e:
-        assert e.error_codes == ('modulo',)
+        assert e.invariant_errors == ('modulo',)
 
 def test_global_invariants_must_be_callable():
     with pytest.raises(TypeError):
@@ -212,7 +212,7 @@ def test_all_invariant_errors_reported():
         CRecord.create({'a': 0, 'b': {'x': -5}})
         assert False
     except InvariantException as e:
-        assert set(e.error_codes) == set(['x negative', 'a zero'])
+        assert set(e.invariant_errors) == set(['x negative', 'a zero'])
         assert e.missing_fields == ('BRecord.y',)
 
 
