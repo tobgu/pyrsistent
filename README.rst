@@ -165,8 +165,8 @@ Random access and insert is log32(n) where n is the size of the set.
 PRecord
 ~~~~~~~
 A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
-from PRecord. Because it is a PMap it has full support for mapping methods such as various forms of iteration
-and element access using subscript notation.
+from PRecord. Because it is a PMap it has full support for all Mapping methods such as iteration and element
+access using subscript notation.
 
 .. code:: python
 

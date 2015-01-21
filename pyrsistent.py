@@ -569,6 +569,29 @@ class PVector(object):
         return _pvector, (self._tolist(),)
 
     def transform(self, *transformations):
+        """
+        Transform arbitrarily complex combinations of PVectors and PMaps. A transformation
+        consists of two parts. One match expression that specifies which elements to transform
+        and one transformation function that performs the actual transformation.
+
+        >>> news_paper = freeze({'articles': [{'author': 'Sara', 'content': 'A short article'},
+        ...                                   {'author': 'Steve', 'content': 'A slightly longer article'}],
+        ...                      'weather': {'temperature': '11C', 'wind': '5m/s'}})
+        >>> short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:25] + '...' if len(c) > 25 else c)
+        >>> very_short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:15] + '...' if len(c) > 15 else c)
+        >>> very_short_news.articles[0].content
+        'A short article'
+        >>> very_short_news.articles[1].content
+        'A slightly long...'
+
+        # When nothing has been transformed the original data structure is kept
+        >>> short_news is news_paper
+        True
+        >>> very_short_news is news_paper
+        False
+        >>> very_short_news.articles[0] is news_paper.articles[0]
+        True
+        """
         return _transform(self, transformations)
 
 
@@ -839,6 +862,29 @@ class PMap(object):
         return pmap, (dict(self),)
 
     def transform(self, *transformations):
+        """
+        Transform arbitrarily complex combinations of PVectors and PMaps. A transformation
+        consists of two parts. One match expression that specifies which elements to transform
+        and one transformation function that performs the actual transformation.
+
+        >>> news_paper = freeze({'articles': [{'author': 'Sara', 'content': 'A short article'},
+        ...                                   {'author': 'Steve', 'content': 'A slightly longer article'}],
+        ...                      'weather': {'temperature': '11C', 'wind': '5m/s'}})
+        >>> short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:25] + '...' if len(c) > 25 else c)
+        >>> very_short_news = news_paper.transform(['articles', ny, 'content'], lambda c: c[:15] + '...' if len(c) > 15 else c)
+        >>> very_short_news.articles[0].content
+        'A short article'
+        >>> very_short_news.articles[1].content
+        'A slightly long...'
+
+        # When nothing has been transformed the original data structure is kept
+        >>> short_news is news_paper
+        True
+        >>> very_short_news is news_paper
+        False
+        >>> very_short_news.articles[0] is news_paper.articles[0]
+        True
+        """
         return _transform(self, transformations)
 
     class _Evolver(object):
@@ -2242,6 +2288,15 @@ class _PRecordMeta(type):
 
 
 class InvariantException(Exception):
+    """
+    Exception raised from :py:class:`PRecord` when invariant tests fail or when a mandatory
+    field is missing.
+
+    Contains two fields of interest:
+    invariant_errors, a tuple of error data for the failing invariants
+    missing_fields, a tuple of strings specifying the missing names
+    """
+
     def __init__(self, error_codes, missing_fields, *args, **kwargs):
         self.invariant_errors = error_codes
         self.missing_fields = missing_fields
@@ -2266,6 +2321,16 @@ _PRECORD_NO_SERIALIZER = lambda _, value: value
 
 def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECORD_NO_INITIAL,
           mandatory=False, factory=_PRECORD_NO_FACTORY, serializer=_PRECORD_NO_SERIALIZER):
+    """
+    Field specification factory for :py:class:`PRecord`.
+    type, a type or iterable with types that are allowed for this field
+    invariant, a function specifying an invariant that must hold for the field
+    initial, initial value of field if not specified when instantiating the record
+    mandatorty, boolean specifying if the field is mandatory or not
+    factory, factory function called when field is set.
+    serializer, function that returns a serialized versino of the field
+    """
+
     types = set(type) if isinstance(type, Iterable) else set([type])
 
     # If no factory is specified and the type is another PRecord use the factory method
@@ -2303,6 +2368,13 @@ def _restore_pickle(cls, data):
 
 @six.add_metaclass(_PRecordMeta)
 class PRecord(PMap):
+    """
+    A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
+    from PRecord. Because it is a PMap it has full support for all Mapping methods such as iteration and element
+    access using subscript notation.
+
+    More documentation and examples of PRecord usage is available at https://github.com/tobgu/pyrsistent
+    """
     def __new__(cls, **kwargs):
         # Hack total! If these two special attributes exist that means we can create
         # ourselves. Otherwise we need to go through the Evolver to create the structures
@@ -2322,6 +2394,12 @@ class PRecord(PMap):
         return e.persistent()
 
     def set(self, *args, **kwargs):
+        """
+        Set a field in the record. This set function differs slightly from that in the PMap
+        class. First of all it accepts key-value pairs. Second it accepts multiple key-value
+        pairs to perform one, atomic, update of multiple fields.
+        """
+
         # The PRecord set() can accept kwargs since all fields that have been declared are
         # valid python identifiers. Also allow multiple fields to be set in one operation.
         if args:
@@ -2330,6 +2408,9 @@ class PRecord(PMap):
         return self.update(kwargs)
 
     def evolver(self):
+        """
+        Returns an evolver of this object.
+        """
         return _PRecordEvolver(self.__class__, self)
 
     def __repr__(self):
@@ -2338,6 +2419,10 @@ class PRecord(PMap):
 
     @classmethod
     def create(cls, kwargs):
+        """
+        Factory method. Will create a new PRecord of the current type and assign the values
+        specified in kwargs.
+        """
         if isinstance(kwargs, cls):
             return kwargs
 
@@ -2348,6 +2433,10 @@ class PRecord(PMap):
         return _restore_pickle, (self.__class__, dict(self),)
 
     def serialize(self, format=None):
+        """
+        Serialize the current PRecord using custom serializer functions for fields where
+        such have been supplied.
+        """
         def _serialize(k, v):
             serializer = self.__class__._precord_fields[k].serializer
             if isinstance(v, PRecord) and serializer is _PRECORD_NO_SERIALIZER:
@@ -2422,17 +2511,33 @@ def _discard(evolver, key):
 
 # Transformations
 inc = lambda x: x + 1
-dec = lambda x: x - 1
-discard = _discard
+"""
+Add one to the current value
+"""
 
+dec = lambda x: x - 1
+"""
+Subtract one from the current value
+"""
+
+discard = _discard
+"""
+Discard the element and returns a structure without the discarded element.
+"""
 
 # Matchers
 def rex(expr):
+    """
+    Regular expression matcher to use together with transform functions
+    """
     r = re.compile(expr)
     return lambda key: isinstance(key, six.string_types) and r.match(key)
 
 
 ny = lambda _: True
+"""
+Matcher that matches any value
+"""
 
 # Support functions
 def _chunks(l, n):
