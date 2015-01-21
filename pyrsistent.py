@@ -1518,13 +1518,9 @@ class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose
     try:
         six.exec_(template, namespace)
     except SyntaxError as e:
-        raise e
         raise SyntaxError(e.message + ':\n' + template)
 
     return namespace[name]
-
-# Deprecated alias for pclass
-immutable = pclass
 
 ## Freeze & Thaw
 
