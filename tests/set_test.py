@@ -142,3 +142,7 @@ def test_evolver_len():
     x = s(1, 2, 3)
     e = x.evolver()
     assert len(e) == 3
+
+def test_copy_returns_reference_to_self():
+    s1 = s(10)
+    assert s1.copy() is s1

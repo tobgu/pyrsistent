@@ -330,3 +330,7 @@ def test_evolver_remove_element_not_present():
 
     with pytest.raises(KeyError):
         del e['c']
+
+def test_copy_returns_reference_to_self():
+    m1 = m(a=10)
+    assert m1.copy() is m1

@@ -887,6 +887,9 @@ class PMap(object):
         """
         return _transform(self, transformations)
 
+    def copy(self):
+        return self
+
     class _Evolver(object):
         __slots__ = ('_buckets_evolver', '_size', '_original_pmap')
 
@@ -1156,6 +1159,9 @@ class PSet(object):
 
         def __len__(self):
             return len(self._pmap_evolver)
+
+    def copy(self):
+        return self
 
     def evolver(self):
         """
