@@ -322,7 +322,7 @@ treated as matchers. If the matcher returns True for a specific key it is consid
     >>> v1.transform([ny], 8)
     pvector([8, 8, 8, 8, 8])
 
-    # Regular expressions can be used for mathing
+    # Regular expressions can be used for matching
     >>> scores = freeze({'John': 12, 'Joseph': 34, 'Sara': 23})
     >>> scores.transform([rex('^Jo')], 0)
     pmap({'Joseph': 0, 'Sara': 23, 'John': 0})

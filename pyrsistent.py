@@ -583,7 +583,6 @@ class PVector(object):
         'A short article'
         >>> very_short_news.articles[1].content
         'A slightly long...'
-
         # When nothing has been transformed the original data structure is kept
         >>> short_news is news_paper
         True
@@ -876,7 +875,6 @@ class PMap(object):
         'A short article'
         >>> very_short_news.articles[1].content
         'A slightly long...'
-
         # When nothing has been transformed the original data structure is kept
         >>> short_news is news_paper
         True
