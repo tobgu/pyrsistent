@@ -17,60 +17,14 @@ BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = _bitcount(BIT_MASK)
 
 
-def _comparator(f):
-    @wraps(f)
-    def wrapper(*args, **kwds):
-        if isinstance(args[0], PVector) and isinstance(args[1], PVector): 
-            return f(*args, **kwds)
-        return NotImplemented
-    return wrapper
-
-
-class PVector(object):
+class _PTrie(object):
     """
-    Persistent vector implementation. Meant as a replacement for the cases where you would normally
-    use a Python list.
-
-    Do not instantiate directly, instead use the factory functions :py:func:`v` and :py:func:`pvector` to
-    create an instance.
-
-    Heavily influenced by the persistent vector available in Clojure. Initially this was more or
-    less just a port of the Java code for the Clojure vector. It has since been modified and to
-    some extent optimized for usage in Python.
-
-    The vector is organized as a trie, any mutating method will return a new vector that contains the changes. No
-    updates are done to the original vector. Structural sharing between vectors are applied where possible to save
-    space and to avoid making complete copies.
-
-    This structure corresponds most closely to the built in list type and is intended as a replacement. Where the
-    semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
-    for example assignments.
-
-    The PVector implements the Sequence protocol and is Hashable.
-
-    Inserts are amortized O(1). Random access is log32(n) where n is the size of the vector.
-
-    The following are examples of some common operations on persistent vectors:
-
-    >>> p = v(1, 2, 3)
-    >>> p2 = p.append(4)
-    >>> p3 = p2.extend([5, 6, 7])
-    >>> p
-    pvector([1, 2, 3])
-    >>> p2
-    pvector([1, 2, 3, 4])
-    >>> p3
-    pvector([1, 2, 3, 4, 5, 6, 7])
-    >>> p3[5]
-    6
-    >>> p.set(1, 99)
-    pvector([1, 99, 3])
-    >>>
+    Support structure for PVector that implements structural sharing for vectors using a trie.
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
 
     def __new__(cls, count, shift, root, tail):
-        self = super(PVector, cls).__new__(cls)
+        self = super(_PTrie, cls).__new__(cls)
         self._count = count
         self._shift = shift
         self._root = root
@@ -81,22 +35,9 @@ class PVector(object):
         return self
 
     def __len__(self):
-        """
-        >>> len(v(1, 2, 3))
-        3
-        """
         return self._count
 
     def __getitem__(self, index):
-        """
-        Get value at index. Full slicing support.
-
-        >>> v1 = v(5, 6, 7, 8)
-        >>> v1[2]
-        7
-        >>> v1[1:3]
-        pvector([6, 7])
-        """
         if isinstance(index, slice):
             # There are more conditions than the below where it would be OK to
             # return ourselves, implement those...
@@ -105,20 +46,14 @@ class PVector(object):
 
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date, and it's easy :-)
-            return _pvector(self._tolist()[index])
+            return _EMPTY_TRIE.extend(self._tolist()[index])
 
         if index < 0:
             index += self._count
 
-        return PVector._node_for(self, index)[index & BIT_MASK]
+        return _PTrie._node_for(self, index)[index & BIT_MASK]
 
     def __add__(self, other):
-        """
-        >>> v1 = v(1, 2)
-        >>> v2 = v(3, 4)
-        >>> v1 + v2
-        pvector([1, 2, 3, 4])
-        """
         return self.extend(other)
 
     def __repr__(self):
@@ -131,42 +66,32 @@ class PVector(object):
         # by far of those tried since it uses the speed of the built in python list directly.
         return iter(self._tolist())
 
-    @_comparator
     def __ne__(self, other):
         return self._tolist() != other._tolist()
 
-    @_comparator
     def __eq__(self, other):
         return self is other or self._tolist() == other._tolist()
 
-    @_comparator
     def __gt__(self, other):
         return self._tolist() > other._tolist()
 
-    @_comparator
     def __lt__(self, other):
         return self._tolist() < other._tolist()
 
-    @_comparator
     def __ge__(self, other):
         return self._tolist() >= other._tolist()
 
-    @_comparator
     def __le__(self, other):
         return self._tolist() <= other._tolist()
 
     def __mul__(self, times):
-        """
-        >>> v1 = v(1, 2)
-        >>> 3 * v1
-        pvector([1, 2, 1, 2, 1, 2])
-        """
-        if times <= 0 or self is _EMPTY_VECTOR:
-            return _EMPTY_VECTOR
-        elif times == 1:
+        if times <= 0 or self is _EMPTY_TRIE:
+            return _EMPTY_TRIE
+
+        if times == 1:
             return self
-        else:
-            return _pvector(times * self._tolist())
+
+        return _EMPTY_TRIE.extend(times * self._tolist())
 
     __rmul__ = __mul__
 
@@ -194,12 +119,6 @@ class PVector(object):
         return tuple(self._tolist())
 
     def __hash__(self):
-        """
-        >>> v1 = v(1, 2, 3)
-        >>> v2 = v(1, 2, 3)
-        >>> hash(v1) == hash(v2)
-        True
-        """
         # Taking the easy way out again...
         return hash(self._totuple())
 
@@ -220,7 +139,7 @@ class PVector(object):
             if self._count <= index < self._count + len(self._extra_tail):
                 return self._extra_tail[index - self._count]
 
-            return PVector._node_for(self, index)[index & BIT_MASK]
+            return _PTrie._node_for(self, index)[index & BIT_MASK]
 
         def _reset(self, v):
             self._count = v._count
@@ -284,7 +203,7 @@ class PVector(object):
         def persistent(self):
             result = self._orig_vector
             if self.is_dirty():
-                result = PVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
+                result = _PTrie(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
                 self._reset(result)
 
             return result
@@ -294,6 +213,316 @@ class PVector(object):
 
         def is_dirty(self):
             return bool(self._dirty_nodes or self._extra_tail)
+
+    def evolver(self):
+        return _PTrie._Evolver(self)
+
+    def set(self, i, val):
+        # This method could be implemented by a call to mset() but doing so would cause
+        # a ~5 X performance penalty on PyPy (considered the primary platform for this implementation
+        #  of PVector) so we're keeping this implementation for now.
+
+        if not isinstance(i, Integral):
+            raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
+
+        if i < 0:
+            i += self._count
+
+        if 0 <= i < self._count:
+            if i >= self._tail_offset:
+                new_tail = list(self._tail)
+                new_tail[i & BIT_MASK] = val
+                return _PTrie(self._count, self._shift, self._root, new_tail)
+
+            return _PTrie(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
+
+        if i == self._count:
+            return self.append(val)
+
+        raise IndexError()
+
+    def _do_set(self, level, node, i, val):
+        ret = list(node)
+        if level == 0:
+            ret[i & BIT_MASK] = val
+        else:
+            sub_index = (i >> level) & BIT_MASK  # >>>
+            ret[sub_index] = self._do_set(level - SHIFT, node[sub_index], i, val)
+
+        return ret
+
+    @staticmethod
+    def _node_for(pvector_like, i):
+        if 0 <= i < pvector_like._count:
+            if i >= pvector_like._tail_offset:
+                return pvector_like._tail
+
+            node = pvector_like._root
+            for level in range(pvector_like._shift, 0, -SHIFT):
+                node = node[(i >> level) & BIT_MASK]  # >>>
+
+            return node
+
+        raise IndexError()
+
+    def _create_new_root(self):
+        new_shift = self._shift
+
+        # Overflow root?
+        if (self._count >> SHIFT) > (1 << self._shift): # >>>
+            new_root = [self._root, self._new_path(self._shift, self._tail)]
+            new_shift += SHIFT
+        else:
+            new_root = self._push_tail(self._shift, self._root, self._tail)
+
+        return new_root, new_shift
+
+    def append(self, val):
+        if len(self._tail) < BRANCH_FACTOR:
+            new_tail = list(self._tail)
+            new_tail.append(val)
+            return _PTrie(self._count + 1, self._shift, self._root, new_tail)
+
+        # Full tail, push into tree
+        new_root, new_shift = self._create_new_root()
+        return _PTrie(self._count + 1, new_shift, new_root, [val])
+
+    def _new_path(self, level, node):
+        if level == 0:
+            return node
+
+        return [self._new_path(level - SHIFT, node)]
+
+    def _mutating_insert_tail(self):
+        self._root, self._shift = self._create_new_root()
+        self._tail = []
+
+    def _mutating_fill_tail(self, offset, sequence):
+        max_delta_len = BRANCH_FACTOR - len(self._tail)
+        delta = sequence[offset:offset + max_delta_len]
+        self._tail.extend(delta)
+        delta_len = len(delta)
+        self._count += delta_len
+        return offset + delta_len
+
+    def _mutating_extend(self, sequence):
+        offset = 0
+        sequence_len = len(sequence)
+        while offset < sequence_len:
+            offset = self._mutating_fill_tail(offset, sequence)
+            if len(self._tail) == BRANCH_FACTOR:
+                self._mutating_insert_tail()
+
+        self._tail_offset = self._count - len(self._tail)
+
+    def extend(self, obj):
+        # Mutates the new vector directly for efficiency but that's only an
+        # implementation detail, once it is returned it should be considered immutable
+        l = obj._tolist() if isinstance(obj, _PTrie) else list(obj)
+        if l:
+            new_vector = self.append(l[0])
+            new_vector._mutating_extend(l[1:])
+            return new_vector
+
+        return self
+
+    def _push_tail(self, level, parent, tail_node):
+        """
+        if parent is leaf, insert node,
+        else does it map to an existing child? ->
+             node_to_insert = push node one more level
+        else alloc new path
+
+        return  node_to_insert placed in copy of parent
+        """
+        ret = list(parent)
+
+        if level == SHIFT:
+            ret.append(tail_node)
+            return ret
+
+        sub_index = ((self._count - 1) >> level) & BIT_MASK  # >>>
+        if len(parent) > sub_index:
+            ret[sub_index] = self._push_tail(level - SHIFT, parent[sub_index], tail_node)
+            return ret
+
+        ret.append(self._new_path(level - SHIFT, tail_node))
+        return ret
+
+    def set_in(self, keys, val):
+        # TODO: Candidate for removal
+        if not keys:
+            return self
+        elif len(keys) == 1:
+            return self.set(keys[0], val)
+        elif keys[0] == self._count:
+            return self.append(pmap().set_in(keys[1:], val))
+        else:
+            return self.set(keys[0], self[keys[0]].set_in(keys[1:], val))
+
+    def index(self, value, *args, **kwargs):
+        return self._tolist().index(value, *args, **kwargs)
+
+    def count(self, value):
+        return self._tolist().count(value)
+
+
+_EMPTY_TRIE = _PTrie(0, SHIFT, [], [])
+
+def _comparator(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        if isinstance(args[0], PVector) and isinstance(args[1], PVector):
+            return f(*args, **kwds)
+        return NotImplemented
+    return wrapper
+
+class PVector(object):
+    """
+    Persistent vector implementation. Meant as a replacement for the cases where you would normally
+    use a Python list.
+
+    Do not instantiate directly, instead use the factory functions :py:func:`v` and :py:func:`pvector` to
+    create an instance.
+
+    Heavily influenced by the persistent vector available in Clojure. Initially this was more or
+    less just a port of the Java code for the Clojure vector. It has since been modified and to
+    some extent optimized for usage in Python.
+
+    The vector is organized as a trie, any mutating method will return a new vector that contains the changes. No
+    updates are done to the original vector. Structural sharing between vectors are applied where possible to save
+    space and to avoid making complete copies.
+
+    This structure corresponds most closely to the built in list type and is intended as a replacement. Where the
+    semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
+    for example assignments.
+
+    The PVector implements the Sequence protocol and is Hashable.
+
+    Inserts are amortized O(1). Random access is log32(n) where n is the size of the vector.
+
+    The following are examples of some common operations on persistent vectors:
+
+    >>> p = v(1, 2, 3)
+    >>> p2 = p.append(4)
+    >>> p3 = p2.extend([5, 6, 7])
+    >>> p
+    pvector([1, 2, 3])
+    >>> p2
+    pvector([1, 2, 3, 4])
+    >>> p3
+    pvector([1, 2, 3, 4, 5, 6, 7])
+    >>> p3[5]
+    6
+    >>> p.set(1, 99)
+    pvector([1, 99, 3])
+    >>>
+    """
+    __slots__ = ('_trie',)
+
+    def __new__(cls, trie):
+        self = super(PVector, cls).__new__(cls)
+        self._trie = trie
+        return self
+
+    def __len__(self):
+        """
+        >>> len(v(1, 2, 3))
+        3
+        """
+        return len(self._trie)
+
+    def __getitem__(self, index):
+        """
+        Get value at index. Full slicing support.
+
+        >>> v1 = v(5, 6, 7, 8)
+        >>> v1[2]
+        7
+        >>> v1[1:3]
+        pvector([6, 7])
+        """
+        result = self._trie[index]
+        return self if result is self._trie else result
+
+    def _new(self, new_trie):
+        if new_trie is self._trie:
+            return self
+
+        if not new_trie:
+            return _EMPTY_PVECTOR
+
+        return PVector(new_trie)
+
+    def __add__(self, other):
+        """
+        >>> v1 = v(1, 2)
+        >>> v2 = v(3, 4)
+        >>> v1 + v2
+        pvector([1, 2, 3, 4])
+        """
+        return self._new(self._trie.extend(other))
+
+    def __repr__(self):
+        return repr(self._trie)
+
+    __str__ = __repr__
+
+    def __iter__(self):
+        return iter(self._trie)
+
+    @_comparator
+    def __ne__(self, other):
+        return self._trie != other._trie
+
+    @_comparator
+    def __eq__(self, other):
+        return self is other or self._trie == other._trie
+
+    @_comparator
+    def __gt__(self, other):
+        return self._trie > other._trie
+
+    @_comparator
+    def __lt__(self, other):
+        return self._trie < other._trie
+
+    @_comparator
+    def __ge__(self, other):
+        return self._trie >= other._trie
+
+    @_comparator
+    def __le__(self, other):
+        return self._trie <= other._trie
+
+    def __mul__(self, times):
+        """
+        >>> v1 = v(1, 2)
+        >>> 3 * v1
+        pvector([1, 2, 1, 2, 1, 2])
+        """
+        return self._new(times * self._trie)
+
+    __rmul__ = __mul__
+
+    def __hash__(self):
+        """
+        >>> v1 = v(1, 2, 3)
+        >>> v2 = v(1, 2, 3)
+        >>> hash(v1) == hash(v2)
+        True
+        """
+        return hash(self._trie)
+
+    class _Evolver(_PTrie._Evolver):
+        __slots__ = ('_pvector',)
+
+        def __init__(self, pvector):
+            super(PVector._Evolver, self).__init__(pvector._trie)
+            self._pvector = pvector
+
+        def persistent(self):
+            return self._pvector._new(super(PVector._Evolver, self).persistent())
 
     def evolver(self):
         """
@@ -375,64 +604,7 @@ class PVector(object):
         >>> v1.set(-1, 4)
         pvector([1, 2, 4])
         """
-        # This method could be implemented by a call to mset() but doing so would cause
-        # a ~5 X performance penalty on PyPy (considered the primary platform for this implementation
-        #  of PVector) so we're keeping this implementation for now.
-
-        if not isinstance(i, Integral):
-            raise TypeError("'%s' object cannot be interpreted as an index" % type(i).__name__)
-
-        if i < 0:
-            i += self._count
-
-        if 0 <= i < self._count:
-            if i >= self._tail_offset:
-                new_tail = list(self._tail)
-                new_tail[i & BIT_MASK] = val
-                return PVector(self._count, self._shift, self._root, new_tail)
-
-            return PVector(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
-
-        if i == self._count:
-            return self.append(val)
-
-        raise IndexError()
-
-    def _do_set(self, level, node, i, val):
-        ret = list(node)
-        if level == 0:
-            ret[i & BIT_MASK] = val
-        else:
-            sub_index = (i >> level) & BIT_MASK  # >>>
-            ret[sub_index] = self._do_set(level - SHIFT, node[sub_index], i, val)
-
-        return ret
-
-    @staticmethod
-    def _node_for(pvector_like, i):
-        if 0 <= i < pvector_like._count:
-            if i >= pvector_like._tail_offset:
-                return pvector_like._tail
-
-            node = pvector_like._root
-            for level in range(pvector_like._shift, 0, -SHIFT):
-                node = node[(i >> level) & BIT_MASK]  # >>>
-
-            return node
-
-        raise IndexError()
-
-    def _create_new_root(self):
-        new_shift = self._shift
-
-        # Overflow root?
-        if (self._count >> SHIFT) > (1 << self._shift): # >>>
-            new_root = [self._root, self._new_path(self._shift, self._tail)]
-            new_shift += SHIFT
-        else:
-            new_root = self._push_tail(self._shift, self._root, self._tail)
-
-        return new_root, new_shift
+        return self._new(self._trie.set(i, val))
 
     def append(self, val):
         """
@@ -442,42 +614,7 @@ class PVector(object):
         >>> v1.append(3)
         pvector([1, 2, 3])
         """
-        if len(self._tail) < BRANCH_FACTOR:
-            new_tail = list(self._tail)
-            new_tail.append(val)
-            return PVector(self._count + 1, self._shift, self._root, new_tail)
-
-        # Full tail, push into tree
-        new_root, new_shift = self._create_new_root()
-        return PVector(self._count + 1, new_shift, new_root, [val])
-
-    def _new_path(self, level, node):
-        if level == 0:
-            return node
-
-        return [self._new_path(level - SHIFT, node)]
-
-    def _mutating_insert_tail(self):
-        self._root, self._shift = self._create_new_root()
-        self._tail = []
-
-    def _mutating_fill_tail(self, offset, sequence):
-        max_delta_len = BRANCH_FACTOR - len(self._tail)
-        delta = sequence[offset:offset + max_delta_len]
-        self._tail.extend(delta)
-        delta_len = len(delta)
-        self._count += delta_len
-        return offset + delta_len
-
-    def _mutating_extend(self, sequence):
-        offset = 0
-        sequence_len = len(sequence)
-        while offset < sequence_len:
-            offset = self._mutating_fill_tail(offset, sequence)
-            if len(self._tail) == BRANCH_FACTOR:
-                self._mutating_insert_tail()
-
-        self._tail_offset = self._count - len(self._tail)
+        return self._new(self._trie.append(val))
 
     def extend(self, obj):
         """
@@ -488,38 +625,7 @@ class PVector(object):
         >>> v1.extend([4, 5])
         pvector([1, 2, 3, 4, 5])
         """
-        # Mutates the new vector directly for efficiency but that's only an
-        # implementation detail, once it is returned it should be considered immutable
-        l = obj._tolist() if isinstance(obj, PVector) else list(obj)
-        if l:
-            new_vector = self.append(l[0])
-            new_vector._mutating_extend(l[1:])
-            return new_vector
-
-        return self
-
-    def _push_tail(self, level, parent, tail_node):
-        """
-        if parent is leaf, insert node,
-        else does it map to an existing child? ->
-             node_to_insert = push node one more level
-        else alloc new path
-
-        return  node_to_insert placed in copy of parent
-        """
-        ret = list(parent)
-
-        if level == SHIFT:
-            ret.append(tail_node)
-            return ret
-
-        sub_index = ((self._count - 1) >> level) & BIT_MASK  # >>>
-        if len(parent) > sub_index:
-            ret[sub_index] = self._push_tail(level - SHIFT, parent[sub_index], tail_node)
-            return ret
-
-        ret.append(self._new_path(level - SHIFT, tail_node))
-        return ret
+        return self._new(self._trie.extend(obj)) if obj else self
 
     def set_in(self, keys, val):
         """
@@ -532,27 +638,22 @@ class PVector(object):
         >>> v1.set_in((2, 'c', 'd'), 17)
         pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
         """
-        if not keys:
-            return self
-        elif len(keys) == 1:
-            return self.set(keys[0], val)
-        elif keys[0] == self._count:
-            return self.append(pmap().set_in(keys[1:], val))
-        else:
-            return self.set(keys[0], self[keys[0]].set_in(keys[1:], val))
+        # Could probably be replaced with transform but there is a slight difference in
+        # the exceptions thrown when setting fails.
+        return self._new(self._trie.set_in(keys, val))
 
     def index(self, value, *args, **kwargs):
         """
         Return first index of value. Additional indexes may be supplied to limit the search to a
         sub range of the vector.
-        
+
         >>> v1 = v(1, 2, 3, 4, 3)
         >>> v1.index(3)
         2
         >>> v1.index(3, 3, 5)
         4
         """
-        return self._tolist().index(value, *args, **kwargs)
+        return self._trie.index(value, *args, **kwargs)
 
     def count(self, value):
         """
@@ -562,11 +663,11 @@ class PVector(object):
         >>> v1.count(4)
         2
         """
-        return self._tolist().count(value)
+        return self._trie.count(value)
 
     def __reduce__(self):
         # Pickling support
-        return _pvector, (self._tolist(),)
+        return _pvector, (self._trie._tolist(),)
 
     def transform(self, *transformations):
         """
@@ -595,12 +696,10 @@ class PVector(object):
         """
         return _transform(self, transformations)
 
-
 Sequence.register(PVector)
 Hashable.register(PVector)
 
-_EMPTY_VECTOR = PVector(0, SHIFT, [], [])
-
+_EMPTY_PVECTOR = PVector(_EMPTY_TRIE)
 
 def _pvector(iterable=()):
     """
@@ -610,7 +709,7 @@ def _pvector(iterable=()):
     >>> v1
     pvector([1, 2, 3])
     """
-    return _EMPTY_VECTOR.extend(iterable)
+    return _EMPTY_PVECTOR.extend(iterable)
 
 
 pvector = _pvector
@@ -851,12 +950,7 @@ class PMap(object):
         >>> m1.set_in(('c', 1), 17)
         pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
         """
-        if not keys:
-            return self
-        elif len(keys) == 1:
-            return self.set(keys[0], val)
-        else:
-            return self.set(keys[0], self.get(keys[0], _EMPTY_PMAP).set_in(keys[1:], val))
+        return self.transform(keys, val)
 
     def __reduce__(self):
         # Pickling support
