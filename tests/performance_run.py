@@ -193,7 +193,7 @@ def run_to_list():
 
     try:
         before = time.time()
-        l1 = p._tolist()
+        l1 = p.tolist()
         print("Tolist: " + str(time.time() - before))
     except:
         print("Tolist not implemented")

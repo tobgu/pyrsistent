@@ -257,7 +257,7 @@ static void PVector_dealloc(PVector *self) {
   Py_TRASHCAN_SAFE_END(self);
 }
 
-static PyObject *toList(PVector *self) {
+static PyObject *PVector_toList(PVector *self) {
   Py_ssize_t i;
   PyObject *list = PyList_New(self->count);
   for (i = 0; i < self->count; ++i) {
@@ -271,7 +271,7 @@ static PyObject *toList(PVector *self) {
 
 static PyObject *PVector_repr(PVector *self) {
   // Reuse the list repr code, a bit less efficient but saves some code
-  PyObject *list = toList(self);
+  PyObject *list = PVector_toList(self);
   PyObject *list_repr = PyObject_Repr(list);
   Py_DECREF(list);
 
@@ -496,7 +496,7 @@ static PyObject* PVector_pickle_reduce(PVector *self) {
   PyObject* pvector_fn = PyObject_GetAttrString(module, "pvector");
   Py_DECREF(module);
 
-  PyObject *list = toList(self);
+  PyObject *list = PVector_toList(self);
   PyObject *arg_tuple = PyTuple_New(1);
   PyTuple_SET_ITEM(arg_tuple, 0, list);
 
@@ -594,6 +594,7 @@ static PyMethodDef PVector_methods[] = {
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
         {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
 	{"mset",        (PyCFunction)PVector_mset, METH_VARARGS, "Inserts multiple elements at the specified positions"},
+        {"tolist",      (PyCFunction)PVector_toList, METH_NOARGS, "Convert to list"},
 	{NULL}
 };
 

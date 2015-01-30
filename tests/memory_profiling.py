@@ -6,9 +6,10 @@ import sys
 import time
 import memory_profiler
 import vector_test
+from pyrsistent import pvector
 
 try:
-    from pvectorc import pvector
+    import pvectorc
 except ImportError:
     print("No C implementation of PVector available, terminating")
     sys.exit()

@@ -1,12 +1,19 @@
 import pickle
 import pytest
 
+
 @pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
 def pvector(request):
+    # This is slightly ugly but will allow the different implementations
+    # to be tested by the same set of unit tests
+    import pyrsistent
     m = pytest.importorskip(request.param)
     if request.param == 'pyrsistent':
-        return m._pvector
-    return m.pvector
+        pyrsistent._EMPTY_PVECTOR = pyrsistent.PVector(pyrsistent._EMPTY_TRIE)
+    else:
+        pyrsistent._EMPTY_PVECTOR = pyrsistent.PVector(m.pvector())
+
+    return pyrsistent.pvector
 
 
 def test_literalish_works():

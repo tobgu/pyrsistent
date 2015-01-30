@@ -46,7 +46,7 @@ class _PTrie(object):
 
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date, and it's easy :-)
-            return _EMPTY_TRIE.extend(self._tolist()[index])
+            return _EMPTY_TRIE.extend(self.tolist()[index])
 
         if index < 0:
             index += self._count
@@ -57,32 +57,32 @@ class _PTrie(object):
         return self.extend(other)
 
     def __repr__(self):
-        return 'pvector({0})'.format(str(self._tolist()))
+        return 'pvector({0})'.format(str(self.tolist()))
 
     __str__ = __repr__
 
     def __iter__(self):
         # This is kind of lazy and will produce some memory overhead but it is the fasted method
         # by far of those tried since it uses the speed of the built in python list directly.
-        return iter(self._tolist())
+        return iter(self.tolist())
 
     def __ne__(self, other):
-        return self._tolist() != other._tolist()
+        return self.tolist() != other.tolist()
 
     def __eq__(self, other):
-        return self is other or self._tolist() == other._tolist()
+        return self is other or self.tolist() == other.tolist()
 
     def __gt__(self, other):
-        return self._tolist() > other._tolist()
+        return self.tolist() > other.tolist()
 
     def __lt__(self, other):
-        return self._tolist() < other._tolist()
+        return self.tolist() < other.tolist()
 
     def __ge__(self, other):
-        return self._tolist() >= other._tolist()
+        return self.tolist() >= other.tolist()
 
     def __le__(self, other):
-        return self._tolist() <= other._tolist()
+        return self.tolist() <= other.tolist()
 
     def __mul__(self, times):
         if times <= 0 or self is _EMPTY_TRIE:
@@ -91,7 +91,7 @@ class _PTrie(object):
         if times == 1:
             return self
 
-        return _EMPTY_TRIE.extend(times * self._tolist())
+        return _EMPTY_TRIE.extend(times * self.tolist())
 
     __rmul__ = __mul__
 
@@ -103,7 +103,7 @@ class _PTrie(object):
         else:
             the_list.extend(node)
 
-    def _tolist(self):
+    def tolist(self):
         """
         The fastest way to convert the vector into a python list.
         """
@@ -116,7 +116,7 @@ class _PTrie(object):
         """
         Returns the content as a python tuple.
         """
-        return tuple(self._tolist())
+        return tuple(self.tolist())
 
     def __hash__(self):
         # Taking the easy way out again...
@@ -318,7 +318,7 @@ class _PTrie(object):
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
-        l = obj._tolist() if isinstance(obj, _PTrie) else list(obj)
+        l = obj.tolist() if isinstance(obj, _PTrie) else list(obj)
         if l:
             new_vector = self.append(l[0])
             new_vector._mutating_extend(l[1:])
@@ -361,10 +361,10 @@ class _PTrie(object):
             return self.set(keys[0], self[keys[0]].set_in(keys[1:], val))
 
     def index(self, value, *args, **kwargs):
-        return self._tolist().index(value, *args, **kwargs)
+        return self.tolist().index(value, *args, **kwargs)
 
     def count(self, value):
-        return self._tolist().count(value)
+        return self.tolist().count(value)
 
 
 _EMPTY_TRIE = _PTrie(0, SHIFT, [], [])
@@ -514,15 +514,33 @@ class PVector(object):
         """
         return hash(self._trie)
 
-    class _Evolver(_PTrie._Evolver):
-        __slots__ = ('_pvector',)
+    class _Evolver(object):
+        __slots__ = ('_pvector', '_trie_evolver')
 
         def __init__(self, pvector):
-            super(PVector._Evolver, self).__init__(pvector._trie)
+            self._trie_evolver = pvector._trie.evolver()
             self._pvector = pvector
 
+        def __setitem__(self, key, value):
+            self._trie_evolver[key] = value
+
+        def __getitem__(self, item):
+            return self._trie_evolver[item]
+
+        def append(self, elem):
+            self._trie_evolver.append(elem)
+
+        def extend(self, it):
+            self._trie_evolver.extend(it)
+
+        def is_dirty(self):
+            return self._trie_evolver.is_dirty()
+
+        def __len__(self):
+            return len(self._trie_evolver)
+
         def persistent(self):
-            return self._pvector._new(super(PVector._Evolver, self).persistent())
+            return self._pvector._new(self._trie_evolver.persistent())
 
     def evolver(self):
         """
@@ -667,7 +685,7 @@ class PVector(object):
 
     def __reduce__(self):
         # Pickling support
-        return _pvector, (self._trie._tolist(),)
+        return pvector, (self._trie.tolist(),)
 
     def transform(self, *transformations):
         """
@@ -699,9 +717,15 @@ class PVector(object):
 Sequence.register(PVector)
 Hashable.register(PVector)
 
-_EMPTY_PVECTOR = PVector(_EMPTY_TRIE)
+try:
+    # Use the C extension as underlying trie implementation if it is available
+    from pvectorc import pvector as pvector_c
+    _EMPTY_PVECTOR = PVector(pvector_c())
+except ImportError:
+    _EMPTY_PVECTOR = PVector(_EMPTY_TRIE)
 
-def _pvector(iterable=()):
+
+def pvector(iterable=()):
     """
     Create a new persistent vector containing the elements in iterable.
 
@@ -710,15 +734,6 @@ def _pvector(iterable=()):
     pvector([1, 2, 3])
     """
     return _EMPTY_PVECTOR.extend(iterable)
-
-
-pvector = _pvector
-try:
-    # Use the C extension as underlying implementation if it is available
-    from pvectorc import pvector as pvector_c
-    pvector = pvector_c
-except ImportError:
-    pass
 
 
 def v(*elements):
