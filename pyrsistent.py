@@ -514,7 +514,7 @@ class PVector(object):
         """
         return hash(self._trie)
 
-    class _Evolver(object):
+    class Evolver(object):
         __slots__ = ('_pvector', '_trie_evolver')
 
         def __init__(self, pvector):
@@ -585,7 +585,7 @@ class PVector(object):
         The new pvector will share data with the original pvector in the same way that would have
         been done if only using operations on the pvector.
         """
-        return PVector._Evolver(self)
+        return PVector.Evolver(self)
 
     def mset(self, *args):
         """
@@ -720,10 +720,11 @@ Hashable.register(PVector)
 try:
     # Use the C extension as underlying trie implementation if it is available
     from pvectorc import pvector as pvector_c
-    _EMPTY_PVECTOR = PVector(pvector_c())
+    _TRIE_IMPL = pvector_c()
 except ImportError:
-    _EMPTY_PVECTOR = PVector(_EMPTY_TRIE)
+    _TRIE_IMPL = _EMPTY_TRIE
 
+_EMPTY_PVECTOR = PVector(_TRIE_IMPL)
 
 def pvector(iterable=()):
     """
@@ -1045,7 +1046,7 @@ class PMap(object):
                 else:
                     new_list[index] = [(k, v)]
 
-            self._buckets_evolver = pvector(new_list).evolver()
+            self._buckets_evolver = _TRIE_IMPL.extend(new_list).evolver()
 
         def is_dirty(self):
             return self._buckets_evolver.is_dirty()
@@ -1126,7 +1127,7 @@ def _turbo_mapping(initial, pre_size):
         else:
             buckets[index] = [(k, v)]
 
-    return PMap(len(initial), pvector(buckets))
+    return PMap(len(initial), _TRIE_IMPL.extend(buckets))
 
 
 _EMPTY_PMAP = _turbo_mapping({}, 0)
@@ -1691,6 +1692,7 @@ def thaw(o):
     >>> thaw((1, v()))
     (1, [])
     """
+    # TODO: Instance of to support subclasses
     typ = type(o)
     if typ is type(pvector()):
         return list(map(thaw, o))
