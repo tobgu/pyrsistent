@@ -57,7 +57,7 @@ class _PTrie(object):
         return self.extend(other)
 
     def __repr__(self):
-        return 'pvector({0})'.format(str(self.tolist()))
+        return '{0}({1})'.format(self.__class__.__name__, str(self.tolist()))
 
     __str__ = __repr__
 
@@ -463,8 +463,9 @@ class PVector(object):
         """
         return self._new(self._trie.extend(other))
 
+
     def __repr__(self):
-        return repr(self._trie)
+        return 'pvector({0})'.format(str(self._trie.tolist()))
 
     __str__ = __repr__
 
@@ -540,7 +541,10 @@ class PVector(object):
             return len(self._trie_evolver)
 
         def persistent(self):
-            return self._pvector._new(self._trie_evolver.persistent())
+            if self.is_dirty():
+                return PVector(self._trie_evolver.persistent())
+
+            return self._pvector
 
     def evolver(self):
         """
@@ -2418,7 +2422,7 @@ class InvariantException(Exception):
     missing_fields, a tuple of strings specifying the missing names
     """
 
-    def __init__(self, error_codes, missing_fields, *args, **kwargs):
+    def __init__(self, error_codes=(), missing_fields=(), *args, **kwargs):
         self.invariant_errors = error_codes
         self.missing_fields = missing_fields
         super(InvariantException, self).__init__(*args, **kwargs)
@@ -2712,3 +2716,113 @@ def _update_structure(structure, kvs, path, command):
             if result is not v:
                 e[k] = result
     return e.persistent()
+
+
+####################### Checked pvector #########################
+
+class _CheckedPVectorMeta(type):
+    def __new__(mcs, name, bases, dct):
+        print "Called meta class"
+        def to_list(elem):
+            return [elem]
+
+        # Invariants are inherited
+        dct['_checked_pvector_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
+        dct['_checked_pvector_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
+        if not all(callable(invariant) for invariant in dct['_checked_pvector_invariants']):
+            raise TypeError('Invariants must be callable')
+
+        dct['_checked_pvector_types'] = to_list(dct['__type__']) if '__type__' in dct else []
+        dct['_checked_pvector_types'] += sum([to_list(b.__dict__['__type__']) for b in bases if '__type__' in b.__dict__], [])
+        if not all(isinstance(t, type) for t in dct['_checked_pvector_types']):
+            raise TypeError('Type specifications must be types')
+
+        dct['__slots__'] = ()
+
+        return super(_CheckedPVectorMeta, mcs).__new__(mcs, name, bases, dct)
+
+# TODO: Update evolvers to return themselves for chaining operations
+
+def _check_types(it, types):
+    if types and not all(any(isinstance(e, t) for t in types) for e in it):
+        raise TypeError
+
+
+def _invariant_errors(elem, invariants):
+    return [data for valid, data in (invariant(elem) for invariant in invariants) if not valid]
+
+
+def _invariant_errors_iterable(it, invariants):
+    return sum([_invariant_errors(elem, invariants) for elem in it], [])
+
+@six.add_metaclass(_CheckedPVectorMeta)
+class CheckedPVector(PVector):
+    __slots__ = ()
+
+    def __new__(cls, initial=()):
+        if type(initial) is type(_TRIE_IMPL):
+            return super(CheckedPVector, cls).__new__(cls, initial)
+
+        evolver = CheckedPVector.Evolver(cls, pvector())
+        evolver.extend(initial)
+        return evolver.persistent()
+
+    def _check_invariants(self, it):
+        error_data = _invariant_errors_iterable(it, self.__class__._checked_pvector_invariants)
+        if error_data:
+            raise InvariantException(error_codes=error_data)
+
+    def set(self, key, value):
+        e = self.evolver()
+        e[key] = value
+        return e.persistent()
+
+    def append(self, val):
+        e = self.evolver()
+        e.append(val)
+        return e.persistent()
+
+    def extend(self, it):
+        e = self.evolver()
+        e.extend(it)
+        return e.persistent()
+
+    class Evolver(PVector.Evolver):
+        __slots__ = ('_destination_class', '_invariant_errors')
+
+        def __init__(self, destination_class, vector):
+            super(CheckedPVector.Evolver, self).__init__(vector)
+            self._destination_class = destination_class
+            self._invariant_errors = []
+
+        def _check(self, it):
+            _check_types(it, self._destination_class._checked_pvector_types)
+            error_data = _invariant_errors_iterable(it, self._destination_class._checked_pvector_invariants)
+            self._invariant_errors.extend(error_data)
+
+        def __setitem__(self, key, value):
+            self._check([value])
+            super(CheckedPVector.Evolver, self).__setitem__(key, value)
+
+        def append(self, elem):
+            self._check([elem])
+            super(CheckedPVector.Evolver, self).append(elem)
+
+        def extend(self, it):
+            self._check(it)
+            super(CheckedPVector.Evolver, self).extend(it)
+
+        def persistent(self):
+            if self._invariant_errors:
+                raise InvariantException(error_codes=self._invariant_errors)
+
+            return self._destination_class(self._trie_evolver.persistent())
+
+    def __repr__(self):
+        return self.__class__.__name__ + "({0})".format(self._trie.tolist())
+
+    __str__ = __repr__
+
+    def evolver(self):
+        return CheckedPVector.Evolver(self.__class__, self)
+
