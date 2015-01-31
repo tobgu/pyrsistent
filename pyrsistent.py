@@ -1223,7 +1223,9 @@ class PSet(object):
         >>> s1.add(3)
         pset([1, 2, 3])
         """
-        return PSet(self._map.set(element, True))
+        evolver = self.evolver()
+        evolver.add(element)
+        return evolver.persistent()
 
     def remove(self, element):
         """
@@ -1234,7 +1236,9 @@ class PSet(object):
         pset([1])
         """
         if element in self._map:
-            return PSet(self._map.remove(element))
+            evolver = self.evolver()
+            evolver.remove(element)
+            return evolver.persistent()
 
         raise KeyError("Element '%s' not present in PSet" % element)
 
@@ -1243,7 +1247,9 @@ class PSet(object):
         Return a new PSet with element removed. Returns itself if element is not present.
         """
         if element in self._map:
-            return PSet(self._map.remove(element))
+            evolver = self.evolver()
+            evolver.remove(element)
+            return evolver.persistent()
 
         return self
 
