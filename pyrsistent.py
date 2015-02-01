@@ -2460,7 +2460,10 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
 
     # If no factory is specified and the type is another PRecord use the factory method
     # of that PRecord
-    if factory is _PRECORD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], PRecord):
+    if factory is _PRECORD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], CheckedType):
+        # TODO: Should this option be looked up at execution time rather than at field construction time?
+        #       that would allow checking against all the types specified and if none matches the
+        #       first
         factory = tuple(types)[0].create
 
     field = _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
@@ -2490,9 +2493,18 @@ def _check_field_parameters(field):
 def _restore_pickle(cls, data):
     return cls.create(data)
 
+class CheckedType(object):
+    __slots__ = ()
+
+    @classmethod
+    def create(cls, source_data):
+        raise NotImplementedError()
+
+    def serialize(self, format=None):
+        raise NotImplementedError()
 
 @six.add_metaclass(_PRecordMeta)
-class PRecord(PMap):
+class PRecord(PMap, CheckedType):
     """
     A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
     from PRecord. Because it is a PMap it has full support for all Mapping methods such as iteration and element
@@ -2564,7 +2576,7 @@ class PRecord(PMap):
         """
         def _serialize(k, v):
             serializer = self.__class__._precord_fields[k].serializer
-            if isinstance(v, PRecord) and serializer is _PRECORD_NO_SERIALIZER:
+            if isinstance(v, CheckedType) and serializer is _PRECORD_NO_SERIALIZER:
                 return v.serialize(format)
 
             return serializer(format, v)
@@ -2722,9 +2734,10 @@ def _update_structure(structure, kvs, path, command):
 
 class _CheckedPVectorMeta(type):
     def __new__(mcs, name, bases, dct):
-        print "Called meta class"
         def to_list(elem):
-            return [elem]
+            if not isinstance(elem, Iterable):
+                return [elem]
+            return list(elem)
 
         # Invariants are inherited
         dct['_checked_pvector_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
@@ -2755,8 +2768,11 @@ def _invariant_errors(elem, invariants):
 def _invariant_errors_iterable(it, invariants):
     return sum([_invariant_errors(elem, invariants) for elem in it], [])
 
+def optional(typ):
+    return typ, type(None)
+
 @six.add_metaclass(_CheckedPVectorMeta)
-class CheckedPVector(PVector):
+class CheckedPVector(PVector, CheckedType):
     __slots__ = ()
 
     def __new__(cls, initial=()):
@@ -2786,6 +2802,27 @@ class CheckedPVector(PVector):
         e = self.evolver()
         e.extend(it)
         return e.persistent()
+
+    @classmethod
+    def create(cls, source_data):
+        # Functionality similar to the following should be implemented in the other
+        # checked types as well.
+        # TODO: Can any code be shared between the different types?
+        if isinstance(source_data, cls):
+            return source_data
+
+        # Recursively apply create methods of checked types if the types of the supplied data
+        # does not match any of the valid types.
+        types = cls._checked_pvector_types
+        checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
+        if checked_type:
+            return cls([checked_type.create(data)
+                        if not any(isinstance(data, t) for t in types) else data
+                        for data in source_data])
+
+        return cls(source_data)
+
+    # TODO: Serialization
 
     class Evolver(PVector.Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')

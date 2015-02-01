@@ -1,5 +1,5 @@
 import pytest
-from pyrsistent import PVector, CheckedPVector, InvariantException
+from pyrsistent import PVector, CheckedPVector, InvariantException, optional
 
 
 class Naturals(CheckedPVector):
@@ -76,9 +76,34 @@ def test_breaking_invariant():
     except InvariantException as e:
         assert e.invariant_errors == ['Negative value']
 
+def test_create_base_case():
+    x =  Naturals.create([1, 2, 3])
+
+    assert isinstance(x, Naturals)
+    assert x == Naturals([1, 2, 3])
+
+
+def test_create_with_instance_of_checked_pvector_returns_the_argument():
+    x =  Naturals([1, 2, 3])
+
+    assert Naturals.create(x) is x
+
+class OptionalNaturals(CheckedPVector):
+    __type__ = optional(int)
+    __invariant__ = lambda value: (value is None or value >= 0, 'Negative value')
+
+def test_multiple_allowed_types():
+    assert list(OptionalNaturals([1, None, 3])) == [1, None, 3]
+
+class NaturalsVector(CheckedPVector):
+    __type__ = optional(Naturals)
+
+def test_create_of_nested_structure():
+    assert NaturalsVector([Naturals([1, 2]), Naturals([3, 4]), None]) ==\
+           NaturalsVector.create([[1, 2], [3, 4], None])
+
 # TODO
-# Multiple allowed types
-# Inheritance
+# Inheritance of types and invariants
 
 def test_repr():
     x = Naturals([1, 2])
