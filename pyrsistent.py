@@ -124,7 +124,7 @@ class _PTrie(object):
 
     class _Evolver(object):
         __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes',
-                     '_extra_tail', '_cached_leafs', '_orig_vector')
+                     '_extra_tail', '_cached_leafs', '_orig_trie')
 
         def __init__(self, v):
             self._reset(v)
@@ -150,7 +150,7 @@ class _PTrie(object):
             self._dirty_nodes = {}
             self._cached_leafs = {}
             self._extra_tail = []
-            self._orig_vector = v
+            self._orig_trie = v
 
         def append(self, element):
             self._extra_tail.append(element)
@@ -201,7 +201,7 @@ class _PTrie(object):
             return ret
 
         def persistent(self):
-            result = self._orig_vector
+            result = self._orig_trie
             if self.is_dirty():
                 result = _PTrie(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
                 self._reset(result)
@@ -348,17 +348,6 @@ class _PTrie(object):
 
         ret.append(self._new_path(level - SHIFT, tail_node))
         return ret
-
-    def set_in(self, keys, val):
-        # TODO: Candidate for removal
-        if not keys:
-            return self
-        elif len(keys) == 1:
-            return self.set(keys[0], val)
-        elif keys[0] == self._count:
-            return self.append(pmap().set_in(keys[1:], val))
-        else:
-            return self.set(keys[0], self[keys[0]].set_in(keys[1:], val))
 
     def index(self, value, *args, **kwargs):
         return self.tolist().index(value, *args, **kwargs)
@@ -660,9 +649,9 @@ class PVector(object):
         >>> v1.set_in((2, 'c', 'd'), 17)
         pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
         """
-        # Could probably be replaced with transform but there is a slight difference in
-        # the exceptions thrown when setting fails.
-        return self._new(self._trie.set_in(keys, val))
+        import warnings
+        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
+        return self.transform(keys, val)
 
     def index(self, value, *args, **kwargs):
         """
@@ -970,6 +959,8 @@ class PMap(object):
         >>> m1.set_in(('c', 1), 17)
         pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
         """
+        import warnings
+        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
         return self.transform(keys, val)
 
     def __reduce__(self):

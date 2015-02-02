@@ -1,5 +1,13 @@
 Revision history
 ----------------
+v0.9.0, 2015-02-..
+  * Checked types, checked versions of PVector, PMap, PSet.
+  * set_in() on PVector and PMap are now deprecated and will be removed in the next release.
+    Use transform() instead. set_in() has been updated to use transform() for this release
+    this means that some corner error cases behave slightly different than before.
+  * Refactoring of the PVector to unify the type. Should not have any user impact as long as
+    only the public interface of pyrsistent has been used.
+
 v0.8.0, 2015-01-21
   * New type PRecord. Subtype of PMap that allows explicit, declarative field specification. Thanks @boxed
     for inspiration!

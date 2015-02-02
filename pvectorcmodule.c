@@ -60,27 +60,6 @@ typedef struct {
 
 
 static PVector* EMPTY_VECTOR = NULL;
-static PyObject* pmap_factory_fn = NULL;
-static PyObject* set_in_fn_name = NULL;
-
-static PyObject* setInPmap(PyObject* keySequence, Py_ssize_t keySize, PyObject* value) {
-  if(pmap_factory_fn == NULL) {
-    // Lazy import pmap factory to avoid circular import problems
-    pmap_factory_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent"), "pmap");
-  }
-
-  PyObject* emptyMap = PyObject_CallFunctionObjArgs(pmap_factory_fn, NULL);
-  PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
-  PyObject* newMap = PyObject_CallMethodObjArgs(emptyMap,
-						set_in_fn_name,
-						newSequence,
-						value,
-						NULL);
-  Py_DECREF(emptyMap);
-  Py_DECREF(newSequence);
-  return newMap;
-}
-
 static PyObject* transform_fn = NULL;
 
 static PyObject* transform(PVector* self, PyObject* args) {
@@ -550,8 +529,6 @@ static void copyInsert(void** dest, void** src, Py_ssize_t pos, void *obj) {
 
 static PyObject* PVector_append(PVector *self, PyObject *obj);
 
-static PyObject* PVector_set_in(PVector *self, PyObject *obj);
-
 static PyObject* PVector_transform(PVector *self, PyObject *obj);
 
 static PyObject* PVector_set(PVector *self, PyObject *obj);
@@ -587,7 +564,6 @@ static PyMethodDef PVector_methods[] = {
 	{"append",      (PyCFunction)PVector_append, METH_O,       "Appends an element"},
 	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
-	{"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Insert an element in a nested structure"},
         {"transform",   (PyCFunction)PVector_transform, METH_VARARGS, "Apply one or more transformations"},
         {"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
@@ -957,60 +933,6 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
   }
 }
 
-static PyObject* PVector_set_in(PVector *self, PyObject *args) {
-  PyObject *keySequence = NULL;
-  PyObject *value = NULL;
-
-  if(!PyArg_ParseTuple(args, "OO", &keySequence, &value)) {
-    return NULL;
-  }
-
-  Py_ssize_t keySize = PySequence_Size(keySequence);
-  if(keySize == 0) {
-    Py_INCREF(self);
-    return (PyObject*)self;
-  } else {
-    PyObject *index = PySequence_GetItem(keySequence, 0);
-    Py_DECREF(index);
-    Py_ssize_t keyIndex = PyNumber_AsSsize_t(index, NULL);
-    if (keyIndex == -1 && PyErr_Occurred()) {
-      return NULL;
-    }
-
-    if(keySize == 1) {
-      return internalSet(self, keyIndex, value);
-    } else if(keyIndex == self->count) {
-      PyObject* newMap = setInPmap(keySequence, keySize, value);
-      if(newMap == NULL) {
-      	return NULL;
-      }
-
-      PyObject* newVector = PVector_append(self, newMap);
-      Py_DECREF(newMap);
-      return newVector;
-    } else {
-      PyObject* currentItem = PVector_get_item(self, keyIndex);
-      if(currentItem == NULL) {
-	return NULL;
-      }
-
-      // This is slightly scary calling out to Python code. Could
-      // there be concurrency issues if the GIL is released?
-      PyObject* newSequence = PySequence_GetSlice(keySequence, 1, keySize);
-      PyObject* newItem = PyObject_CallMethodObjArgs(currentItem, set_in_fn_name, newSequence, value, NULL);
-      Py_DECREF(currentItem);
-      Py_DECREF(newSequence);
-      if(newItem == NULL) {
-	return NULL;
-      }
-      
-      PyObject* newVector = internalSet(self, keyIndex, newItem);
-      Py_DECREF(newItem);
-      return newVector;
-    }
-  }
-}
-
 
 static PyObject* PVector_transform(PVector *self, PyObject *obj) {
   return transform(self, obj);
@@ -1120,9 +1042,6 @@ PyObject* moduleinit(void) {
 
   Py_INCREF(&PVectorType);
   PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
-
-
-  set_in_fn_name = PyUnicode_FromString("set_in");
 
   return m;
 }

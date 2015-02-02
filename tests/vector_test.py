@@ -376,7 +376,7 @@ def test_repeat(pvector):
 def test_set_zero_key_length(pvector):
     x = pvector([1, 2])
 
-    assert x.set_in([], 3) is x
+    assert x.set_in([], 3) == 3
 
 
 def test_set_in_base_case(pvector):
@@ -415,7 +415,7 @@ def test_set_in_index_error_wrong_type(pvector):
 def test_set_in_non_setable_type(pvector):
     x = pvector([1, 2, 5])
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         x.set_in([2, 3], 999)
 
 
