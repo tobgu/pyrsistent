@@ -739,3 +739,8 @@ def test_vector_insert_one_step_beyond_end(pvector):
 def test_evolver_with_no_updates_returns_same_pvector(pvector):
     v = pvector([1, 2])
     assert v.evolver().persistent() is v
+
+def test_evolver_returns_itself_on_evolving_operations(pvector):
+    # Does this to be able to chain operations
+    v = pvector([1, 2])
+    assert v.evolver().append(3).extend([4, 5]).set(1, 6).persistent() == pvector([1, 6, 3, 4, 5])

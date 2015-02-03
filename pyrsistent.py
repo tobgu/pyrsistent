@@ -252,13 +252,13 @@ class _PTrie(object):
         return ret
 
     @staticmethod
-    def _node_for(pvector_like, i):
-        if 0 <= i < pvector_like._count:
-            if i >= pvector_like._tail_offset:
-                return pvector_like._tail
+    def _node_for(ptrie_like, i):
+        if 0 <= i < ptrie_like._count:
+            if i >= ptrie_like._tail_offset:
+                return ptrie_like._tail
 
-            node = pvector_like._root
-            for level in range(pvector_like._shift, 0, -SHIFT):
+            node = ptrie_like._root
+            for level in range(ptrie_like._shift, 0, -SHIFT):
                 node = node[(i >> level) & BIT_MASK]  # >>>
 
             return node
@@ -514,14 +514,20 @@ class PVector(object):
         def __setitem__(self, key, value):
             self._trie_evolver[key] = value
 
+        def set(self, key, value):
+            self[key] = value
+            return self
+
         def __getitem__(self, item):
             return self._trie_evolver[item]
 
         def append(self, elem):
             self._trie_evolver.append(elem)
+            return self
 
         def extend(self, it):
             self._trie_evolver.extend(it)
+            return self
 
         def is_dirty(self):
             return self._trie_evolver.is_dirty()
@@ -883,9 +889,7 @@ class PMap(object):
         >>> m3
         pmap({'a': 1, 'c': 4, 'b': 2})
         """
-        evolver = self.evolver()
-        evolver[key] = val
-        return evolver.persistent()
+        return self.evolver().set(key, val).persistent()
 
     def remove(self, key):
         """
@@ -896,9 +900,7 @@ class PMap(object):
         >>> m1.remove('a')
         pmap({'b': 2})
         """
-        evolver = self.evolver()
-        del evolver[key]
-        return evolver.persistent()
+        return self.evolver().remove(key).persistent()
 
     def discard(self, key):
         """
@@ -946,7 +948,7 @@ class PMap(object):
         evolver = self.evolver()
         for map in maps:
             for key, value in map.items():
-                evolver[key] = update_fn(evolver[key], value) if key in evolver else value
+                evolver.set(key, update_fn(evolver[key], value) if key in evolver else value)
 
         return evolver.persistent()
 
@@ -1009,6 +1011,9 @@ class PMap(object):
             return PMap._getitem(self._buckets_evolver, key)
 
         def __setitem__(self, key, val):
+            self.set(key, val)
+
+        def set(self, key, val):
             if len(self._buckets_evolver) < 0.67 * self._size:
                 self._reallocate(2 * len(self._buckets_evolver))
 
@@ -1021,7 +1026,7 @@ class PMap(object):
                             new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
                             self._buckets_evolver[index] = new_bucket
 
-                        return
+                        return self
 
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
@@ -1030,6 +1035,8 @@ class PMap(object):
             else:
                 self._buckets_evolver[index] = [kv]
                 self._size += 1
+
+            return self
 
         def _reallocate(self, new_size):
             new_list = new_size * [None]
@@ -1059,6 +1066,9 @@ class PMap(object):
             return PMap._contains(self._buckets_evolver, key)
 
         def __delitem__(self, key):
+            self.remove(key)
+
+        def remove(self, key):
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
 
             if bucket:
@@ -1066,7 +1076,7 @@ class PMap(object):
                 if len(bucket) > len(new_bucket):
                     self._buckets_evolver[index] = new_bucket if new_bucket else None
                     self._size -= 1
-                    return
+                    return self
 
             raise KeyError('{0}'.format(key))
 
@@ -1218,9 +1228,7 @@ class PSet(object):
         >>> s1.add(3)
         pset([1, 2, 3])
         """
-        evolver = self.evolver()
-        evolver.add(element)
-        return evolver.persistent()
+        return self.evolver().add(element).persistent()
 
     def remove(self, element):
         """
@@ -1231,9 +1239,7 @@ class PSet(object):
         pset([1])
         """
         if element in self._map:
-            evolver = self.evolver()
-            evolver.remove(element)
-            return evolver.persistent()
+            return self.evolver().remove(element).persistent()
 
         raise KeyError("Element '%s' not present in PSet" % element)
 
@@ -1242,9 +1248,7 @@ class PSet(object):
         Return a new PSet with element removed. Returns itself if element is not present.
         """
         if element in self._map:
-            evolver = self.evolver()
-            evolver.remove(element)
-            return evolver.persistent()
+            return self.evolver().remove(element).persistent()
 
         return self
 
@@ -1257,9 +1261,11 @@ class PSet(object):
 
         def add(self, element):
             self._pmap_evolver[element] = True
+            return self
 
         def remove(self, element):
             del self._pmap_evolver[element]
+            return self
 
         def is_dirty(self):
             return self._pmap_evolver.is_dirty()
@@ -2584,6 +2590,9 @@ class _PRecordEvolver(PMap._Evolver):
         self._missing_fields = []
 
     def __setitem__(self, key, original_value):
+        self.set(key, original_value)
+
+    def set(self, key, original_value):
         field = self._destination_cls._precord_fields.get(key)
         if field:
             try:
@@ -2591,7 +2600,7 @@ class _PRecordEvolver(PMap._Evolver):
             except InvariantException as e:
                 self._invariant_error_codes += e.invariant_errors
                 self._missing_fields += e.missing_fields
-                return
+                return self
 
             if field.type and not any(isinstance(value, t) for t in field.type):
                 raise TypeError("Invalid type for field {0}.{1}, was {2}".format(self._destination_cls.__name__, key, type(value)))
@@ -2600,7 +2609,7 @@ class _PRecordEvolver(PMap._Evolver):
             if not is_ok:
                 self._invariant_error_codes.append(error_code)
 
-            super(_PRecordEvolver, self).__setitem__(key, value)
+            return super(_PRecordEvolver, self).set(key, value)
         else:
             raise AttributeError("'{0}' is not among the specified fields for {1}".format(key, self._destination_cls.__name__))
 
@@ -2745,7 +2754,6 @@ class _CheckedPVectorMeta(type):
 
         return super(_CheckedPVectorMeta, mcs).__new__(mcs, name, bases, dct)
 
-# TODO: Update evolvers to return themselves for chaining operations
 
 def _check_types(it, types):
     if types and not all(any(isinstance(e, t) for t in types) for e in it):
@@ -2780,19 +2788,13 @@ class CheckedPVector(PVector, CheckedType):
             raise InvariantException(error_codes=error_data)
 
     def set(self, key, value):
-        e = self.evolver()
-        e[key] = value
-        return e.persistent()
+        return self.evolver().set(key, value).persistent()
 
     def append(self, val):
-        e = self.evolver()
-        e.append(val)
-        return e.persistent()
+        return self.evolver().append(val).persistent()
 
     def extend(self, it):
-        e = self.evolver()
-        e.extend(it)
-        return e.persistent()
+        return self.evolver().extend(it).persistent()
 
     @classmethod
     def create(cls, source_data):
@@ -2828,17 +2830,17 @@ class CheckedPVector(PVector, CheckedType):
             error_data = _invariant_errors_iterable(it, self._destination_class._checked_pvector_invariants)
             self._invariant_errors.extend(error_data)
 
-        def __setitem__(self, key, value):
+        def set(self, key, value):
             self._check([value])
-            super(CheckedPVector.Evolver, self).__setitem__(key, value)
+            return super(CheckedPVector.Evolver, self).set(key, value)
 
         def append(self, elem):
             self._check([elem])
-            super(CheckedPVector.Evolver, self).append(elem)
+            return super(CheckedPVector.Evolver, self).append(elem)
 
         def extend(self, it):
             self._check(it)
-            super(CheckedPVector.Evolver, self).extend(it)
+            return super(CheckedPVector.Evolver, self).extend(it)
 
         def persistent(self):
             if self._invariant_errors:
