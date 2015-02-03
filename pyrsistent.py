@@ -565,8 +565,8 @@ class PVector(object):
         >>> v1 = v(1, 2, 3, 4, 5)
         >>> e = v1.evolver()
         >>> e[1] = 22
-        >>> e.append(6)
-        >>> e.extend([7, 8, 9])
+        >>> _ = e.append(6)
+        >>> _ = e.extend([7, 8, 9])
         >>> e[8] += 1
         >>> len(e)
         9
@@ -1290,10 +1290,10 @@ class PSet(object):
         Create the evolver and perform various mutating updates to it:
         >>> s1 = s(1, 2, 3)
         >>> e = s1.evolver()
-        >>> e.add(4)
+        >>> _ = e.add(4)
         >>> len(e)
         4
-        >>> e.remove(1)
+        >>> _ = e.remove(1)
 
         The underlying pset remains the same:
         >>> s1
@@ -1699,16 +1699,14 @@ def thaw(o):
     >>> thaw((1, v()))
     (1, [])
     """
-    # TODO: Instance of to support subclasses
-    typ = type(o)
-    if typ is type(pvector()):
+    if isinstance(o, PVector):
         return list(map(thaw, o))
-    if typ is type(pmap()):
+    if isinstance(o, PMap):
         return dict((k, thaw(v)) for k, v in o.iteritems())
-    if typ is tuple:
-        return tuple(map(thaw, o))
-    if typ is type(pset()):
+    if isinstance(o, PSet):
         return set(o)
+    if type(o) is tuple:
+        return tuple(map(thaw, o))
     return o
 
 

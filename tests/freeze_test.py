@@ -1,6 +1,6 @@
 """Tests for freeze and thaw."""
 
-from pyrsistent import v, m, s, freeze, thaw
+from pyrsistent import v, m, s, freeze, thaw, PRecord, field
 
 
 ## Freeze
@@ -75,3 +75,12 @@ def test_thaw_recurse_in_tuples():
     result = thaw(('a', m()))
     assert result == ('a', {})
     assert type(result[1]) is dict
+
+def test_thaw_can_handle_subclasses_of_persistent_base_types():
+    class R(PRecord):
+        x = field()
+
+    result = thaw(R(x=1))
+    assert result == {'x': 1}
+    assert type(result) is dict
+
