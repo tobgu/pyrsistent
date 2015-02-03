@@ -2640,41 +2640,33 @@ class _PRecordEvolver(PMap._Evolver):
 
 ############## Transform ##################
 
-def _discard(evolver, key):
+# Transformations
+def inc(x):
+    """ Add one to the current value """
+    return x + 1
+
+def dec(x):
+    """ Subtract one from the current value """
+    return x - 1
+
+def discard(evolver, key):
+    """ Discard the element and returns a structure without the discarded elements """
     try:
         del evolver[key]
     except KeyError:
         pass
 
-# Transformations
-inc = lambda x: x + 1
-"""
-Add one to the current value
-"""
-
-dec = lambda x: x - 1
-"""
-Subtract one from the current value
-"""
-
-discard = _discard
-"""
-Discard the element and returns a structure without the discarded element.
-"""
 
 # Matchers
 def rex(expr):
-    """
-    Regular expression matcher to use together with transform functions
-    """
+    """ Regular expression matcher to use together with transform functions """
     r = re.compile(expr)
     return lambda key: isinstance(key, six.string_types) and r.match(key)
 
 
-ny = lambda _: True
-"""
-Matcher that matches any value
-"""
+def ny(_):
+    """ Matcher that matches any value """
+    return True
 
 # Support functions
 def _chunks(l, n):
@@ -2768,6 +2760,7 @@ def _invariant_errors_iterable(it, invariants):
     return sum([_invariant_errors(elem, invariants) for elem in it], [])
 
 def optional(typ):
+    """ Convenience function to specify that a value may be of type 'typ' or None """
     return typ, type(None)
 
 @six.add_metaclass(_CheckedPVectorMeta)
