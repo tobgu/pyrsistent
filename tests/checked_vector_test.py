@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from pyrsistent import PVector, CheckedPVector, InvariantException, optional
 
@@ -82,7 +83,6 @@ def test_create_base_case():
     assert isinstance(x, Naturals)
     assert x == Naturals([1, 2, 3])
 
-
 def test_create_with_instance_of_checked_pvector_returns_the_argument():
     x =  Naturals([1, 2, 3])
 
@@ -101,6 +101,22 @@ class NaturalsVector(CheckedPVector):
 def test_create_of_nested_structure():
     assert NaturalsVector([Naturals([1, 2]), Naturals([3, 4]), None]) ==\
            NaturalsVector.create([[1, 2], [3, 4], None])
+
+def test_serialize_default_case():
+    v = CheckedPVector([1, 2, 3])
+    assert v.serialize() == [1, 2, 3]
+
+class Dates(CheckedPVector):
+    __type__ = datetime.date
+
+    @staticmethod
+    def __serializer__(format, d):
+        return d.strftime(format)
+
+def test_serialize_custom_serializer():
+    d = datetime.date
+    v = Dates([d(2015, 2, 2), d(2015, 2, 3)])
+    assert v.serialize(format='%Y-%m-%d') == ['2015-02-02', '2015-02-03']
 
 # TODO
 # Inheritance of types and invariants

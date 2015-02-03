@@ -2723,7 +2723,6 @@ def _update_structure(structure, kvs, path, command):
 
 
 ####################### Checked pvector #########################
-
 class _CheckedPVectorMeta(type):
     def __new__(mcs, name, bases, dct):
         def to_list(elem):
@@ -2741,6 +2740,8 @@ class _CheckedPVectorMeta(type):
         dct['_checked_pvector_types'] += sum([to_list(b.__dict__['__type__']) for b in bases if '__type__' in b.__dict__], [])
         if not all(isinstance(t, type) for t in dct['_checked_pvector_types']):
             raise TypeError('Type specifications must be types')
+
+        dct.setdefault('__serializer__', lambda self, f, v: v)
 
         dct['__slots__'] = ()
 
@@ -2808,7 +2809,9 @@ class CheckedPVector(PVector, CheckedType):
 
         return cls(source_data)
 
-    # TODO: Serialization
+    def serialize(self, format=None):
+        serializer = self.__serializer__
+        return list(serializer(format, v) for v in self)
 
     class Evolver(PVector.Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')
