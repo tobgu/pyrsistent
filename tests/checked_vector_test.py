@@ -118,8 +118,34 @@ def test_serialize_custom_serializer():
     v = Dates([d(2015, 2, 2), d(2015, 2, 3)])
     assert v.serialize(format='%Y-%m-%d') == ['2015-02-02', '2015-02-03']
 
-# TODO
-# Inheritance of types and invariants
+def test_type_information_is_inherited():
+    class MultiDates(Dates):
+        __type__ = int
+
+    MultiDates([datetime.date(2015, 2, 4), 5])
+
+    with pytest.raises(TypeError):
+        MultiDates([5.0])
+
+def test_invariants_are_inherited():
+    class LimitNaturals(Naturals):
+        __invariant__ = lambda value: (value < 10, 'Too big')
+
+    try:
+        LimitNaturals([10, -1])
+        assert False
+    except InvariantException as e:
+        assert e.invariant_errors == ['Too big', 'Negative value']
+
+def test_invariant_must_be_callable():
+    with pytest.raises(TypeError):
+        class InvalidInvariant(CheckedPVector):
+            __invariant__ = 1
+
+def test_type_spec_must_be_type():
+    with pytest.raises(TypeError):
+        class InvalidType(CheckedPVector):
+            __type__ = 1
 
 def test_repr():
     x = Naturals([1, 2])

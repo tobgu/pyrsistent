@@ -2758,6 +2758,7 @@ def _invariant_errors(elem, invariants):
 def _invariant_errors_iterable(it, invariants):
     return sum([_invariant_errors(elem, invariants) for elem in it], [])
 
+
 def optional(typ):
     """ Convenience function to specify that a value may be of type 'typ' or None """
     return typ, type(None)
@@ -2773,11 +2774,6 @@ class CheckedPVector(PVector, CheckedType):
         evolver = CheckedPVector.Evolver(cls, pvector())
         evolver.extend(initial)
         return evolver.persistent()
-
-    def _check_invariants(self, it):
-        error_data = _invariant_errors_iterable(it, self.__class__._checked_pvector_invariants)
-        if error_data:
-            raise InvariantException(error_codes=error_data)
 
     def set(self, key, value):
         return self.evolver().set(key, value).persistent()
