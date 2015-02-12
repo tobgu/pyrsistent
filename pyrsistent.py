@@ -182,7 +182,7 @@ class _PTrie(object):
             elif index == self._count + len(self._extra_tail):
                 self._extra_tail.append(val)
             else:
-                raise IndexError()
+                raise IndexError("Index out of range: %s" % (index,))
 
         def _do_set(self, level, node, i, val):
             if id(node) in self._dirty_nodes:
@@ -239,7 +239,7 @@ class _PTrie(object):
         if i == self._count:
             return self.append(val)
 
-        raise IndexError()
+        raise IndexError("Index out of range: %s" % (i,))
 
     def _do_set(self, level, node, i, val):
         ret = list(node)
@@ -263,7 +263,7 @@ class _PTrie(object):
 
             return node
 
-        raise IndexError()
+        raise IndexError("Index out of range: %s" % (i,))
 
     def _create_new_root(self):
         new_shift = self._shift
@@ -805,7 +805,7 @@ class PMap(object):
                 if k == key:
                     return v
 
-        raise KeyError
+        raise KeyError(key)
 
     def __getitem__(self, key):
         return PMap._getitem(self._buckets, key)

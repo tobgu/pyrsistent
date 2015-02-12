@@ -26,8 +26,9 @@ def test_empty_initialization(pvector):
     seq = pvector()
     assert len(seq) == 0
 
-    with pytest.raises(IndexError):
+    with pytest.raises(IndexError) as error:
         x = seq[0]
+    assert str(error.value) == 'Index out of range: 0'
 
 
 def test_initialization_with_one_element(pvector):
@@ -118,8 +119,10 @@ def test_insert_beyond_end(pvector):
     seq2 = seq.set(2, 50)
     assert seq2[2] == 50
 
-    with pytest.raises(IndexError):
+    with pytest.raises(IndexError) as error:
         seq2.set(19, 4)
+
+    assert str(error.value) == 'Index out of range: 19'
 
 
 def test_insert_with_index_from_the_end(pvector):
@@ -524,6 +527,13 @@ def test_evolver_simple_update_in_tree(pvector):
     assert e[10] == -10
     assert e.persistent()[10] == -10
 
+
+def test_evolver_set_out_of_range(pvector):
+    v = pvector([0])
+    e = v.evolver()
+    with pytest.raises(IndexError) as error:
+        e[10] = 1
+    assert str(error.value) == "Index out of range: 10"
 
 def test_evolver_multi_level_multi_update_in_tree(pvector):
     # This test is mostly to detect memory/ref count issues in the native implementation

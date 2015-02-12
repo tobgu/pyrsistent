@@ -161,7 +161,7 @@ static VNode* nodeFor(PVector *self, int i){
     return node;
   }
 
-  PyErr_SetString(PyExc_IndexError, "Index out of range");
+  PyErr_Format(PyExc_IndexError, "Index out of range: %i", i);
   return NULL;
 }
 
@@ -928,7 +928,7 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
     // TODO Remove this case?
     return PVector_append(self, argObj);
   } else {
-    PyErr_SetString(PyExc_IndexError, "Index out of range");
+    PyErr_Format(PyExc_IndexError, "Index out of range: %i", position);
     return NULL;
   }
 }
@@ -1389,7 +1389,7 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
     } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))) {
       return PyList_Append(self->appendList, value); 
     } else {
-      PyErr_SetString(PyExc_IndexError, "Index out of range");
+      PyErr_Format(PyExc_IndexError, "Index out of range: %i", position);
     }
   } else {
     PyErr_Format(PyExc_TypeError, "Indices must be integers, not %.200s", item->ob_type->tp_name);

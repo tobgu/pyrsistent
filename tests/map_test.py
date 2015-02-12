@@ -35,11 +35,22 @@ def test_initialization_with_one_element():
     assert len(empty_map) == 0
     assert 'a' not in empty_map
 
+
+def test_get_non_existing_raises_key_error():
+    m1 = m()
+    with pytest.raises(KeyError) as error:
+        m1['foo']
+
+    assert str(error.value) == "'foo'"
+
+
 def test_remove_non_existing_element_raises_key_error():
     m1 = m(a=1)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError) as error:
         m1.remove('b')
+
+    assert str(error.value) == "'b'"
 
 def test_various_iterations():
     assert set(['a', 'b']) == set(m(a=1, b=2))
@@ -328,8 +339,10 @@ def test_evolver_remove_element():
 def test_evolver_remove_element_not_present():
     e = m(a=1000, b=2000).evolver()
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError) as error:
         del e['c']
+
+    assert str(error.value) == "'c'"
 
 def test_copy_returns_reference_to_self():
     m1 = m(a=10)
