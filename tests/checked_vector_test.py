@@ -151,3 +151,7 @@ def test_repr():
     x = Naturals([1, 2])
 
     assert str(x) == 'Naturals([1, 2])'
+
+def test_evolver_returns_same_instance_when_no_updates():
+    x = Naturals([1, 2])
+    assert x.evolver().persistent() is x

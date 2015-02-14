@@ -6,8 +6,15 @@ v0.9.0, 2015-02-..
     Use transform() instead. set_in() has been updated to use transform() for this release
     this means that some corner error cases behave slightly different than before.
   * Refactoring of the PVector to unify the type. Should not have any user impact as long as
-    only the public interface of pyrsistent has been used.
+    only the public interface of pyrsistent has been used. There is a negative performance impact
+    when using the PVector on CPython because of the additional layer of indirection introduced. PMap and
+    PSet should not be affected by this. If this is a problem to you please let me know by describing
+    the use case.
   * Evolvers have been updated to return themselves for evolving operations to allow function chaining.
+  * Richer exception messages for KeyErrors and IndexErrors specifying the key/index that caused the failure.
+    Thanks @radix for this.
+  * New decorator ...
+
 
 v0.8.0, 2015-01-21
   * New type PRecord. Subtype of PMap that allows explicit, declarative field specification. Thanks @boxed

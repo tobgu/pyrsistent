@@ -1193,8 +1193,10 @@ class PSet(object):
     """
     __slots__ = ('_map',)
 
-    def __init__(self, m):
+    def __new__(cls, m):
+        self = super(PSet, cls).__new__(cls)
         self._map = m
+        return self
 
     def __contains__(self, element):
         return element in self._map
@@ -1211,7 +1213,8 @@ class PSet(object):
 
         return 'pset([{0}])'.format(str(set(self))[1:-1])
 
-    __str__ = __repr__
+    def __str__(self):
+        return self.__repr__()
 
     def __hash__(self):
         return hash(self._map)
@@ -2721,7 +2724,7 @@ def _update_structure(structure, kvs, path, command):
 
 
 ####################### Checked pvector #########################
-class _CheckedPVectorMeta(type):
+class _CheckedTypeMeta(type):
     def __new__(mcs, name, bases, dct):
         def to_list(elem):
             if not isinstance(elem, Iterable):
@@ -2729,21 +2732,21 @@ class _CheckedPVectorMeta(type):
             return list(elem)
 
         # Invariants are inherited
-        dct['_checked_pvector_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
-        dct['_checked_pvector_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
-        if not all(callable(invariant) for invariant in dct['_checked_pvector_invariants']):
+        dct['_checked_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
+        dct['_checked_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
+        if not all(callable(invariant) for invariant in dct['_checked_invariants']):
             raise TypeError('Invariants must be callable')
 
-        dct['_checked_pvector_types'] = to_list(dct['__type__']) if '__type__' in dct else []
-        dct['_checked_pvector_types'] += sum([to_list(b.__dict__['__type__']) for b in bases if '__type__' in b.__dict__], [])
-        if not all(isinstance(t, type) for t in dct['_checked_pvector_types']):
+        dct['_checked_types'] = to_list(dct['__type__']) if '__type__' in dct else []
+        dct['_checked_types'] += sum([to_list(b.__dict__['__type__']) for b in bases if '__type__' in b.__dict__], [])
+        if not all(isinstance(t, type) for t in dct['_checked_types']):
             raise TypeError('Type specifications must be types')
 
         dct.setdefault('__serializer__', lambda self, f, v: v)
 
         dct['__slots__'] = ()
 
-        return super(_CheckedPVectorMeta, mcs).__new__(mcs, name, bases, dct)
+        return super(_CheckedTypeMeta, mcs).__new__(mcs, name, bases, dct)
 
 
 def _check_types(it, types):
@@ -2763,7 +2766,25 @@ def optional(typ):
     """ Convenience function to specify that a value may be of type 'typ' or None """
     return typ, type(None)
 
-@six.add_metaclass(_CheckedPVectorMeta)
+def _checked_type_create(cls, source_data):
+        # Functionality similar to the following should be implemented in the other
+        # checked types as well.
+        # TODO: Can any code be shared between the different types?
+        if isinstance(source_data, cls):
+            return source_data
+
+        # Recursively apply create methods of checked types if the types of the supplied data
+        # does not match any of the valid types.
+        types = cls._checked_types
+        checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
+        if checked_type:
+            return cls([checked_type.create(data)
+                        if not any(isinstance(data, t) for t in types) else data
+                        for data in source_data])
+
+        return cls(source_data)
+
+@six.add_metaclass(_CheckedTypeMeta)
 class CheckedPVector(PVector, CheckedType):
     __slots__ = ()
 
@@ -2771,9 +2792,7 @@ class CheckedPVector(PVector, CheckedType):
         if type(initial) is type(_TRIE_IMPL):
             return super(CheckedPVector, cls).__new__(cls, initial)
 
-        evolver = CheckedPVector.Evolver(cls, pvector())
-        evolver.extend(initial)
-        return evolver.persistent()
+        return CheckedPVector.Evolver(cls, pvector()).extend(initial).persistent()
 
     def set(self, key, value):
         return self.evolver().set(key, value).persistent()
@@ -2784,24 +2803,7 @@ class CheckedPVector(PVector, CheckedType):
     def extend(self, it):
         return self.evolver().extend(it).persistent()
 
-    @classmethod
-    def create(cls, source_data):
-        # Functionality similar to the following should be implemented in the other
-        # checked types as well.
-        # TODO: Can any code be shared between the different types?
-        if isinstance(source_data, cls):
-            return source_data
-
-        # Recursively apply create methods of checked types if the types of the supplied data
-        # does not match any of the valid types.
-        types = cls._checked_pvector_types
-        checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
-        if checked_type:
-            return cls([checked_type.create(data)
-                        if not any(isinstance(data, t) for t in types) else data
-                        for data in source_data])
-
-        return cls(source_data)
+    create = classmethod(_checked_type_create)
 
     def serialize(self, format=None):
         serializer = self.__serializer__
@@ -2816,8 +2818,8 @@ class CheckedPVector(PVector, CheckedType):
             self._invariant_errors = []
 
         def _check(self, it):
-            _check_types(it, self._destination_class._checked_pvector_types)
-            error_data = _invariant_errors_iterable(it, self._destination_class._checked_pvector_invariants)
+            _check_types(it, self._destination_class._checked_types)
+            error_data = _invariant_errors_iterable(it, self._destination_class._checked_invariants)
             self._invariant_errors.extend(error_data)
 
         def set(self, key, value):
@@ -2836,7 +2838,10 @@ class CheckedPVector(PVector, CheckedType):
             if self._invariant_errors:
                 raise InvariantException(error_codes=self._invariant_errors)
 
-            return self._destination_class(self._trie_evolver.persistent())
+            if self.is_dirty() or self._destination_class != type(self._pvector):
+                return self._destination_class(self._trie_evolver.persistent())
+
+            return self._pvector
 
     def __repr__(self):
         return self.__class__.__name__ + "({0})".format(self._trie.tolist())
@@ -2846,3 +2851,58 @@ class CheckedPVector(PVector, CheckedType):
     def evolver(self):
         return CheckedPVector.Evolver(self.__class__, self)
 
+@six.add_metaclass(_CheckedTypeMeta)
+class CheckedPSet(PSet):
+    __slots__ = ()
+
+    def __new__(cls, initial=()):
+        if type(initial) is PMap:
+            return super(CheckedPSet, cls).__new__(cls, initial)
+
+        evolver = CheckedPSet.Evolver(cls, pset())
+        for e in initial:
+            evolver.add(e)
+
+        return evolver.persistent()
+
+    def __repr__(self):
+        return self.__class__.__name__ + super(CheckedPSet, self).__repr__()[4:]
+
+    def __str__(self):
+       return self.__repr__()
+
+    def serialize(self, format=None):
+        serializer = self.__serializer__
+        return set(serializer(format, v) for v in self)
+
+    create = classmethod(_checked_type_create)
+
+    def evolver(self):
+        return CheckedPSet.Evolver(self.__class__, self)
+
+    class Evolver(PSet._Evolver):
+        __slots__ = ('_destination_class', '_invariant_errors')
+
+        def __init__(self, destination_class, original_set):
+            super(CheckedPSet.Evolver, self).__init__(original_set)
+            self._destination_class = destination_class
+            self._invariant_errors = []
+
+        def _check(self, it):
+            _check_types(it, self._destination_class._checked_types)
+            error_data = _invariant_errors_iterable(it, self._destination_class._checked_invariants)
+            self._invariant_errors.extend(error_data)
+
+        def add(self, element):
+            self._check([element])
+            self._pmap_evolver[element] = True
+            return self
+
+        def persistent(self):
+            if self._invariant_errors:
+                raise InvariantException(error_codes=self._invariant_errors)
+
+            if self.is_dirty() or self._destination_class != type(self._original_pset):
+                return self._destination_class(self._pmap_evolver.persistent())
+
+            return self._original_pset
