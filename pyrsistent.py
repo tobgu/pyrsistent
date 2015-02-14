@@ -831,7 +831,10 @@ class PMap(object):
         return self.iterkeys()
 
     def __getattr__(self, key):
-        return self[key]
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError("PMap has no attribute '{0}'".format(key))
 
     def iterkeys(self):
         for k, _ in self.iteritems():

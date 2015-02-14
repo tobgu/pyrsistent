@@ -347,3 +347,11 @@ def test_evolver_remove_element_not_present():
 def test_copy_returns_reference_to_self():
     m1 = m(a=10)
     assert m1.copy() is m1
+
+def test_dot_access_of_non_existing_element_raises_attribute_error():
+    m1 = m(a=10)
+
+    with pytest.raises(AttributeError) as error:
+        m1.b
+
+    assert "'b'" in str(error.value)
