@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from abc import ABCMeta, abstractmethod
 from collections import (Sequence, Mapping, Set, Hashable, Container, Iterable, Sized)
 from functools import wraps, reduce
 from itertools import chain, islice
@@ -16,15 +17,23 @@ BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = _bitcount(BIT_MASK)
 
+def _comparator(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        if isinstance(args[0], PVector) and isinstance(args[1], PVector):
+            return f(*args, **kwds)
+        return NotImplemented
+    return wrapper
 
-class _PTrie(object):
+
+class _PVectorImpl(object):
     """
     Support structure for PVector that implements structural sharing for vectors using a trie.
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
 
     def __new__(cls, count, shift, root, tail):
-        self = super(_PTrie, cls).__new__(cls)
+        self = super(_PVectorImpl, cls).__new__(cls)
         self._count = count
         self._shift = shift
         self._root = root
@@ -46,52 +55,59 @@ class _PTrie(object):
 
             # This is a bit nasty realizing the whole structure as a list before
             # slicing it but it is the fastest way I've found to date, and it's easy :-)
-            return _EMPTY_TRIE.extend(self.tolist()[index])
+            return _EMPTY_PVECTOR.extend(self.tolist()[index])
 
         if index < 0:
             index += self._count
 
-        return _PTrie._node_for(self, index)[index & BIT_MASK]
+        return _PVectorImpl._node_for(self, index)[index & BIT_MASK]
 
     def __add__(self, other):
         return self.extend(other)
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__, str(self.tolist()))
+        return 'pvector({0})'.format(str(self.tolist()))
 
-    __str__ = __repr__
+    def __str__(self):
+        return self.__repr__()
 
     def __iter__(self):
         # This is kind of lazy and will produce some memory overhead but it is the fasted method
         # by far of those tried since it uses the speed of the built in python list directly.
         return iter(self.tolist())
 
+    @_comparator
     def __ne__(self, other):
         return self.tolist() != other.tolist()
 
+    @_comparator
     def __eq__(self, other):
         return self is other or self.tolist() == other.tolist()
 
+    @_comparator
     def __gt__(self, other):
         return self.tolist() > other.tolist()
 
+    @_comparator
     def __lt__(self, other):
         return self.tolist() < other.tolist()
 
+    @_comparator
     def __ge__(self, other):
         return self.tolist() >= other.tolist()
 
+    @_comparator
     def __le__(self, other):
         return self.tolist() <= other.tolist()
 
     def __mul__(self, times):
-        if times <= 0 or self is _EMPTY_TRIE:
-            return _EMPTY_TRIE
+        if times <= 0 or self is _EMPTY_PVECTOR:
+            return _EMPTY_PVECTOR
 
         if times == 1:
             return self
 
-        return _EMPTY_TRIE.extend(times * self.tolist())
+        return _EMPTY_PVECTOR.extend(times * self.tolist())
 
     __rmul__ = __mul__
 
@@ -122,9 +138,31 @@ class _PTrie(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
-    class _Evolver(object):
+    def set_in(self, keys, val):
+        import warnings
+        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
+        return self.transform(keys, val)
+
+    def transform(self, *transformations):
+        return _transform(self, transformations)
+
+    def __reduce__(self):
+        # Pickling support
+        return pvector, (self.tolist(),)
+
+    def mset(self, *args):
+        if len(args) % 2:
+            raise TypeError("mset expected an even number of arguments")
+
+        evolver = self.evolver()
+        for i in range(0, len(args), 2):
+            evolver[args[i]] = args[i+1]
+
+        return evolver.persistent()
+
+    class Evolver(object):
         __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes',
-                     '_extra_tail', '_cached_leafs', '_orig_trie')
+                     '_extra_tail', '_cached_leafs', '_orig_pvector')
 
         def __init__(self, v):
             self._reset(v)
@@ -139,7 +177,7 @@ class _PTrie(object):
             if self._count <= index < self._count + len(self._extra_tail):
                 return self._extra_tail[index - self._count]
 
-            return _PTrie._node_for(self, index)[index & BIT_MASK]
+            return _PVectorImpl._node_for(self, index)[index & BIT_MASK]
 
         def _reset(self, v):
             self._count = v._count
@@ -150,13 +188,19 @@ class _PTrie(object):
             self._dirty_nodes = {}
             self._cached_leafs = {}
             self._extra_tail = []
-            self._orig_trie = v
+            self._orig_pvector = v
 
         def append(self, element):
             self._extra_tail.append(element)
+            return self
 
         def extend(self, iterable):
             self._extra_tail.extend(iterable)
+            return self
+
+        def set(self, index, val):
+            self[index] = val
+            return self
 
         def __setitem__(self, index, val):
             if not isinstance(index, Integral):
@@ -201,9 +245,9 @@ class _PTrie(object):
             return ret
 
         def persistent(self):
-            result = self._orig_trie
+            result = self._orig_pvector
             if self.is_dirty():
-                result = _PTrie(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
+                result = _PVectorImpl(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
                 self._reset(result)
 
             return result
@@ -215,7 +259,7 @@ class _PTrie(object):
             return bool(self._dirty_nodes or self._extra_tail)
 
     def evolver(self):
-        return _PTrie._Evolver(self)
+        return _PVectorImpl.Evolver(self)
 
     def set(self, i, val):
         # This method could be implemented by a call to mset() but doing so would cause
@@ -232,9 +276,9 @@ class _PTrie(object):
             if i >= self._tail_offset:
                 new_tail = list(self._tail)
                 new_tail[i & BIT_MASK] = val
-                return _PTrie(self._count, self._shift, self._root, new_tail)
+                return _PVectorImpl(self._count, self._shift, self._root, new_tail)
 
-            return _PTrie(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
+            return _PVectorImpl(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
 
         if i == self._count:
             return self.append(val)
@@ -252,13 +296,13 @@ class _PTrie(object):
         return ret
 
     @staticmethod
-    def _node_for(ptrie_like, i):
-        if 0 <= i < ptrie_like._count:
-            if i >= ptrie_like._tail_offset:
-                return ptrie_like._tail
+    def _node_for(pvector_like, i):
+        if 0 <= i < pvector_like._count:
+            if i >= pvector_like._tail_offset:
+                return pvector_like._tail
 
-            node = ptrie_like._root
-            for level in range(ptrie_like._shift, 0, -SHIFT):
+            node = pvector_like._root
+            for level in range(pvector_like._shift, 0, -SHIFT):
                 node = node[(i >> level) & BIT_MASK]  # >>>
 
             return node
@@ -281,11 +325,11 @@ class _PTrie(object):
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
             new_tail.append(val)
-            return _PTrie(self._count + 1, self._shift, self._root, new_tail)
+            return _PVectorImpl(self._count + 1, self._shift, self._root, new_tail)
 
         # Full tail, push into tree
         new_root, new_shift = self._create_new_root()
-        return _PTrie(self._count + 1, new_shift, new_root, [val])
+        return _PVectorImpl(self._count + 1, new_shift, new_root, [val])
 
     def _new_path(self, level, node):
         if level == 0:
@@ -318,7 +362,7 @@ class _PTrie(object):
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
-        l = obj.tolist() if isinstance(obj, _PTrie) else list(obj)
+        l = obj.tolist() if isinstance(obj, _PVectorImpl) else list(obj)
         if l:
             new_vector = self.append(l[0])
             new_vector._mutating_extend(l[1:])
@@ -355,17 +399,7 @@ class _PTrie(object):
     def count(self, value):
         return self.tolist().count(value)
 
-
-_EMPTY_TRIE = _PTrie(0, SHIFT, [], [])
-
-def _comparator(f):
-    @wraps(f)
-    def wrapper(*args, **kwds):
-        if isinstance(args[0], PVector) and isinstance(args[1], PVector):
-            return f(*args, **kwds)
-        return NotImplemented
-    return wrapper
-
+@six.add_metaclass(ABCMeta)
 class PVector(object):
     """
     Persistent vector implementation. Meant as a replacement for the cases where you would normally
@@ -407,20 +441,15 @@ class PVector(object):
     pvector([1, 99, 3])
     >>>
     """
-    __slots__ = ('_trie',)
 
-    def __new__(cls, trie):
-        self = super(PVector, cls).__new__(cls)
-        self._trie = trie
-        return self
-
+    @abstractmethod
     def __len__(self):
         """
         >>> len(v(1, 2, 3))
         3
         """
-        return len(self._trie)
 
+    @abstractmethod
     def __getitem__(self, index):
         """
         Get value at index. Full slicing support.
@@ -431,18 +460,8 @@ class PVector(object):
         >>> v1[1:3]
         pvector([6, 7])
         """
-        result = self._trie[index]
-        return self if result is self._trie else result
 
-    def _new(self, new_trie):
-        if new_trie is self._trie:
-            return self
-
-        if not new_trie:
-            return _EMPTY_PVECTOR
-
-        return PVector(new_trie)
-
+    @abstractmethod
     def __add__(self, other):
         """
         >>> v1 = v(1, 2)
@@ -450,51 +469,16 @@ class PVector(object):
         >>> v1 + v2
         pvector([1, 2, 3, 4])
         """
-        return self._new(self._trie.extend(other))
 
-
-    def __repr__(self):
-        return 'pvector({0})'.format(str(self._trie.tolist()))
-
-    __str__ = __repr__
-
-    def __iter__(self):
-        return iter(self._trie)
-
-    @_comparator
-    def __ne__(self, other):
-        return self._trie != other._trie
-
-    @_comparator
-    def __eq__(self, other):
-        return self is other or self._trie == other._trie
-
-    @_comparator
-    def __gt__(self, other):
-        return self._trie > other._trie
-
-    @_comparator
-    def __lt__(self, other):
-        return self._trie < other._trie
-
-    @_comparator
-    def __ge__(self, other):
-        return self._trie >= other._trie
-
-    @_comparator
-    def __le__(self, other):
-        return self._trie <= other._trie
-
+    @abstractmethod
     def __mul__(self, times):
         """
         >>> v1 = v(1, 2)
         >>> 3 * v1
         pvector([1, 2, 1, 2, 1, 2])
         """
-        return self._new(times * self._trie)
 
-    __rmul__ = __mul__
-
+    @abstractmethod
     def __hash__(self):
         """
         >>> v1 = v(1, 2, 3)
@@ -502,45 +486,8 @@ class PVector(object):
         >>> hash(v1) == hash(v2)
         True
         """
-        return hash(self._trie)
 
-    class Evolver(object):
-        __slots__ = ('_pvector', '_trie_evolver')
-
-        def __init__(self, pvector):
-            self._trie_evolver = pvector._trie.evolver()
-            self._pvector = pvector
-
-        def __setitem__(self, key, value):
-            self._trie_evolver[key] = value
-
-        def set(self, key, value):
-            self[key] = value
-            return self
-
-        def __getitem__(self, item):
-            return self._trie_evolver[item]
-
-        def append(self, elem):
-            self._trie_evolver.append(elem)
-            return self
-
-        def extend(self, it):
-            self._trie_evolver.extend(it)
-            return self
-
-        def is_dirty(self):
-            return self._trie_evolver.is_dirty()
-
-        def __len__(self):
-            return len(self._trie_evolver)
-
-        def persistent(self):
-            if self.is_dirty():
-                return PVector(self._trie_evolver.persistent())
-
-            return self._pvector
-
+    @abstractmethod
     def evolver(self):
         """
         Create a new evolver for this pvector. The evolver acts as a mutable view of the vector
@@ -584,8 +531,8 @@ class PVector(object):
         The new pvector will share data with the original pvector in the same way that would have
         been done if only using operations on the pvector.
         """
-        return PVector.Evolver(self)
 
+    @abstractmethod
     def mset(self, *args):
         """
         Return a new vector with elements in specified positions replaced by values (multi set).
@@ -597,15 +544,8 @@ class PVector(object):
         >>> v1.mset(0, 11, 2, 33)
         pvector([11, 2, 33])
         """
-        if len(args) % 2:
-            raise TypeError("mset expected an even number of arguments")
 
-        evolver = self.evolver()
-        for i in range(0, len(args), 2):
-            evolver[args[i]] = args[i+1]
-
-        return evolver.persistent()
-
+    @abstractmethod
     def set(self, i, val):
         """
         Return a new vector with element at position i replaced with val. The original vector remains unchanged.
@@ -621,8 +561,8 @@ class PVector(object):
         >>> v1.set(-1, 4)
         pvector([1, 2, 4])
         """
-        return self._new(self._trie.set(i, val))
 
+    @abstractmethod
     def append(self, val):
         """
         Return a new vector with val appended.
@@ -631,8 +571,8 @@ class PVector(object):
         >>> v1.append(3)
         pvector([1, 2, 3])
         """
-        return self._new(self._trie.append(val))
 
+    @abstractmethod
     def extend(self, obj):
         """
         Return a new vector with all values in obj appended to it. Obj may be another
@@ -642,8 +582,8 @@ class PVector(object):
         >>> v1.extend([4, 5])
         pvector([1, 2, 3, 4, 5])
         """
-        return self._new(self._trie.extend(obj)) if obj else self
 
+    @abstractmethod
     def set_in(self, keys, val):
         """
         Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
@@ -655,10 +595,8 @@ class PVector(object):
         >>> v1.set_in((2, 'c', 'd'), 17)
         pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
         """
-        import warnings
-        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
-        return self.transform(keys, val)
 
+    @abstractmethod
     def index(self, value, *args, **kwargs):
         """
         Return first index of value. Additional indexes may be supplied to limit the search to a
@@ -670,8 +608,8 @@ class PVector(object):
         >>> v1.index(3, 3, 5)
         4
         """
-        return self._trie.index(value, *args, **kwargs)
 
+    @abstractmethod
     def count(self, value):
         """
         Return the number of times that value appears in the vector.
@@ -680,12 +618,8 @@ class PVector(object):
         >>> v1.count(4)
         2
         """
-        return self._trie.count(value)
 
-    def __reduce__(self):
-        # Pickling support
-        return pvector, (self._trie.tolist(),)
-
+    @abstractmethod
     def transform(self, *transformations):
         """
         Transform arbitrarily complex combinations of PVectors and PMaps. A transformation
@@ -711,21 +645,13 @@ class PVector(object):
         >>> very_short_news.articles[0] is news_paper.articles[0]
         True
         """
-        return _transform(self, transformations)
 
+_EMPTY_PVECTOR = _PVectorImpl(0, SHIFT, [], [])
+PVector.register(_PVectorImpl)
 Sequence.register(PVector)
 Hashable.register(PVector)
 
-try:
-    # Use the C extension as underlying trie implementation if it is available
-    from pvectorc import pvector as pvector_c
-    _TRIE_IMPL = pvector_c()
-except ImportError:
-    _TRIE_IMPL = _EMPTY_TRIE
-
-_EMPTY_PVECTOR = PVector(_TRIE_IMPL)
-
-def pvector(iterable=()):
+def _pvector(iterable=()):
     """
     Create a new persistent vector containing the elements in iterable.
 
@@ -734,6 +660,13 @@ def pvector(iterable=()):
     pvector([1, 2, 3])
     """
     return _EMPTY_PVECTOR.extend(iterable)
+
+try:
+    # Use the C extension as underlying trie implementation if it is available
+    from pvectorc import pvector
+    PVector.register(type(pvector()))
+except ImportError:
+    pvector = _pvector
 
 
 def v(*elements):
@@ -965,7 +898,7 @@ class PMap(object):
         pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
         """
         import warnings
-        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
+        warnings.warn("set_in is deprecated, use 467 instead", DeprecationWarning, stacklevel=2)
         return self.transform(keys, val)
 
     def __reduce__(self):
@@ -1051,7 +984,7 @@ class PMap(object):
                 else:
                     new_list[index] = [(k, v)]
 
-            self._buckets_evolver = _TRIE_IMPL.extend(new_list).evolver()
+            self._buckets_evolver = pvector().extend(new_list).evolver()
 
         def is_dirty(self):
             return self._buckets_evolver.is_dirty()
@@ -1135,7 +1068,7 @@ def _turbo_mapping(initial, pre_size):
         else:
             buckets[index] = [(k, v)]
 
-    return PMap(len(initial), _TRIE_IMPL.extend(buckets))
+    return PMap(len(initial), _EMPTY_PVECTOR.extend(buckets))
 
 
 _EMPTY_PMAP = _turbo_mapping({}, 0)
@@ -2770,9 +2703,6 @@ def optional(typ):
     return typ, type(None)
 
 def _checked_type_create(cls, source_data):
-        # Functionality similar to the following should be implemented in the other
-        # checked types as well.
-        # TODO: Can any code be shared between the different types?
         if isinstance(source_data, cls):
             return source_data
 
@@ -2788,14 +2718,14 @@ def _checked_type_create(cls, source_data):
         return cls(source_data)
 
 @six.add_metaclass(_CheckedTypeMeta)
-class CheckedPVector(PVector, CheckedType):
+class CheckedPVector(_PVectorImpl, CheckedType):
     __slots__ = ()
 
     def __new__(cls, initial=()):
-        if type(initial) is type(_TRIE_IMPL):
-            return super(CheckedPVector, cls).__new__(cls, initial)
+        if type(initial) == _PVectorImpl:
+            return super(CheckedPVector, cls).__new__(cls, initial._count, initial._shift, initial._root, initial._tail)
 
-        return CheckedPVector.Evolver(cls, pvector()).extend(initial).persistent()
+        return CheckedPVector.Evolver(cls, _pvector()).extend(initial).persistent()
 
     def set(self, key, value):
         return self.evolver().set(key, value).persistent()
@@ -2812,7 +2742,7 @@ class CheckedPVector(PVector, CheckedType):
         serializer = self.__serializer__
         return list(serializer(format, v) for v in self)
 
-    class Evolver(PVector.Evolver):
+    class Evolver(_PVectorImpl.Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, vector):
@@ -2825,9 +2755,9 @@ class CheckedPVector(PVector, CheckedType):
             error_data = _invariant_errors_iterable(it, self._destination_class._checked_invariants)
             self._invariant_errors.extend(error_data)
 
-        def set(self, key, value):
+        def __setitem__(self, key, value):
             self._check([value])
-            return super(CheckedPVector.Evolver, self).set(key, value)
+            return super(CheckedPVector.Evolver, self).__setitem__(key, value)
 
         def append(self, elem):
             self._check([elem])
@@ -2841,13 +2771,16 @@ class CheckedPVector(PVector, CheckedType):
             if self._invariant_errors:
                 raise InvariantException(error_codes=self._invariant_errors)
 
-            if self.is_dirty() or self._destination_class != type(self._pvector):
-                return self._destination_class(self._trie_evolver.persistent())
+            result = self._orig_pvector
+            if self.is_dirty() or (self._destination_class != type(self._orig_pvector)):
+                pv = super(CheckedPVector.Evolver, self).persistent().extend(self._extra_tail)
+                result = self._destination_class(pv)
+                self._reset(result)
 
-            return self._pvector
+            return result
 
     def __repr__(self):
-        return self.__class__.__name__ + "({0})".format(self._trie.tolist())
+        return self.__class__.__name__ + "({0})".format(self.tolist())
 
     __str__ = __repr__
 

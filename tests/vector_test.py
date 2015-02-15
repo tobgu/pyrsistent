@@ -4,16 +4,10 @@ import pytest
 
 @pytest.fixture(scope='session', params=['pyrsistent', 'pvectorc'])
 def pvector(request):
-    # This is slightly ugly but will allow the different implementations
-    # to be tested by the same set of unit tests
-    import pyrsistent
     m = pytest.importorskip(request.param)
     if request.param == 'pyrsistent':
-        pyrsistent._EMPTY_PVECTOR = pyrsistent.PVector(pyrsistent._EMPTY_TRIE)
-    else:
-        pyrsistent._EMPTY_PVECTOR = pyrsistent.PVector(m.pvector())
-
-    return pyrsistent.pvector
+        return m._pvector
+    return m.pvector
 
 
 def test_literalish_works():
@@ -288,6 +282,11 @@ def test_index_error_negative(pvector):
 def test_is_sequence(pvector):
     from collections import Sequence
     assert isinstance(pvector(), Sequence)
+
+
+def test_is_hashable(pvector):
+    from collections import Hashable
+    assert isinstance(pvector(), Hashable)
 
 
 def test_empty_repr(pvector):

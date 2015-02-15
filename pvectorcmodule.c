@@ -531,6 +531,8 @@ static PyObject* PVector_append(PVector *self, PyObject *obj);
 
 static PyObject* PVector_transform(PVector *self, PyObject *obj);
 
+static PyObject* PVector_set_in(PVector *self, PyObject *obj);
+
 static PyObject* PVector_set(PVector *self, PyObject *obj);
 
 static PyObject* PVector_mset(PVector *self, PyObject *args);
@@ -565,6 +567,7 @@ static PyMethodDef PVector_methods[] = {
 	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
         {"transform",   (PyCFunction)PVector_transform, METH_VARARGS, "Apply one or more transformations"},
+        {"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Set in"},
         {"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
@@ -933,12 +936,13 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
   }
 }
 
-
 static PyObject* PVector_transform(PVector *self, PyObject *obj) {
   return transform(self, obj);
 }
 
-
+static PyObject* PVector_set_in(PVector *self, PyObject *obj) {
+  return transform(self, obj);
+}
 
 /*
  Steals a reference to the object that is inserted in the vector.
@@ -1008,19 +1012,6 @@ PyObject* moduleinit(void) {
     return NULL;
   }
 
-  // Register with Sequence to appear as a proper sequence to the outside world
-  PyObject* c = PyObject_GetAttrString(PyImport_ImportModule("collections"), "Sequence");
-
-  if (PyType_Ready(Py_TYPE(c)) < 0) {
-    printf("Failed to initialize Sequence!\n");
-    return NULL;
-  }
-
-  if(c == NULL) {
-    debug("Was NULL!\n");
-  }
-  
-  PyObject_CallMethod(c, "register", "O", &PVectorType);
 
 #if PY_MAJOR_VERSION >= 3
   m = PyModule_Create(&moduledef);
@@ -1164,6 +1155,7 @@ Evolver to make multi updates easier to work with and more efficient.
 static void PVectorEvolver_dealloc(PVectorEvolver *);
 static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
+static PyObject *PVectorEvolver_set(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_persistent(PVectorEvolver *);
 static Py_ssize_t PVectorEvolver_len(PVectorEvolver *);
@@ -1180,6 +1172,7 @@ static PyMappingMethods PVectorEvolver_mapping_methods = {
 static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
+	{"set",         (PyCFunction)PVectorEvolver_set, METH_VARARGS, "Set item"},
         {"persistent",  (PyCFunction)PVectorEvolver_persistent, METH_NOARGS, "Create PVector from evolver"},
         {"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
         {NULL,              NULL}           /* sentinel */
@@ -1281,14 +1274,22 @@ static void PVectorEvolver_dealloc(PVectorEvolver *self) {
 
 static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
   if (PyList_Append(self->appendList, args) == 0) {
-    Py_RETURN_NONE;
+    Py_INCREF(self);
+    return (PyObject*)self;
   }
 
   return NULL;
 }
 
 static PyObject *PVectorEvolver_extend(PVectorEvolver *self, PyObject *args) {
-  return _PyList_Extend((PyListObject *)self->appendList, args);
+  PyObject *retVal = _PyList_Extend((PyListObject *)self->appendList, args);
+  if (retVal == NULL) {
+    return NULL;
+  }
+
+  Py_DECREF(retVal);
+  Py_INCREF(self);
+  return (PyObject*)self;
 }
 
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *self, PyObject *item) {
@@ -1355,6 +1356,27 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
 
   return resultNode;
 }
+
+/*
+ Steals a reference to the object that is inserted in the vector.
+*/
+static PyObject *PVectorEvolver_set(PVectorEvolver *self, PyObject *args) {
+  PyObject *argObj = NULL;  /* argument to insert */
+  PyObject *position = NULL;
+
+  /* The n parses for size, the O parses for a Python object */
+  if(!PyArg_ParseTuple(args, "OO", &position, &argObj)) {
+    return NULL;
+  }
+
+  if(PVectorEvolver_set_item(self, position, argObj) < 0) {
+    return NULL;
+  }
+
+  Py_INCREF(self);
+  return (PyObject*)self;
+}
+
 
 static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
   if (PyIndex_Check(item)) {

@@ -1,6 +1,6 @@
 import datetime
 import pytest
-from pyrsistent import PVector, CheckedPVector, InvariantException, optional
+from pyrsistent import _PVectorImpl, CheckedPVector, InvariantException, optional
 
 
 class Naturals(CheckedPVector):
@@ -12,7 +12,7 @@ def test_instantiate():
 
     assert list(x) == [1, 2, 3]
     assert isinstance(x, Naturals)
-    assert isinstance(x, PVector)
+    assert isinstance(x, _PVectorImpl)
 
 def test_append():
     x = Naturals()
@@ -50,6 +50,8 @@ def test_invalid_type():
     with pytest.raises(TypeError):
         x.set(1, 2.0)
 
+    with pytest.raises(TypeError):
+        x.evolver()[1] = 2.0
 
 def test_breaking_invariant():
     try:
