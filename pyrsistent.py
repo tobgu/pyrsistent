@@ -2842,3 +2842,33 @@ class CheckedPSet(PSet):
                 return self._destination_class(self._pmap_evolver.persistent())
 
             return self._original_pset
+
+# Marker object
+_UNDEFINED_CHECKED_PMAP_SIZE = object()
+
+#@six.add_metaclass(_CheckedTypeMeta)
+class CheckedPMap(PMap):
+    __slots__ = ()
+
+    def __new__(cls, initial={}, size=_UNDEFINED_CHECKED_PMAP_SIZE):
+        if size is not _UNDEFINED_CHECKED_PMAP_SIZE:
+            return super(CheckedPMap, cls).__new__(cls, size, initial)
+
+        evolver = CheckedPMap.Evolver(cls, pmap())
+        for k, v in initial.items():
+            evolver.set(k, v)
+
+        return evolver.persistent()
+
+    class Evolver(PMap._Evolver):
+        __slots__ = ('_destination_class',)
+
+        def __init__(self, destination_class, original_map):
+            super(CheckedPMap.Evolver, self).__init__(original_map)
+            self._destination_class = destination_class
+
+        def persistent(self):
+            if self.is_dirty() or type(self._original_pmap) != self._destination_class:
+                return self._destination_class(self._buckets_evolver.persistent(), self._size)
+
+            return self._original_pmap
