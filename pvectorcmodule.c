@@ -120,6 +120,7 @@ static VNode* copyNode(VNode* source) {
   memcpy(result->items, source->items, sizeof(source->items));
   
   for(i = 0; i < BRANCH_FACTOR; i++) {
+    // TODO-OPT: Any need to go on when the first NULL has been found?
     if(result->items[i] != NULL) {
       INC_NODE_REF_COUNT((VNode*)result->items[i]);
     }
@@ -646,6 +647,8 @@ static PVector* emptyNewPvec(void) {
 }
 
 static void incRefs(PyObject **obj) {
+  // TODO-OPT: Would it be OK to exit on first NULL? Should not be any
+  //           non NULLs beyond a NULL.
   int i;
   for(i = 0; i < BRANCH_FACTOR; i++) {
     Py_XINCREF(obj[i]);
@@ -654,6 +657,7 @@ static void incRefs(PyObject **obj) {
 
 
 static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
+  // TODO-OPT: Introduce object cache
   PVector *pvec = PyObject_GC_New(PVector, &PVectorType);
   debug("pymem alloc_copy %x, ref cnt: %u\n", pvec, pvec->ob_refcnt);
   pvec->count = count;
@@ -821,6 +825,7 @@ static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
         return NULL;
     }
     
+    // TODO-OPT: Use special fast iterator if available
     iternext = *Py_TYPE(it)->tp_iternext;
     PyObject *item = iternext(it);
     if (item == NULL) {
@@ -830,6 +835,8 @@ static PyObject* PVector_extend(PVector *self, PyObject *iterable) {
       return (PyObject *)self;
     } else {
       PVector *newVec = copyPVector(self);
+      // TODO-OPT test using special case code here for extension to
+      // avoid recalculating tail length all the time.
       while(item != NULL) {
         extendWithItem(newVec, item);
         item = iternext(it);
@@ -855,6 +862,8 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
   if(tail_size < BRANCH_FACTOR) {
     INC_NODE_REF_COUNT(self->root);
     PVector *new_pvec = newPvec(self->count + 1, self->shift, self->root);
+    // TODO-OPT No need to copy more than the current tail length
+    // TODO-OPT No need to incRefs for all elements all the time
     copyInsert(new_pvec->tail->items, self->tail->items, tail_size, obj);
     incRefs((PyObject**)new_pvec->tail->items);
     debug("append(): new_pvec=%p, new_pvec->tail=%p, new_pvec->root=%p\n",
@@ -887,6 +896,8 @@ static PyObject* PVector_append(PVector *self, PyObject *obj) {
 static VNode* doSet(VNode* node, unsigned int level, unsigned int position, PyObject* value) {
   debug("doSet(): level == %i\n", level);
   if(level == 0) {
+    // TODO-OPT: Perhaps an alloc followed by a reset of reference
+    // count is enough here since we overwrite all subnodes below.
     VNode* theNewNode = newNode();
     copyInsert(theNewNode->items, node->items, position & BIT_MASK, value);
     incRefs((PyObject**)theNewNode->items);
