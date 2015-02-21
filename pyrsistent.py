@@ -2660,23 +2660,30 @@ def _update_structure(structure, kvs, path, command):
 
 
 ####################### Checked pvector #########################
-class _CheckedTypeMeta(type):
-    def __new__(mcs, name, bases, dct):
-        def to_list(elem):
-            if not isinstance(elem, Iterable):
-                return [elem]
-            return list(elem)
 
+def _store_types(dct, bases, destination_name, source_name):
+    def to_list(elem):
+        if not isinstance(elem, Iterable):
+            return [elem]
+        return list(elem)
+
+    dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
+    dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
+    if not all(isinstance(t, type) for t in dct[destination_name]):
+        raise TypeError('Type specifications must be types')
+
+def _store_invariants(dct, bases, destination_name, source_name):
         # Invariants are inherited
-        dct['_checked_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
-        dct['_checked_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
-        if not all(callable(invariant) for invariant in dct['_checked_invariants']):
+        dct[destination_name] = [dct[source_name]] if source_name in dct else []
+        dct[destination_name] += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
+        if not all(callable(invariant) for invariant in dct[destination_name]):
             raise TypeError('Invariants must be callable')
 
-        dct['_checked_types'] = to_list(dct['__type__']) if '__type__' in dct else []
-        dct['_checked_types'] += sum([to_list(b.__dict__['__type__']) for b in bases if '__type__' in b.__dict__], [])
-        if not all(isinstance(t, type) for t in dct['_checked_types']):
-            raise TypeError('Type specifications must be types')
+
+class _CheckedTypeMeta(type):
+    def __new__(mcs, name, bases, dct):
+        _store_types(dct, bases, '_checked_types', '__type__')
+        _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
         dct.setdefault('__serializer__', lambda self, f, v: v)
 
@@ -2843,11 +2850,24 @@ class CheckedPSet(PSet):
 
             return self._original_pset
 
+
+class _CheckedMapTypeMeta(type):
+    def __new__(mcs, name, bases, dct):
+        _store_types(dct, bases, '_checked_key_types', '__key_type__')
+        _store_types(dct, bases, '_checked_value_types', '__value_type__')
+        _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
+
+        dct.setdefault('__serializer__', lambda self, f, v: v)
+
+        dct['__slots__'] = ()
+
+        return super(_CheckedMapTypeMeta, mcs).__new__(mcs, name, bases, dct)
+
 # Marker object
 _UNDEFINED_CHECKED_PMAP_SIZE = object()
 
-#@six.add_metaclass(_CheckedTypeMeta)
-class CheckedPMap(PMap):
+@six.add_metaclass(_CheckedMapTypeMeta)
+class CheckedPMap(PMap, CheckedType):
     __slots__ = ()
 
     def __new__(cls, initial={}, size=_UNDEFINED_CHECKED_PMAP_SIZE):
@@ -2860,14 +2880,32 @@ class CheckedPMap(PMap):
 
         return evolver.persistent()
 
+    def evolver(self):
+        return CheckedPMap.Evolver(self.__class__, self)
+
     class Evolver(PMap._Evolver):
-        __slots__ = ('_destination_class',)
+        __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, original_map):
             super(CheckedPMap.Evolver, self).__init__(original_map)
             self._destination_class = destination_class
+            self._invariant_errors = []
+
+        def set(self, key, value):
+            _check_types([key], self._destination_class._checked_key_types)
+            _check_types([value], self._destination_class._checked_value_types)
+            self._invariant_errors.extend(data for valid, data in (invariant(key, value)
+                                                                   for invariant in self._destination_class._checked_invariants)
+                                          if not valid)
+
+            return super(CheckedPMap.Evolver, self).set(key, value)
+
 
         def persistent(self):
+            if self._invariant_errors:
+                raise InvariantException(error_codes=self._invariant_errors)
+
+
             if self.is_dirty() or type(self._original_pmap) != self._destination_class:
                 return self._destination_class(self._buckets_evolver.persistent(), self._size)
 

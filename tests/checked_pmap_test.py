@@ -1,5 +1,5 @@
 import pytest
-from pyrsistent import CheckedPMap, InvariantException, PMap
+from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType
 
 
 class FloatToIntMap(CheckedPMap):
@@ -13,32 +13,36 @@ def test_instantiate():
     assert dict(x.items()) == {1.1: 1, 2.3: 2}
     assert isinstance(x, FloatToIntMap)
     assert isinstance(x, PMap)
+    assert isinstance(x, CheckedType)
 
 def test_instantiate_empty():
     x = FloatToIntMap()
 
     assert dict(x.items()) == {}
     assert isinstance(x, FloatToIntMap)
-    assert isinstance(x, PMap)
 
-# def test_add():
-#     x = Naturals()
-#     x2 = x.add(1)
-#
-#     assert list(x2) == [1]
-#     assert isinstance(x2, Naturals)
-#
-# def test_invalid_type():
-#     with pytest.raises(TypeError):
-#         Naturals([1, 2.0])
-#
-# def test_breaking_invariant():
-#     try:
-#         Naturals([1, -1])
-#         assert False
-#     except InvariantException as e:
-#         assert e.invariant_errors == ['Negative value']
-#
+def test_set():
+     x = FloatToIntMap()
+     x2 = x.set(1.0, 1)
+
+     assert x2[1.0] == 1
+     assert isinstance(x2, FloatToIntMap)
+
+def test_invalid_key_type():
+     with pytest.raises(TypeError):
+         FloatToIntMap({1: 1})
+
+def test_invalid_value_type():
+     with pytest.raises(TypeError):
+         FloatToIntMap({1.0: 1.0})
+
+def test_breaking_invariant():
+     try:
+         FloatToIntMap({1.3: 2})
+         assert False
+     except InvariantException as e:
+        assert e.invariant_errors == ['Invalid mapping']
+
 # def test_repr():
 #     x = Naturals([1, 2])
 #
