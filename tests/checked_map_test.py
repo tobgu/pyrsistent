@@ -8,9 +8,9 @@ class FloatToIntMap(CheckedPMap):
     __invariant__ = lambda key, value: (int(key) == value, 'Invalid mapping')
 
 def test_instantiate():
-    x = FloatToIntMap({1.1: 1, 2.3: 2})
+    x = FloatToIntMap({1.25: 1, 2.5: 2})
 
-    assert dict(x.items()) == {1.1: 1, 2.3: 2}
+    assert dict(x.items()) == {1.25: 1, 2.5: 2}
     assert isinstance(x, FloatToIntMap)
     assert isinstance(x, PMap)
     assert isinstance(x, CheckedType)
@@ -38,20 +38,20 @@ def test_invalid_value_type():
 
 def test_breaking_invariant():
      try:
-         FloatToIntMap({1.3: 2})
+         FloatToIntMap({1.5: 2})
          assert False
      except InvariantException as e:
         assert e.invariant_errors == ['Invalid mapping']
 
 def test_repr():
-    x = FloatToIntMap({1.1: 1})
+    x = FloatToIntMap({1.25: 1})
 
-    assert str(x) == 'FloatToIntMap({1.1: 1})'
+    assert str(x) == 'FloatToIntMap({1.25: 1})'
 
 def test_default_serialization():
-    x = FloatToIntMap({1.1: 1, 2.3: 2})
+    x = FloatToIntMap({1.25: 1, 2.5: 2})
 
-    assert x.serialize() == {1.1: 1, 2.3: 2}
+    assert x.serialize() == {1.25: 1, 2.5: 2}
 
 class StringFloatToIntMap(FloatToIntMap):
     @staticmethod
@@ -59,12 +59,12 @@ class StringFloatToIntMap(FloatToIntMap):
         return format.format(key), format.format(value)
 
 def test_custom_serialization():
-    x = StringFloatToIntMap({1.1: 1, 2.3: 2})
+    x = StringFloatToIntMap({1.25: 1, 2.5: 2})
 
-    assert x.serialize("{0}") == {"1.1": "1", "2.3": "2"}
+    assert x.serialize("{0}") == {"1.25": "1", "2.5": "2"}
 
 def test_create_non_checked_types():
-    assert FloatToIntMap.create({1.1: 1, 2.3: 2}) == FloatToIntMap({1.1: 1, 2.3: 2})
+    assert FloatToIntMap.create({1.25: 1, 2.5: 2}) == FloatToIntMap({1.25: 1, 2.5: 2})
 
 def test_create_checked_types():
     class IntSet(CheckedPSet):
@@ -77,12 +77,12 @@ def test_create_checked_types():
         __key_type__ = IntSet
         __value_type__ = FloatVector
 
-    x = IntSetToFloatVectorMap.create({frozenset([1, 2]): [1.1, 2.2]})
+    x = IntSetToFloatVectorMap.create({frozenset([1, 2]): [1.25, 2.5]})
 
-    assert str(x) == "IntSetToFloatVectorMap({IntSet([1, 2]): FloatVector([1.1, 2.2])})"
+    assert str(x) == "IntSetToFloatVectorMap({IntSet([1, 2]): FloatVector([1.25, 2.5])})"
 
 def test_evolver_returns_same_instance_when_no_updates():
-    x = FloatToIntMap({1.1: 1, 2.3: 2})
+    x = FloatToIntMap({1.25: 1, 2.25: 2})
 
     assert x.evolver().persistent() is x
 
