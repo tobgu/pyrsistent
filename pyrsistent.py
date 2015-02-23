@@ -1155,6 +1155,10 @@ class PSet(object):
     def __hash__(self):
         return hash(self._map)
 
+    def __reduce__(self):
+        # Pickling support
+        return pset, (list(self),)
+
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
         return PSet(pmap(dict((k, True) for k in it), pre_size=pre_size))

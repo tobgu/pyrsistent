@@ -1,7 +1,6 @@
-import six
-
 from pyrsistent import pset, s
 import pytest
+import pickle
 
 
 def test_literalish_works():
@@ -143,6 +142,15 @@ def test_evolver_len():
     e = x.evolver()
     assert len(e) == 3
 
+
 def test_copy_returns_reference_to_self():
     s1 = s(10)
     assert s1.copy() is s1
+
+
+def test_pickling_empty_set():
+    assert pickle.loads(pickle.dumps(s(), -1)) == s()
+
+
+def test_pickling_non_empty_map():
+    assert pickle.loads(pickle.dumps(s(1, 2), -1)) == s(1, 2)
