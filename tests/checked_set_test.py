@@ -1,5 +1,5 @@
 import pytest
-from pyrsistent import CheckedPSet, PSet, InvariantException
+from pyrsistent import CheckedPSet, PSet, InvariantException, CheckedType
 
 
 class Naturals(CheckedPSet):
@@ -12,6 +12,7 @@ def test_instantiate():
     assert list(x) == [1, 2, 3]
     assert isinstance(x, Naturals)
     assert isinstance(x, PSet)
+    assert isinstance(x, CheckedType)
 
 def test_add():
     x = Naturals()

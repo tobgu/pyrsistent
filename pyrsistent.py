@@ -2795,7 +2795,7 @@ class CheckedPVector(_PVectorImpl, CheckedType):
         return CheckedPVector.Evolver(self.__class__, self)
 
 @six.add_metaclass(_CheckedTypeMeta)
-class CheckedPSet(PSet):
+class CheckedPSet(PSet, CheckedType):
     __slots__ = ()
 
     def __new__(cls, initial=()):
@@ -2857,7 +2857,7 @@ class _CheckedMapTypeMeta(type):
         _store_types(dct, bases, '_checked_value_types', '__value_type__')
         _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
-        dct.setdefault('__serializer__', lambda self, f, v: v)
+        dct.setdefault('__serializer__', lambda self, f, k, v: (k, v))
 
         dct['__slots__'] = ()
 
@@ -2882,6 +2882,34 @@ class CheckedPMap(PMap, CheckedType):
 
     def evolver(self):
         return CheckedPMap.Evolver(self.__class__, self)
+
+    def __repr__(self):
+        return self.__class__.__name__ + "({0})".format(str(dict(self)))
+
+    __str__ = __repr__
+
+    def serialize(self, format=None):
+        serializer = self.__serializer__
+        return dict(serializer(format, k, v) for k, v in self.items())
+
+    @classmethod
+    def create(cls, source_data):
+        if isinstance(source_data, cls):
+            return source_data
+
+        # Recursively apply create methods of checked types if the types of the supplied data
+        # does not match any of the valid types.
+        key_types = cls._checked_key_types
+        checked_key_type = next((t for t in key_types if issubclass(t, CheckedType)), None)
+        value_types = cls._checked_value_types
+        checked_value_type = next((t for t in value_types if issubclass(t, CheckedType)), None)
+
+        if checked_key_type or checked_value_type:
+            return cls({checked_key_type.create(key) if checked_key_type and not any(isinstance(key, t) for t in key_types) else key:
+                        checked_value_type.create(value) if checked_value_type and not any(isinstance(value, t) for t in value_types) else value
+                        for key, value in source_data.items()})
+
+        return cls(source_data)
 
     class Evolver(PMap._Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')

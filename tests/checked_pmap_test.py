@@ -1,5 +1,5 @@
 import pytest
-from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType
+from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector
 
 
 class FloatToIntMap(CheckedPMap):
@@ -43,29 +43,53 @@ def test_breaking_invariant():
      except InvariantException as e:
         assert e.invariant_errors == ['Invalid mapping']
 
-# def test_repr():
-#     x = Naturals([1, 2])
-#
-#     assert str(x) == 'Naturals([1, 2])'
-#
-# def test_default_serialization():
-#     x = Naturals([1, 2])
-#
-#     assert x.serialize() == set([1, 2])
-#
-# class StringNaturals(Naturals):
-#     @staticmethod
-#     def __serializer__(format, value):
-#         return format.format(value)
-#
-# def test_custom_serialization():
-#     x = StringNaturals([1, 2])
-#
-#     assert x.serialize("{0}") == set(["1", "2"])
-#
-# def test_create():
-#     assert Naturals.create([1, 2]) == Naturals([1, 2])
-#
-# def test_evolver_returns_same_instance_when_no_updates():
-#     x = Naturals([1, 2])
-#     assert x.evolver().persistent() is x
+def test_repr():
+    x = FloatToIntMap({1.1: 1})
+
+    assert str(x) == 'FloatToIntMap({1.1: 1})'
+
+def test_default_serialization():
+    x = FloatToIntMap({1.1: 1, 2.3: 2})
+
+    assert x.serialize() == {1.1: 1, 2.3: 2}
+
+class StringFloatToIntMap(FloatToIntMap):
+    @staticmethod
+    def __serializer__(format, key, value):
+        return format.format(key), format.format(value)
+
+def test_custom_serialization():
+    x = StringFloatToIntMap({1.1: 1, 2.3: 2})
+
+    assert x.serialize("{0}") == {"1.1": "1", "2.3": "2"}
+
+def test_create_non_checked_types():
+    assert FloatToIntMap.create({1.1: 1, 2.3: 2}) == FloatToIntMap({1.1: 1, 2.3: 2})
+
+def test_create_checked_types():
+    class IntSet(CheckedPSet):
+        __type__ = int
+
+    class FloatVector(CheckedPVector):
+        __type__ = float
+
+    class IntSetToFloatVectorMap(CheckedPMap):
+        __key_type__ = IntSet
+        __value_type__ = FloatVector
+
+    x = IntSetToFloatVectorMap.create({frozenset([1, 2]): [1.1, 2.2]})
+
+    assert str(x) == "IntSetToFloatVectorMap({IntSet([1, 2]): FloatVector([1.1, 2.2])})"
+
+def test_evolver_returns_same_instance_when_no_updates():
+    x = FloatToIntMap({1.1: 1, 2.3: 2})
+
+    assert x.evolver().persistent() is x
+
+def test_map_with_no_types_or_invariants():
+    class NoCheckPMap(CheckedPMap):
+        pass
+
+    x = NoCheckPMap({1: 2, 3: 4})
+    assert x[1] == 2
+    assert x[3] == 4
