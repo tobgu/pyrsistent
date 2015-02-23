@@ -9,6 +9,7 @@ import re
 
 import six
 
+from _version import __version__
 
 def _bitcount(val):
     return bin(val).count("1")

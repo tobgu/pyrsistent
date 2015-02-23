@@ -6,6 +6,8 @@ import warnings
 from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
+from _pyrsistent_version import __version__
+
 
 f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
 readme = f.read()
@@ -54,7 +56,6 @@ WARNING: Could not build the %s.
                                                   "the compilation "
                                                   "failed."))
 
-__version__ = "0.8.0"
 setup(
     name='pyrsistent',
     version=__version__,
@@ -64,7 +65,7 @@ setup(
     author_email='tobias.l.gustafsson@gmail.com',
     url='http://github.com/tobgu/pyrsistent/',
     license='LICENSE.mit',
-    py_modules=['pyrsistent'],
+    py_modules=['pyrsistent', '_pyrsistent_version'],
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
