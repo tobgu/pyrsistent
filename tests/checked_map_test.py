@@ -64,6 +64,23 @@ def test_custom_serialization():
 
     assert x.serialize("{0}") == {"1.25": "1", "2.5": "2"}
 
+class FloatSet(CheckedPSet):
+    __type__ = float
+
+class IntToFloatSetMap(CheckedPMap):
+    __key_type__ = int
+    __value_type__ = FloatSet
+
+
+def test_multi_level_serialization():
+    x = IntToFloatSetMap.create({1: [1.25, 1.50], 2: [2.5, 2.75]})
+
+    assert str(x) == "IntToFloatSetMap({1: FloatSet([1.5, 1.25]), 2: FloatSet([2.75, 2.5])})"
+
+    sx = x.serialize()
+    assert sx == {1: set([1.5, 1.25]), 2: set([2.75, 2.5])}
+    assert isinstance(sx[1], set)
+
 def test_create_non_checked_types():
     assert FloatToIntMap.create({1.25: 1, 2.5: 2}) == FloatToIntMap({1.25: 1, 2.5: 2})
 

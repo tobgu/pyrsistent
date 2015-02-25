@@ -1,7 +1,7 @@
 import pickle
 import datetime
 import pytest
-from pyrsistent import PRecord, field, InvariantException, ny
+from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector
 
 
 class ARecord(PRecord):
@@ -253,3 +253,29 @@ def test_serializer_must_be_callable():
 def test_transform_without_update_returns_same_precord():
     r = ARecord(x=2.0, y='bar')
     assert r.transform([ny], lambda x: x) is r
+
+
+class Application(PRecord):
+    name = field(type=unicode)
+    image = field(type=unicode)
+
+class ApplicationVector(CheckedPVector):
+    __type__ = Application
+
+class Node(PRecord):
+    applications = field(type=ApplicationVector)
+
+
+def test_nested_create_serialize():
+    node = Node(applications=[Application(name=u'myapp', image=u'myimage'),
+                              Application(name=u'b', image=u'c')])
+
+    node2 = Node.create({'applications': [{'name': u'myapp', 'image': u'myimage'},
+                                          {'name': u'b', 'image': u'c'}]})
+
+    assert node == node2
+
+    serialized = node.serialize()
+    restored = Node.create(serialized)
+
+    assert restored == node

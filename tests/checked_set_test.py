@@ -1,6 +1,6 @@
 import pickle
 import pytest
-from pyrsistent import CheckedPSet, PSet, InvariantException, CheckedType
+from pyrsistent import CheckedPSet, PSet, InvariantException, CheckedType, CheckedPVector
 
 
 class Naturals(CheckedPSet):
@@ -52,6 +52,18 @@ def test_custom_serialization():
     x = StringNaturals([1, 2])
 
     assert x.serialize("{0}") == set(["1", "2"])
+
+class NaturalsVector(CheckedPVector):
+    __type__ = Naturals
+
+def test_multi_level_serialization():
+    x = NaturalsVector.create([[1, 2], [3, 4]])
+
+    assert str(x) == "NaturalsVector([Naturals([1, 2]), Naturals([3, 4])])"
+
+    sx = x.serialize()
+    assert sx == [set([1, 2]), set([3, 4])]
+    assert isinstance(sx[0], set)
 
 def test_create():
     assert Naturals.create([1, 2]) == Naturals([1, 2])

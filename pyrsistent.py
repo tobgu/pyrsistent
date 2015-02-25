@@ -2704,7 +2704,12 @@ class _CheckedTypeMeta(type):
         _store_types(dct, bases, '_checked_types', '__type__')
         _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
-        dct.setdefault('__serializer__', lambda self, f, v: v)
+        def default_serializer(self, _, value):
+            if isinstance(value, CheckedType):
+                return value.serialize()
+            return value
+
+        dct.setdefault('__serializer__', default_serializer)
 
         dct['__slots__'] = ()
 
@@ -2885,7 +2890,18 @@ class _CheckedMapTypeMeta(type):
         _store_types(dct, bases, '_checked_value_types', '__value_type__')
         _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
-        dct.setdefault('__serializer__', lambda self, f, k, v: (k, v))
+        def default_serializer(self, _, key, value):
+            sk = key
+            if isinstance(key, CheckedType):
+                sk = key.serialize()
+
+            sv = value
+            if isinstance(value, CheckedType):
+                sv = value.serialize()
+
+            return sk, sv
+
+        dct.setdefault('__serializer__', default_serializer)
 
         dct['__slots__'] = ()
 
