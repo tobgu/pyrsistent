@@ -1,5 +1,8 @@
 Revision history
 ----------------
+v0.9.1, 2015-02-25
+  * Multi level serialization for checked types
+
 v0.9.0, 2015-02-25, Lots of new stuff in this release!
   * Checked types, checked versions of PVector, PMap, PSet that support type and invariant specification.
     Currently lacking proper documentation but I'm working on it.
