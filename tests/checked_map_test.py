@@ -1,3 +1,4 @@
+import pickle
 import pytest
 from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector
 
@@ -93,3 +94,11 @@ def test_map_with_no_types_or_invariants():
     x = NoCheckPMap({1: 2, 3: 4})
     assert x[1] == 2
     assert x[3] == 4
+
+
+def test_pickling():
+    x = FloatToIntMap({1.25: 1, 2.5: 2})
+    y = pickle.loads(pickle.dumps(x, -1))
+
+    assert x == y
+    assert isinstance(y, FloatToIntMap)

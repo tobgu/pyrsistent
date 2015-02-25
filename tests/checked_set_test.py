@@ -1,3 +1,4 @@
+import pickle
 import pytest
 from pyrsistent import CheckedPSet, PSet, InvariantException, CheckedType
 
@@ -58,3 +59,10 @@ def test_create():
 def test_evolver_returns_same_instance_when_no_updates():
     x = Naturals([1, 2])
     assert x.evolver().persistent() is x
+
+def test_pickling():
+    x = Naturals([1, 2])
+    y = pickle.loads(pickle.dumps(x, -1))
+
+    assert x == y
+    assert isinstance(y, Naturals)

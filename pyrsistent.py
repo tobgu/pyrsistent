@@ -2754,6 +2754,10 @@ class CheckedPVector(_PVectorImpl, CheckedType):
         serializer = self.__serializer__
         return list(serializer(format, v) for v in self)
 
+    def __reduce__(self):
+        # Pickling support
+        return _restore_pickle, (self.__class__, list(self),)
+
     class Evolver(_PVectorImpl.Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')
 
@@ -2824,6 +2828,11 @@ class CheckedPSet(PSet, CheckedType):
         return set(serializer(format, v) for v in self)
 
     create = classmethod(_checked_type_create)
+
+    def __reduce__(self):
+        # Pickling support
+        return _restore_pickle, (self.__class__, list(self),)
+
 
     def evolver(self):
         return CheckedPSet.Evolver(self.__class__, self)
@@ -2915,6 +2924,10 @@ class CheckedPMap(PMap, CheckedType):
                             for key, value in source_data.items()))
 
         return cls(source_data)
+
+    def __reduce__(self):
+        # Pickling support
+        return _restore_pickle, (self.__class__, dict(self),)
 
     class Evolver(PMap._Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')
