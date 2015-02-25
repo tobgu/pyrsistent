@@ -1,6 +1,6 @@
 """Tests for freeze and thaw."""
 
-from pyrsistent import v, m, s, freeze, thaw, PRecord, field
+from pyrsistent import v, m, s, freeze, thaw, PRecord, field, mutant
 
 
 ## Freeze
@@ -84,3 +84,18 @@ def test_thaw_can_handle_subclasses_of_persistent_base_types():
     assert result == {'x': 1}
     assert type(result) is dict
 
+
+def test_mutant_decorator():
+    @mutant
+    def fn(a_list, a_dict):
+        assert a_list == v(1, 2, 3)
+        assert isinstance(a_dict, type(m()))
+        assert a_dict == {'a': 5}
+
+        return [1, 2, 3], {'a': 3}
+
+    pv, pm = fn([1, 2, 3], a_dict={'a': 5})
+
+    assert pv == v(1, 2, 3)
+    assert pm == m(a=3)
+    assert isinstance(pm, type(m()))
