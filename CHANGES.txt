@@ -1,20 +1,22 @@
 Revision history
 ----------------
-v0.9.0, 2015-02-..
-  * Checked types, checked versions of PVector, PMap, PSet.
+v0.9.0, 2015-02-25, Lots of new stuff in this release!
+  * Checked types, checked versions of PVector, PMap, PSet that support type and invariant specification.
+    Currently lacking proper documentation but I'm working on it.
   * set_in() on PVector and PMap are now deprecated and will be removed in the next release.
     Use transform() instead. set_in() has been updated to use transform() for this release
     this means that some corner error cases behave slightly different than before.
   * Refactoring of the PVector to unify the type. Should not have any user impact as long as
-    only the public interface of pyrsistent has been used. There is a negative performance impact
-    when using the PVector on CPython because of the additional layer of indirection introduced. PMap and
-    PSet should not be affected by this. If this is a problem to you please let me know by describing
-    the use case.
+    only the public interface of pyrsistent has been used. PVector is now an abstract base class
+    with which the different implementations are registered.
   * Evolvers have been updated to return themselves for evolving operations to allow function chaining.
   * Richer exception messages for KeyErrors and IndexErrors specifying the key/index that caused the failure.
     Thanks @radix for this.
-  * New decorator ...
-
+  * Missing attribute on PMaps when accessing with dot-notation now raises an AttributeError instead of a
+    KeyError. Issue #21.
+  * New function decorator @mutant that freezes all input arguments to a function and the return value.
+  * Add __version__ to pyrsistent.py. Issue #23.
+  * Fix pickling for pset. Issue #24.
 
 v0.8.0, 2015-01-21
   * New type PRecord. Subtype of PMap that allows explicit, declarative field specification. Thanks @boxed
@@ -104,7 +106,4 @@ TODO (in no particular order)
 - Ordered sets and maps
 - A good performance measurement suite
 - Provide additional package with literal syntax for pvector, pmap, pset?
-- Replace parts of the set_in implementation with standalone function
 - Refactor to split pyrsistent.py into multiple files
-- Reimplement set_in using transform
-- Make transform return the same structure when no transformations have been done.

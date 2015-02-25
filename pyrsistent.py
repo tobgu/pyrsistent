@@ -2412,8 +2412,7 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
 
     types = set(type) if isinstance(type, Iterable) else set([type])
 
-    # If no factory is specified and the type is another PRecord use the factory method
-    # of that PRecord
+    # If no factory is specified and the type is another CheckedType use the factory method of that CheckedType
     if factory is _PRECORD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], CheckedType):
         # TODO: Should this option be looked up at execution time rather than at field construction time?
         #       that would allow checking against all the types specified and if none matches the
