@@ -271,8 +271,8 @@ def test_nested_create_serialize():
     node = Node(applications=[Application(name=u'myapp', image=u'myimage'),
                               Application(name=u'b', image=u'c')])
 
-    node2 = Node.create({'applications': [{'name': u'myapp', 'image': u'myimage'},
-                                          {'name': u'b', 'image': u'c'}]})
+    node2 = Node.create({u'applications': [{u'name': u'myapp', u'image': u'myimage'},
+                                           {u'name': u'b', u'image': u'c'}]})
 
     assert node == node2
 
