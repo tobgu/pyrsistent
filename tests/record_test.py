@@ -257,8 +257,8 @@ def test_transform_without_update_returns_same_precord():
 
 
 class Application(PRecord):
-    name = field(type=six.text_type)
-    image = field(type=six.text_type)
+    name = field(type=(six.text_type,) + six.string_types)
+    image = field(type=(six.text_type,) + six.string_types)
 
 class ApplicationVector(CheckedPVector):
     __type__ = Application
@@ -268,11 +268,11 @@ class Node(PRecord):
 
 
 def test_nested_create_serialize():
-    node = Node(applications=[Application(name=u'myapp', image=u'myimage'),
-                              Application(name=u'b', image=u'c')])
+    node = Node(applications=[Application(name='myapp', image='myimage'),
+                              Application(name='b', image='c')])
 
-    node2 = Node.create({u'applications': [{u'name': u'myapp', u'image': u'myimage'},
-                                           {u'name': u'b', u'image': u'c'}]})
+    node2 = Node.create({'applications': [{'name': 'myapp', 'image': 'myimage'},
+                                          {'name': 'b', 'image': 'c'}]})
 
     assert node == node2
 
