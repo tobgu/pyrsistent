@@ -436,6 +436,19 @@ Compatibility
 Pyrsistent is developed and tested on Python 2.6, 2.7, 3.2, 3.4 and PyPy (Python 2.7 compatible). It will most likely work
 on all other versions >= 3.2 but no guarantees are given. :)
 
+Compatibility issues
+~~~~~~~~~~~~~~~~~~~~
+
+.. _27: https://github.com/tobgu/pyrsistent/issues/27
+
+There is currently one known compatibility issue when comparing built in sets and frozensets to PSets as discussed in 27_.
+It affects python 2 versions < 2.7.8 and python 3 versions < 3.4.0 and is due to a bug described in
+http://bugs.python.org/issue8743.
+
+Comparisons will fail or be incorrect when using the set/frozenset as left hand side of the comparison. As a workaround
+you need to either upgrade Python to a more recent version, avoid comparing sets/frozensets with PSets or always make
+sure to convert both sides of the comparison to the same type before performing the comparison.
+
 Performance
 -----------
 
