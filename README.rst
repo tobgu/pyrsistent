@@ -328,7 +328,8 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     >>> lotteries
     LotteriesByDate({datetime.date(2015, 2, 15): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')]), datetime.date(2015, 2, 16): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')])})
 
-    # The checked versions support all operations that the corresponding unchecked types do
+    # The checked versions support all operations that the corresponding
+    # unchecked types do
     >>> lottery_0215 = lotteries[date(2015, 02, 15)]
     >>> lottery_0215.transform([0, 'name'], 'SuperDuperLotto')
     Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperDuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')])
@@ -342,8 +343,8 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     Traceback (most recent call last):
     InvariantException: Field invariant failed
 
-    # They can be converted back to python built ins with either thaw() or serialize() (which provides
-    # possibilities to customize serialization)
+    # They can be converted back to python built ins with either thaw()
+    # or serialize() (which provides possibilities to customize serialization)
     >>> thaw(lottery_0215)
     [{'numbers': set([1, 2, 3]), 'name': 'SuperLotto'}, {'numbers': set([4, 5, 6]), 'name': 'MegaLotto'}]
     >>> lottery_0215.serialize()

@@ -2408,7 +2408,7 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
     :param initial: value of field if not specified when instantiating the record
     :param mandatorty: boolean specifying if the field is mandatory or not
     :param factory: function called when field is set.
-    :param serializer: function that returns a serialized versino of the field
+    :param serializer: function that returns a serialized version of the field
     """
 
     types = set(type) if isinstance(type, Iterable) else set([type])
