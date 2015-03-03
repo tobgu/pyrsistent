@@ -2402,12 +2402,13 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
           mandatory=False, factory=_PRECORD_NO_FACTORY, serializer=_PRECORD_NO_SERIALIZER):
     """
     Field specification factory for :py:class:`PRecord`.
-    type, a type or iterable with types that are allowed for this field
-    invariant, a function specifying an invariant that must hold for the field
-    initial, initial value of field if not specified when instantiating the record
-    mandatorty, boolean specifying if the field is mandatory or not
-    factory, factory function called when field is set.
-    serializer, function that returns a serialized versino of the field
+
+    :type, a type or iterable with types that are allowed for this field
+    :invariant, a function specifying an invariant that must hold for the field
+    :initial, initial value of field if not specified when instantiating the record
+    :mandatorty, boolean specifying if the field is mandatory or not
+    :factory, factory function called when field is set.
+    :serializer, function that returns a serialized versino of the field
     """
 
     types = set(type) if isinstance(type, Iterable) else set([type])
@@ -2505,7 +2506,7 @@ class PRecord(PMap, CheckedType):
 
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
-                                 ', '.join('{0}={1}'.format(k, v) for k, v in self.items()))
+                                 ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self.items()))
 
     @classmethod
     def create(cls, kwargs):
@@ -2750,6 +2751,17 @@ def _checked_type_create(cls, source_data):
 
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPVector(_PVectorImpl, CheckedType):
+    """
+    A CheckedPVector is a PVector which allows specifying type and invariant checks.
+
+    >>> class Positives(CheckedPVector):
+    ...     __type__ = (long, int)
+    ...     __invariant__ = lambda n: (n >= 0, 'Negative')
+    ...
+    >>> Positives([1, 2, 3])
+    Positives([1, 2, 3])
+    """
+
     __slots__ = ()
 
     def __new__(cls, initial=()):
@@ -2824,6 +2836,17 @@ class CheckedPVector(_PVectorImpl, CheckedType):
 
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPSet(PSet, CheckedType):
+    """
+    A CheckedPVector is a PSet which allows specifying type and invariant checks.
+
+    >>> class Positives(CheckedPSet):
+    ...     __type__ = (long, int)
+    ...     __invariant__ = lambda n: (n >= 0, 'Negative')
+    ...
+    >>> Positives([1, 2, 3])
+    Positives([1, 2, 3])
+    """
+
     __slots__ = ()
 
     def __new__(cls, initial=()):
@@ -2912,6 +2935,18 @@ _UNDEFINED_CHECKED_PMAP_SIZE = object()
 
 @six.add_metaclass(_CheckedMapTypeMeta)
 class CheckedPMap(PMap, CheckedType):
+    """
+    A CheckedPMap is a PMap which allows specifying type and invariant checks.
+
+    >>> class IntToFloatMap(CheckedPMap):
+    ...     __key_type__ = int
+    ...     __value_type__ = float
+    ...     __invariant__ = lambda k, v: (int(v) == k, 'Invalid mapping')
+    ...
+    >>> IntToFloatMap({1: 1.5, 2: 2.25})
+    IntToFloatMap({1: 1.5, 2: 2.25})
+    """
+
     __slots__ = ()
 
     def __new__(cls, initial={}, size=_UNDEFINED_CHECKED_PMAP_SIZE):

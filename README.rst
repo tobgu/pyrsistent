@@ -33,6 +33,7 @@ The collection types and key features currently implemented are:
 * PMap_, similar to dict
 * PSet_, similar to set
 * PRecord_, a PMap on steroids with fixed fields, optional type and invariant checking and much more
+* `Checked collections`_, PVector, PMap and PSet with optional type and invariance checks and more
 * PBag, similar to collections.Counter
 * PList, a classic singly linked list
 * PDeque, similar to collections.deque
@@ -298,6 +299,56 @@ to take care of fields that require special treatment.
 .. _instar: https://github.com/boxed/instar/
 .. _transformations: https://github.com/boxed/instar/
 
+Checked collections
+-------------------
+Checked collections currently come in three flavors: CheckedPVector, CheckedPMap and CheckedPSet.
+
+.. code:: python
+
+    >>> from pyrsistent import CheckedPVector, CheckedPMap, CheckedPSet, thaw
+    >>> class Positives(CheckedPSet):
+    ...     __type__ = (long, int)
+    ...     __invariant__ = lambda n: (n >= 0, 'Negative')
+    ...
+    >>> class Lottery(PRecord):
+    ...     name = field(type=str)
+    ...     numbers = field(type=Positives, invariant=lambda p: (len(p) > 0, 'No numbers'))
+    ...
+    >>> class Lotteries(CheckedPVector):
+    ...     __type__ = Lottery
+    ...
+    >>> class LotteriesByDate(CheckedPMap):
+    ...     __key_type__ = date
+    ...     __value_type__ = Lotteries
+    ...
+    >>> lotteries = LotteriesByDate.create({date(2015, 02, 15): [{'name': 'SuperLotto', 'numbers': {1, 2, 3}},
+    ...                                                          {'name': 'MegaLotto',  'numbers': {4, 5, 6}}],
+    ...                                     date(2015, 02, 16): [{'name': 'SuperLotto', 'numbers': {3, 2, 1}},
+    ...                                                          {'name': 'MegaLotto',  'numbers': {6, 5, 4}}]})
+    >>> lotteries
+    LotteriesByDate({datetime.date(2015, 2, 15): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')]), datetime.date(2015, 2, 16): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')])})
+
+    # The checked versions support all operations that the corresponding unchecked types do
+    >>> lottery_0215 = lotteries[date(2015, 02, 15)]
+    >>> lottery_0215.transform([0, 'name'], 'SuperDuperLotto')
+    Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperDuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')])
+
+    # But also makes asserts that types and invariants hold
+    >>> lottery_0215.transform([0, 'name'], 999)
+    Traceback (most recent call last):
+    TypeError: Invalid type for field Lottery.name, was <type 'int'>
+
+    >>> lottery_0215.transform([0, 'numbers'], set())
+    Traceback (most recent call last):
+    InvariantException: Field invariant failed
+
+    # They can be converted back to python built ins with either thaw() or serialize() (which provides
+    # possibilities to customize serialization)
+    >>> thaw(lottery_0215)
+    [{'numbers': set([1, 2, 3]), 'name': 'SuperLotto'}, {'numbers': set([4, 5, 6]), 'name': 'MegaLotto'}]
+    >>> lottery_0215.serialize()
+    [{'numbers': set([1, 2, 3]), 'name': 'SuperLotto'}, {'numbers': set([4, 5, 6]), 'name': 'MegaLotto'}]
+
 Transformations
 ~~~~~~~~~~~~~~~
 Transformations are inspired by the cool library instar_ for Clojure. They let you evolve PMaps and PVectors
@@ -377,8 +428,8 @@ Examples of when you may want to use an evolver instead of working directly with
     >>> v1 = v(1, 2, 3)
     >>> e = v1.evolver()
     >>> e[1] = 22
-    >>> e.append(4)
-    >>> e.extend([5, 6])
+    >>> e = e.append(4)
+    >>> e = e.extend([5, 6])
     >>> e[5] += 1
     >>> len(e)
     6
