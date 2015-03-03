@@ -2403,12 +2403,12 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
     """
     Field specification factory for :py:class:`PRecord`.
 
-    :type, a type or iterable with types that are allowed for this field
-    :invariant, a function specifying an invariant that must hold for the field
-    :initial, initial value of field if not specified when instantiating the record
-    :mandatorty, boolean specifying if the field is mandatory or not
-    :factory, factory function called when field is set.
-    :serializer, function that returns a serialized versino of the field
+    :param type: a type or iterable with types that are allowed for this field
+    :param invariant: a function specifying an invariant that must hold for the field
+    :param initial: value of field if not specified when instantiating the record
+    :param mandatorty: boolean specifying if the field is mandatory or not
+    :param factory: function called when field is set.
+    :param serializer: function that returns a serialized versino of the field
     """
 
     types = set(type) if isinstance(type, Iterable) else set([type])
