@@ -2537,6 +2537,12 @@ class PRecord(PMap, CheckedType):
 
         return dict((k, _serialize(k, v)) for k, v in self.items())
 
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        else:
+            return super(PRecord, self).__eq__(other)
+
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields')
 

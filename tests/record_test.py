@@ -22,8 +22,8 @@ def test_correct_assignment():
     r2 = r.set('x', 2.0)
     r3 = r2.set('y', 'bar')
 
-    assert r2 == {'x': 2.0, 'y': 'foo'}
-    assert r3 == {'x': 2.0, 'y': 'bar'}
+    assert r2 == ARecord(x=2.0, y='foo')
+    assert r3 == ARecord(x=2.0, y='bar')
     assert isinstance(r3, ARecord)
 
 
@@ -60,7 +60,7 @@ def test_support_record_inheritance():
 
     assert isinstance(r, BRecord)
     assert isinstance(r, ARecord)
-    assert r == {'x': 1, 'y': 'foo', 'z': 'bar'}
+    assert r == BRecord(x=1, y='foo', z='bar')
 
 
 def test_single_type_spec():
@@ -79,7 +79,7 @@ def test_remove():
     r2 = r.remove('y')
 
     assert isinstance(r2, ARecord)
-    assert r2 == {'x': 1}
+    assert r2 == ARecord(x=1)
 
 
 def test_field_invariant_must_hold():
@@ -114,7 +114,7 @@ def test_set_multiple_fields():
     a = ARecord(x=1, y='foo')
     b = a.set(x=2, y='bar')
 
-    assert b == {'x': 2, 'y': 'bar'}
+    assert b == ARecord(x=2, y='bar')
 
 
 def test_initial_value():
@@ -173,7 +173,7 @@ def test_factory():
     class BRecord(PRecord):
         x = field(type=int, factory=int)
 
-    assert BRecord(x=2.5) == {'x': 2}
+    assert BRecord(x=2.5) == BRecord(x=2)
 
 def test_factory_must_be_callable():
     with pytest.raises(TypeError):
@@ -191,7 +191,7 @@ def test_nested_record_construction():
     r = CRecord.create({'a': 'foo', 'b': {'x': '5'}})
     assert isinstance(r, CRecord)
     assert isinstance(r.b, BRecord)
-    assert r == {'a': 'foo', 'b': {'x': 5}}
+    assert r == CRecord(a='foo', b=BRecord(x=5))
 
 def test_pickling():
     x = ARecord(x=2.0, y='bar')
@@ -280,3 +280,11 @@ def test_nested_create_serialize():
     restored = Node.create(serialized)
 
     assert restored == node
+
+def test_unlike_types_not_equal():
+    class BRecord(PRecord):
+        x = field(type=(int, float))
+        y = field()
+    r1 = ARecord(x=1, y=2)
+    r2 = BRecord(x=1, y=2)
+    assert r1 != r2
