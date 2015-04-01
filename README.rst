@@ -201,7 +201,7 @@ by providing an iterable of types.
     BRecord(y=None, x=3)
     >>> BRecord(x=3.0)
     Traceback (most recent call last):
-    TypeError: Invalid type for field BRecord.x, was <type 'float'>
+    PRecordTypeError: Invalid type for field BRecord.x, was float
 
 Mandatory fields
 ****************
@@ -337,7 +337,7 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     # But also makes asserts that types and invariants hold
     >>> lottery_0215.transform([0, 'name'], 999)
     Traceback (most recent call last):
-    TypeError: Invalid type for field Lottery.name, was <type 'int'>
+    PRecordTypeError: Invalid type for field Lottery.name, was int
 
     >>> lottery_0215.transform([0, 'numbers'], set())
     Traceback (most recent call last):

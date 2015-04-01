@@ -2,7 +2,7 @@ import pickle
 import datetime
 import pytest
 import six
-from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector
+from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector, PRecordTypeError
 
 
 class ARecord(PRecord):
@@ -38,9 +38,14 @@ def test_cannot_assign_undeclared_fields():
 
 
 def test_cannot_assign_wrong_type_to_fields():
-    with pytest.raises(TypeError):
+    try:
         ARecord().set('x', 'foo')
-
+        assert False
+    except PRecordTypeError as e:
+        assert e.source_class == ARecord
+        assert e.field == 'x'
+        assert e.expected_types == set([int, float])
+        assert e.actual_type is type('foo')
 
 def test_cannot_construct_with_undeclared_fields():
     with pytest.raises(AttributeError):

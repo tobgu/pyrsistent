@@ -1,6 +1,7 @@
 import pickle
 import pytest
-from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector
+from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector, \
+    CheckedKeyTypeError, CheckedValueTypeError
 
 
 class FloatToIntMap(CheckedPMap):
@@ -30,11 +31,11 @@ def test_set():
      assert isinstance(x2, FloatToIntMap)
 
 def test_invalid_key_type():
-     with pytest.raises(TypeError):
+     with pytest.raises(CheckedKeyTypeError):
          FloatToIntMap({1: 1})
 
 def test_invalid_value_type():
-     with pytest.raises(TypeError):
+     with pytest.raises(CheckedValueTypeError):
          FloatToIntMap({1.0: 1.0})
 
 def test_breaking_invariant():

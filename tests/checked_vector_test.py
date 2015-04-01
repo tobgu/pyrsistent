@@ -1,7 +1,7 @@
 import datetime
 import pickle
 import pytest
-from pyrsistent import _PVectorImpl, CheckedPVector, InvariantException, optional
+from pyrsistent import _PVectorImpl, CheckedPVector, InvariantException, optional, CheckedValueTypeError
 
 
 class Naturals(CheckedPVector):
@@ -38,8 +38,14 @@ def test_set():
 
 
 def test_invalid_type():
-    with pytest.raises(TypeError):
+    try:
         Naturals([1, 2.0])
+        assert False
+    except CheckedValueTypeError as e:
+        assert e.expected_types == (int,)
+        assert e.actual_type is float
+        assert e.actual_value == 2.0
+        assert e.source_class is Naturals
 
     x = Naturals([1, 2])
     with pytest.raises(TypeError):

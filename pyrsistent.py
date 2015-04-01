@@ -2537,6 +2537,16 @@ class PRecord(PMap, CheckedType):
 
         return dict((k, _serialize(k, v)) for k, v in self.items())
 
+
+class PRecordTypeError(TypeError):
+    def __init__(self, source_class, field, expected_types, actual_type, *args, **kwargs):
+        super(PRecordTypeError, self).__init__(*args, **kwargs)
+        self.source_class = source_class
+        self.field = field
+        self.expected_types = expected_types
+        self.actual_type = actual_type
+
+
 class _PRecordEvolver(PMap._Evolver):
     __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields')
 
@@ -2560,7 +2570,9 @@ class _PRecordEvolver(PMap._Evolver):
                 return self
 
             if field.type and not any(isinstance(value, t) for t in field.type):
-                raise TypeError("Invalid type for field {0}.{1}, was {2}".format(self._destination_cls.__name__, key, type(value)))
+                actual_type = type(value)
+                message = "Invalid type for field {0}.{1}, was {2}".format(self._destination_cls.__name__, key, actual_type.__name__)
+                raise PRecordTypeError(self._destination_cls, key, field.type, actual_type, message)
 
             is_ok, error_code = field.invariant(value)
             if not is_ok:
@@ -2689,13 +2701,16 @@ def _store_types(dct, bases, destination_name, source_name):
 
     dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
     dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
+    dct[destination_name] = tuple(dct[destination_name])
     if not all(isinstance(t, type) for t in dct[destination_name]):
         raise TypeError('Type specifications must be types')
+
 
 def _store_invariants(dct, bases, destination_name, source_name):
         # Invariants are inherited
         dct[destination_name] = [dct[source_name]] if source_name in dct else []
         dct[destination_name] += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
+        dct[destination_name] = tuple(dct[destination_name])
         if not all(callable(invariant) for invariant in dct[destination_name]):
             raise TypeError('Invariants must be callable')
 
@@ -2717,9 +2732,33 @@ class _CheckedTypeMeta(type):
         return super(_CheckedTypeMeta, mcs).__new__(mcs, name, bases, dct)
 
 
-def _check_types(it, types):
-    if types and not all(any(isinstance(e, t) for t in types) for e in it):
-        raise TypeError
+class CheckedTypeError(TypeError):
+    def __init__(self, expected_types, actual_type, actual_value, source_class, *args, **kwargs):
+        super(CheckedTypeError, self).__init__(*args, **kwargs)
+        self.expected_types = expected_types
+        self.actual_type = actual_type
+        self.actual_value = actual_value
+        self.source_class = source_class
+
+
+class CheckedKeyTypeError(CheckedTypeError):
+    pass
+
+
+class CheckedValueTypeError(CheckedTypeError):
+    pass
+
+
+def _check_types(it, expected_types, source_class, exception_type=CheckedValueTypeError):
+    if expected_types:
+        for e in it:
+            if not any(isinstance(e, t) for t in expected_types):
+                actual_type = type(e)
+                msg = "Type {source_class} can only be used with {expected_types}, not {actual_type}".format(
+                    source_class=source_class.__name__,
+                    expected_types=tuple(et.__name__ for et in expected_types),
+                    actual_type=actual_type.__name__)
+                raise exception_type(expected_types, actual_type, e, source_class, msg)
 
 
 def _invariant_errors(elem, invariants):
@@ -2733,6 +2772,7 @@ def _invariant_errors_iterable(it, invariants):
 def optional(typ):
     """ Convenience function to specify that a value may be of type 'typ' or None """
     return typ, type(None)
+
 
 def _checked_type_create(cls, source_data):
         if isinstance(source_data, cls):
@@ -2798,7 +2838,7 @@ class CheckedPVector(_PVectorImpl, CheckedType):
             self._invariant_errors = []
 
         def _check(self, it):
-            _check_types(it, self._destination_class._checked_types)
+            _check_types(it, self._destination_class._checked_types, self._destination_class)
             error_data = _invariant_errors_iterable(it, self._destination_class._checked_invariants)
             self._invariant_errors.extend(error_data)
 
@@ -2834,6 +2874,7 @@ class CheckedPVector(_PVectorImpl, CheckedType):
     def evolver(self):
         return CheckedPVector.Evolver(self.__class__, self)
 
+
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPSet(PSet, CheckedType):
     """
@@ -2863,7 +2904,7 @@ class CheckedPSet(PSet, CheckedType):
         return self.__class__.__name__ + super(CheckedPSet, self).__repr__()[4:]
 
     def __str__(self):
-       return self.__repr__()
+        return self.__repr__()
 
     def serialize(self, format=None):
         serializer = self.__serializer__
@@ -2874,7 +2915,6 @@ class CheckedPSet(PSet, CheckedType):
     def __reduce__(self):
         # Pickling support
         return _restore_pickle, (self.__class__, list(self),)
-
 
     def evolver(self):
         return CheckedPSet.Evolver(self.__class__, self)
@@ -2888,7 +2928,7 @@ class CheckedPSet(PSet, CheckedType):
             self._invariant_errors = []
 
         def _check(self, it):
-            _check_types(it, self._destination_class._checked_types)
+            _check_types(it, self._destination_class._checked_types, self._destination_class)
             error_data = _invariant_errors_iterable(it, self._destination_class._checked_invariants)
             self._invariant_errors.extend(error_data)
 
@@ -2932,6 +2972,7 @@ class _CheckedMapTypeMeta(type):
 
 # Marker object
 _UNDEFINED_CHECKED_PMAP_SIZE = object()
+
 
 @six.add_metaclass(_CheckedMapTypeMeta)
 class CheckedPMap(PMap, CheckedType):
@@ -3003,19 +3044,17 @@ class CheckedPMap(PMap, CheckedType):
             self._invariant_errors = []
 
         def set(self, key, value):
-            _check_types([key], self._destination_class._checked_key_types)
-            _check_types([value], self._destination_class._checked_value_types)
+            _check_types([key], self._destination_class._checked_key_types, self._destination_class, CheckedKeyTypeError)
+            _check_types([value], self._destination_class._checked_value_types, self._destination_class)
             self._invariant_errors.extend(data for valid, data in (invariant(key, value)
                                                                    for invariant in self._destination_class._checked_invariants)
                                           if not valid)
 
             return super(CheckedPMap.Evolver, self).set(key, value)
 
-
         def persistent(self):
             if self._invariant_errors:
                 raise InvariantException(error_codes=self._invariant_errors)
-
 
             if self.is_dirty() or type(self._original_pmap) != self._destination_class:
                 return self._destination_class(self._buckets_evolver.persistent(), self._size)
