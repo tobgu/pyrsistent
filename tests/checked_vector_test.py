@@ -171,3 +171,13 @@ def test_pickling():
 
     assert x == y
     assert isinstance(y, Naturals)
+
+def test_multiple_optional_types():
+    class Numbers(CheckedPVector):
+        __type__ = optional(int, float)
+
+    numbers = Numbers([1, 2.5, None])
+    assert numbers.serialize() == [1, 2.5, None]
+
+    with pytest.raises(TypeError):
+        numbers.append('foo')

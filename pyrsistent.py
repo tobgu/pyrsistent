@@ -2769,9 +2769,9 @@ def _invariant_errors_iterable(it, invariants):
     return sum([_invariant_errors(elem, invariants) for elem in it], [])
 
 
-def optional(typ):
-    """ Convenience function to specify that a value may be of type 'typ' or None """
-    return typ, type(None)
+def optional(*typs):
+    """ Convenience function to specify that a value may be of any of the types in type 'typs' or None """
+    return tuple(typs) + (type(None),)
 
 
 def _checked_type_create(cls, source_data):
