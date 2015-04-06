@@ -1,19 +1,19 @@
 import pytest
-from pyrsistent import pclass
+from pyrsistent import immutable
 
-class Empty(pclass(verbose=True)):
+class Empty(immutable(verbose=True)):
     pass
 
 
-class Single(pclass('x')):
+class Single(immutable('x')):
     pass
 
 
-class FrozenMember(pclass('x, y_')):
+class FrozenMember(immutable('x, y_')):
     pass
 
 
-class DerivedWithNew(pclass(['x', 'y'])):
+class DerivedWithNew(immutable(['x', 'y'])):
     def __new__(cls, x, y):
         return super(DerivedWithNew, cls).__new__(cls, x, y)
 

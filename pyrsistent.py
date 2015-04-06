@@ -6,6 +6,7 @@ from itertools import chain, islice
 from numbers import Integral
 import sys
 import re
+import warnings
 
 import six
 
@@ -1495,7 +1496,12 @@ _EMPTY_PBAG = _PBag(_EMPTY_PMAP)
 
 ######################################## Immutable object ##############################################
 
-def pclass(members='', name='PClass', verbose=False):
+def pclass(*args, **kwargs):
+    warnings.warn("'pclass' has been renamed to 'immutable' please use that name instead", DeprecationWarning)
+    return immutable(*args, **kwargs)
+
+
+def immutable(members='', name='Immutable', verbose=False):
     """
     Produces a class that either can be used standalone or as a base class for persistent classes.
 
@@ -1503,7 +1509,7 @@ def pclass(members='', name='PClass', verbose=False):
 
     Constructing a type and using it to instantiate objects:
 
-    >>> Point = pclass('x, y', name='Point')
+    >>> Point = immutable('x, y', name='Point')
     >>> p = Point(1, 2)
     >>> p2 = p.set(x=3)
     >>> p
@@ -1513,7 +1519,7 @@ def pclass(members='', name='PClass', verbose=False):
 
     Inheriting from a constructed type. In this case no type name needs to be supplied:
 
-    >>> class PositivePoint(pclass('x, y')):
+    >>> class PositivePoint(immutable('x, y')):
     ...     __slots__ = tuple()
     ...     def __new__(cls, x, y):
     ...         if x > 0 and y > 0:
@@ -1531,7 +1537,7 @@ def pclass(members='', name='PClass', verbose=False):
     cannot be updated. For example it could be used to implement an ID that should remain the same
     over time. A frozen member is denoted by a trailing underscore.
 
-    >>> Point = pclass('x, y, id_', name='Point')
+    >>> Point = immutable('x, y, id_', name='Point')
     >>> p = Point(1, 2, id_=17)
     >>> p.set(x=3)
     Point(x=3, y=2, id_=17)
@@ -1556,11 +1562,11 @@ def pclass(members='', name='PClass', verbose=False):
 
     quoted_members = ', '.join("'%s'" % m for m in members)
     template = """
-class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose})):
+class {class_name}(namedtuple('ImmutableBase', [{quoted_members}], verbose={verbose})):
     __slots__ = tuple()
 
     def __repr__(self):
-        return super({class_name}, self).__repr__().replace('PClassBase', self.__class__.__name__)
+        return super({class_name}, self).__repr__().replace('ImmutableBase', self.__class__.__name__)
 
     def set(self, **kwargs):
         if not kwargs:
@@ -1583,7 +1589,7 @@ class {class_name}(namedtuple('PClassBase', [{quoted_members}], verbose={verbose
         print(template)
 
     from collections import namedtuple
-    namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_pclass')
+    namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_immutable')
     try:
         six.exec_(template, namespace)
     except SyntaxError as e:
