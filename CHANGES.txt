@@ -3,7 +3,7 @@ Revision history
 v0.9.3, 2015-04-06
   * Rename pclass back to immutable and deprecate the usage of the pclass function. PClass will be used by
     a new, different type in upcoming releases.
-
+  * Documentation strings for the exceptions introduced in 0.9.2.
 
 v0.9.2, 2015-04-03
   * More informative type errors from checked types, issue #30

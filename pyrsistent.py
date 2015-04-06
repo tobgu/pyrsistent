@@ -2545,6 +2545,15 @@ class PRecord(PMap, CheckedType):
 
 
 class PRecordTypeError(TypeError):
+    """
+    Raised when trying to assign a value with a type that doesn't match the declared type.
+
+    Attributes:
+    source_class -- The class of the record
+    field -- Field name
+    expected_types  -- Types allowed for the field
+    actual_type -- The non matching type
+    """
     def __init__(self, source_class, field, expected_types, actual_type, *args, **kwargs):
         super(PRecordTypeError, self).__init__(*args, **kwargs)
         self.source_class = source_class
@@ -2739,19 +2748,37 @@ class _CheckedTypeMeta(type):
 
 
 class CheckedTypeError(TypeError):
-    def __init__(self, expected_types, actual_type, actual_value, source_class, *args, **kwargs):
+    def __init__(self, source_class, expected_types, actual_type, actual_value, *args, **kwargs):
         super(CheckedTypeError, self).__init__(*args, **kwargs)
+        self.source_class = source_class
         self.expected_types = expected_types
         self.actual_type = actual_type
         self.actual_value = actual_value
-        self.source_class = source_class
 
 
 class CheckedKeyTypeError(CheckedTypeError):
+    """
+    Raised when trying to set a value using a key with a type that doesn't match the declared type.
+
+    Attributes:
+    source_class -- The class of the collection
+    expected_types  -- Allowed types
+    actual_type -- The non matching type
+    actual_value -- Value of the variable with the non matching type
+    """
     pass
 
 
 class CheckedValueTypeError(CheckedTypeError):
+    """
+    Raised when trying to set a value using a key with a type that doesn't match the declared type.
+
+    Attributes:
+    source_class -- The class of the collection
+    expected_types  -- Allowed types
+    actual_type -- The non matching type
+    actual_value -- Value of the variable with the non matching type
+    """
     pass
 
 
@@ -2764,7 +2791,7 @@ def _check_types(it, expected_types, source_class, exception_type=CheckedValueTy
                     source_class=source_class.__name__,
                     expected_types=tuple(et.__name__ for et in expected_types),
                     actual_type=actual_type.__name__)
-                raise exception_type(expected_types, actual_type, e, source_class, msg)
+                raise exception_type(source_class, expected_types, actual_type, e, msg)
 
 
 def _invariant_errors(elem, invariants):
