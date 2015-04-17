@@ -1,7 +1,7 @@
 import datetime
 import pickle
 import pytest
-from pyrsistent import _PVectorImpl, CheckedPVector, InvariantException, optional, CheckedValueTypeError
+from pyrsistent import CheckedPVector, InvariantException, optional, CheckedValueTypeError, PVector
 
 
 class Naturals(CheckedPVector):
@@ -13,7 +13,7 @@ def test_instantiate():
 
     assert list(x) == [1, 2, 3]
     assert isinstance(x, Naturals)
-    assert isinstance(x, _PVectorImpl)
+    assert isinstance(x, PVector)
 
 def test_append():
     x = Naturals()
