@@ -1,8 +1,8 @@
 from collections import Mapping, Hashable
 from itertools import chain
 import six
-from pyrsistent.pvector import pvector
-from pyrsistent.transformations import _transform
+from pyrsistent._pvector import pvector
+from pyrsistent._transformations import transform
 
 
 class PMap(object):
@@ -256,7 +256,7 @@ class PMap(object):
         >>> very_short_news.articles[0] is news_paper.articles[0]
         True
         """
-        return _transform(self, transformations)
+        return transform(self, transformations)
 
     def copy(self):
         return self

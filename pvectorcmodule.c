@@ -65,7 +65,7 @@ static PyObject* transform_fn = NULL;
 static PyObject* transform(PVector* self, PyObject* args) {
   if(transform_fn == NULL) {
     // transform to avoid circular import problems
-    transform_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent.transformations"), "_transform");
+    transform_fn = PyObject_GetAttrString(PyImport_ImportModule("pyrsistent._transformations"), "transform");
   }
 
   return PyObject_CallFunctionObjArgs(transform_fn, self, args, NULL);

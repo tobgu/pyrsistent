@@ -1,13 +1,10 @@
 import pickle
 import pytest
-from pyrsistent.pvector import _pvector
 
-_pvector()
-
-@pytest.fixture(scope='session', params=['pyrsistent.pvector', 'pvectorc'])
+@pytest.fixture(scope='session', params=['pyrsistent._pvector', 'pvectorc'])
 def pvector(request):
     m = pytest.importorskip(request.param)
-    if request.param == 'pyrsistent.pvector':
+    if request.param == 'pyrsistent._pvector':
         return m._pvector
     return m.pvector
 

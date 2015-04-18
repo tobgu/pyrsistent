@@ -1,6 +1,6 @@
 from collections import Set, Hashable
 import sys
-from pyrsistent.pmap import pmap
+from pyrsistent._pmap import pmap
 
 PY2 = sys.version_info[0] < 3
 

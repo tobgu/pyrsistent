@@ -37,7 +37,7 @@ def _chunks(l, n):
         yield l[i:i + n]
 
 
-def _transform(structure, transformations):
+def transform(structure, transformations):
     r = structure
     for path, command in _chunks(transformations, 2):
         r = _do_to_path(r, path, command)
@@ -67,7 +67,7 @@ def _get(structure, key, default):
 
 
 def _get_keys_and_values(structure, key_spec):
-    from pyrsistent.pmap import pmap
+    from pyrsistent._pmap import pmap
     if callable(key_spec):
         return [(k, v) for k, v in _items(structure) if key_spec(k)]
 

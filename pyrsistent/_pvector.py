@@ -3,7 +3,7 @@ from collections import Sequence, Hashable
 from numbers import Integral
 import six
 from functools import wraps
-from pyrsistent.transformations import _transform
+from pyrsistent._transformations import transform
 
 
 def _bitcount(val):
@@ -140,7 +140,7 @@ class _PVectorImpl(object):
         return self.transform(keys, val)
 
     def transform(self, *transformations):
-        return _transform(self, transformations)
+        return transform(self, transformations)
 
     def __reduce__(self):
         # Pickling support

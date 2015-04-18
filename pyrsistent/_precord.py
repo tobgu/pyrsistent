@@ -1,7 +1,7 @@
 from collections import Iterable
 import six
-from pyrsistent.checked_types import CheckedType, _restore_pickle, InvariantException
-from pyrsistent.pmap import PMap, pmap
+from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException
+from pyrsistent._pmap import PMap, pmap
 
 
 class _PRecordMeta(type):

@@ -1,8 +1,8 @@
 from collections import Iterable
 import six
-from pyrsistent.pmap import PMap, pmap
-from pyrsistent.pset import PSet, pset
-from pyrsistent.pvector import _PVectorImpl, _pvector
+from pyrsistent._pmap import PMap, pmap
+from pyrsistent._pset import PSet, pset
+from pyrsistent._pvector import _PVectorImpl, _pvector
 
 
 class CheckedType(object):

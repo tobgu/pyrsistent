@@ -1,5 +1,5 @@
 from pyperform import BenchmarkedFunction
-from pyrsistent import pvector, _pvector #!
+from pyrsistent import _pvector, _pvector #!
 
 
 class Benchmarked(BenchmarkedFunction):
@@ -11,7 +11,7 @@ class Benchmarked(BenchmarkedFunction):
 @Benchmarked()
 def create_empty_native_pvector():
     for x in range(1000):
-        _ = pvector()
+        _ = _pvector()
 
 @Benchmarked()
 def create_empty_python_pvector():
@@ -32,7 +32,7 @@ def _large_list():
 @Benchmarked(setup=_small_list)
 def create_small_native_pvector():
     for x in range(100):
-        _ = pvector(small_list)
+        _ = _pvector(small_list)
 
 @Benchmarked(setup=_small_list)
 def create_small_python_pvector():
@@ -47,7 +47,7 @@ def reference_create_small_list():
 @Benchmarked(setup=_large_list)
 def create_large_native_pvector():
     for x in range(10):
-        _ = pvector(large_list)
+        _ = _pvector(large_list)
 
 @Benchmarked(setup=_large_list)
 def create_large_python_pvector():
@@ -64,7 +64,7 @@ def reference_create_large_list():
 
 @Benchmarked()
 def append_native_pvector():
-    v = pvector()
+    v = _pvector()
     for x in range(100):
         v = v.append(x)
 
@@ -82,7 +82,7 @@ def reference_append_list():
 
 @Benchmarked()
 def append_native_pvector():
-    v = pvector()
+    v = _pvector()
     for x in range(100):
         v = v.append(x)
 
@@ -102,7 +102,7 @@ def reference_append_list():
 ######################### Insert ######################
 
 def _small_native_vector():
-    small_native_vector = pvector(range(10))
+    small_native_vector = _pvector(range(10))
 
 
 def _small_python_vector():
@@ -128,7 +128,7 @@ def reference_random_insert_small_list():
 
 
 def _large_native_vector():
-    large_native_vector = pvector(range(2000))
+    large_native_vector = _pvector(range(2000))
 
 
 def _large_python_vector():

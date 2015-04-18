@@ -1,8 +1,8 @@
 from functools import wraps
 import six
-from pyrsistent.pmap import PMap, pmap
-from pyrsistent.pset import PSet, pset
-from pyrsistent.pvector import PVector, pvector
+from pyrsistent._pmap import PMap, pmap
+from pyrsistent._pset import PSet, pset
+from pyrsistent._pvector import PVector, pvector
 
 
 def freeze(o):
