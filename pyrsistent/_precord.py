@@ -4,15 +4,18 @@ from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantExc
 from pyrsistent._pmap import PMap, pmap
 
 
+def set_fields(dct, bases, name):
+    dct[name] = dict(sum([list(b.__dict__.get(name, {}).items()) for b in bases], []))
+
+    for k, v in list(dct.items()):
+        if isinstance(v, _PField):
+            dct[name][k] = v
+            del dct[k]
+
+
 class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
-        dct['_precord_fields'] = dict(sum([list(b.__dict__.get('_precord_fields', {}).items()) for b in bases], []))
-
-        for k, v in list(dct.items()):
-            if isinstance(v, _PRecordField):
-                dct['_precord_fields'][k] = v
-                del dct[k]
-
+        set_fields(dct, bases, name='_precord_fields')
         # Global invariants are inherited
         dct['_precord_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
         dct['_precord_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
@@ -30,9 +33,7 @@ class _PRecordMeta(type):
         return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
 
 
-
-
-class _PRecordField(object):
+class _PField(object):
     __slots__ = ('type', 'invariant', 'initial', 'mandatory', 'factory', 'serializer')
 
     def __init__(self, type, invariant, initial, mandatory, factory, serializer):
@@ -71,7 +72,7 @@ def field(type=_PRECORD_NO_TYPE, invariant=_PRECORD_NO_INVARIANT, initial=_PRECO
         #       first
         factory = tuple(types)[0].create
 
-    field = _PRecordField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
+    field = _PField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
                           factory=factory, serializer=serializer)
 
     _check_field_parameters(field)
