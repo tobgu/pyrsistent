@@ -4,7 +4,7 @@ from numbers import Integral
 from pyrsistent._plist import plist
 
 
-class _PDeque(object):
+class PDeque(object):
     """
     Persistent double ended queue (deque). Allows quick appends and pops in both ends. Implemented
     using two persistent lists.
@@ -48,7 +48,7 @@ class _PDeque(object):
     __slots__ = ('_left_list', '_right_list', '_length', '_maxlen')
 
     def __new__(cls, left_list, right_list, length, maxlen=None):
-        instance = super(_PDeque, cls).__new__(cls)
+        instance = super(PDeque, cls).__new__(cls)
         instance._left_list = left_list
         instance._right_list = right_list
         instance._length = length
@@ -68,14 +68,14 @@ class _PDeque(object):
         """
         Rightmost element in dqueue.
         """
-        return _PDeque._tip_from_lists(self._right_list, self._left_list)
+        return PDeque._tip_from_lists(self._right_list, self._left_list)
 
     @property
     def left(self):
         """
         Leftmost element in dqueue.
         """
-        return _PDeque._tip_from_lists(self._left_list, self._right_list)
+        return PDeque._tip_from_lists(self._left_list, self._right_list)
 
     @staticmethod
     def _tip_from_lists(primary_list, secondary_list):
@@ -119,8 +119,8 @@ class _PDeque(object):
         if count < 0:
             return self.popleft(-count)
 
-        new_right_list, new_left_list = _PDeque._pop_lists(self._right_list, self._left_list, count)
-        return _PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
+        new_right_list, new_left_list = PDeque._pop_lists(self._right_list, self._left_list, count)
+        return PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
 
     def popleft(self, count=1):
         """
@@ -133,8 +133,8 @@ class _PDeque(object):
         if count < 0:
             return self.pop(-count)
 
-        new_left_list, new_right_list = _PDeque._pop_lists(self._left_list, self._right_list, count)
-        return _PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
+        new_left_list, new_right_list = PDeque._pop_lists(self._left_list, self._right_list, count)
+        return PDeque(new_left_list, new_right_list, max(self._length - count, 0), self._maxlen)
 
     @staticmethod
     def _pop_lists(primary_list, secondary_list, count):
@@ -158,13 +158,13 @@ class _PDeque(object):
         return not self._left_list and not self._right_list
 
     def __lt__(self, other):
-        if not isinstance(other, _PDeque):
+        if not isinstance(other, PDeque):
             return NotImplemented
 
         return tuple(self) < tuple(other)
 
     def __eq__(self, other):
-        if not isinstance(other, _PDeque):
+        if not isinstance(other, PDeque):
             return NotImplemented
 
         if tuple(self) == tuple(other):
@@ -188,7 +188,7 @@ class _PDeque(object):
         pdeque([1, 2, 3])
         """
         new_left_list, new_right_list, new_length = self._append(self._left_list, self._right_list, elem)
-        return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
+        return PDeque(new_left_list, new_right_list, new_length, self._maxlen)
 
     def appendleft(self, elem):
         """
@@ -198,13 +198,13 @@ class _PDeque(object):
         pdeque([3, 1, 2])
         """
         new_right_list, new_left_list, new_length = self._append(self._right_list, self._left_list, elem)
-        return _PDeque(new_left_list, new_right_list, new_length, self._maxlen)
+        return PDeque(new_left_list, new_right_list, new_length, self._maxlen)
 
     def _append(self, primary_list, secondary_list, elem):
         if self._maxlen is not None and self._length == self._maxlen:
             if self._maxlen == 0:
                 return primary_list, secondary_list, 0
-            new_primary_list, new_secondary_list = _PDeque._pop_lists(primary_list, secondary_list, 1)
+            new_primary_list, new_secondary_list = PDeque._pop_lists(primary_list, secondary_list, 1)
             return new_primary_list, new_secondary_list.cons(elem), self._length
 
         return primary_list, secondary_list.cons(elem), self._length + 1
@@ -219,12 +219,12 @@ class _PDeque(object):
         return the_list, count
 
     def _extend(self, primary_list, secondary_list, iterable):
-        new_primary_list, extend_count = _PDeque._extend_list(primary_list, iterable)
+        new_primary_list, extend_count = PDeque._extend_list(primary_list, iterable)
         new_secondary_list = secondary_list
         current_len = self._length + extend_count
         if self._maxlen is not None and current_len > self._maxlen:
             pop_len = current_len - self._maxlen
-            new_secondary_list, new_primary_list = _PDeque._pop_lists(new_secondary_list, new_primary_list, pop_len)
+            new_secondary_list, new_primary_list = PDeque._pop_lists(new_secondary_list, new_primary_list, pop_len)
             extend_count -= pop_len
 
         return new_primary_list, new_secondary_list, extend_count
@@ -237,7 +237,7 @@ class _PDeque(object):
         pdeque([1, 2, 3, 4])
         """
         new_right_list, new_left_list, extend_count = self._extend(self._right_list, self._left_list, iterable)
-        return _PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
+        return PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
 
     def extendleft(self, iterable):
         """
@@ -249,7 +249,7 @@ class _PDeque(object):
         pdeque([4, 3, 1, 2])
         """
         new_left_list, new_right_list, extend_count = self._extend(self._left_list, self._right_list, iterable)
-        return _PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
+        return PDeque(new_left_list, new_right_list, self._length + extend_count, self._maxlen)
 
     def count(self, elem):
         """
@@ -269,12 +269,12 @@ class _PDeque(object):
         pdeque([1, 2])
         """
         try:
-            return _PDeque(self._left_list.remove(elem), self._right_list, self._length - 1)
+            return PDeque(self._left_list.remove(elem), self._right_list, self._length - 1)
         except ValueError:
             # Value not found in left list, try the right list
             try:
                 # This is severely inefficient with a double reverse, should perhaps implement a remove_last()?
-                return _PDeque(self._left_list,
+                return PDeque(self._left_list,
                                self._right_list.reverse().remove(elem).reverse(), self._length - 1)
             except ValueError:
                 raise ValueError('{0} not found in PDeque'.format(elem))
@@ -291,7 +291,7 @@ class _PDeque(object):
         >>> reversed(pdeque([1, 2, 3]))
         pdeque([3, 2, 1])
         """
-        return _PDeque(self._right_list, self._left_list, self._length)
+        return PDeque(self._right_list, self._left_list, self._length)
     __reversed__ = reverse
 
     def rotate(self, steps):
@@ -338,8 +338,8 @@ class _PDeque(object):
 
     index = Sequence.index
 
-Sequence.register(_PDeque)
-Hashable.register(_PDeque)
+Sequence.register(PDeque)
+Hashable.register(PDeque)
 
 
 def pdeque(iterable=(), maxlen=None):
@@ -359,7 +359,7 @@ def pdeque(iterable=(), maxlen=None):
     pivot = int(length / 2)
     left = plist(t[:pivot])
     right = plist(t[pivot:], reverse=True)
-    return _PDeque(left, right, length, maxlen)
+    return PDeque(left, right, length, maxlen)
 
 def dq(*elements):
     """

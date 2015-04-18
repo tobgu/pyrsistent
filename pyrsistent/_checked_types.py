@@ -6,6 +6,9 @@ from pyrsistent._pvector import _PVectorImpl, _pvector
 
 
 class CheckedType(object):
+    """
+    Marker class to enable creation and serialization of checked object graphs.
+    """
     __slots__ = ()
 
     @classmethod
@@ -22,7 +25,7 @@ def _restore_pickle(cls, data):
 
 class InvariantException(Exception):
     """
-    Exception raised from :py:class:`PRecord` when invariant tests fail or when a mandatory
+    Exception raised from a :py:class:`CheckedType` when invariant tests fail or when a mandatory
     field is missing.
 
     Contains two fields of interest:
@@ -239,7 +242,7 @@ class CheckedPVector(_PVectorImpl, CheckedType):
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPSet(PSet, CheckedType):
     """
-    A CheckedPVector is a PSet which allows specifying type and invariant checks.
+    A CheckedPSet is a PSet which allows specifying type and invariant checks.
 
     >>> class Positives(CheckedPSet):
     ...     __type__ = (long, int)

@@ -25,7 +25,7 @@ class _PListBuilder(object):
         return self._head
 
     def append_elem(self, elem):
-        return self._append(elem, lambda e: _PList(e, _EMPTY_PLIST))
+        return self._append(elem, lambda e: PList(e, _EMPTY_PLIST))
 
     def append_plist(self, pl):
         return self._append(pl, lambda l: l)
@@ -64,7 +64,7 @@ class _PListBase(object):
         >>> plist([1, 2]).cons(3)
         plist([3, 1, 2])
         """
-        return _PList(elem, self)
+        return PList(elem, self)
 
     def mcons(self, iterable):
         """
@@ -210,7 +210,7 @@ class _PListBase(object):
         raise ValueError('{0} not found in PList'.format(elem))
 
 
-class _PList(_PListBase):
+class PList(_PListBase):
     """
     Classical Lisp style singly linked list. Adding elements to the head using cons is O(1).
     Element access is O(k) where k is the position of the element in the list. Taking the
@@ -240,7 +240,7 @@ class _PList(_PListBase):
     __slots__ = ('first', 'rest')
 
     def __new__(cls, first, rest):
-        instance = super(_PList, cls).__new__(cls)
+        instance = super(PList, cls).__new__(cls)
         instance.first = first
         instance.rest = rest
         return instance
@@ -250,8 +250,8 @@ class _PList(_PListBase):
     __nonzero__ = __bool__
 
 
-Sequence.register(_PList)
-Hashable.register(_PList)
+Sequence.register(PList)
+Hashable.register(PList)
 
 
 class _EmptyPList(_PListBase):

@@ -7,7 +7,7 @@ def _add_to_counters(counters, element):
     return counters.set(element, counters.get(element, 0) + 1)
 
 
-class _PBag(object):
+class PBag(object):
     """
     A persistent bag/multiset type.
 
@@ -47,7 +47,7 @@ class _PBag(object):
         >>> s3
         pbag([1, 2])
         """
-        return _PBag(_add_to_counters(self._counts, element))
+        return PBag(_add_to_counters(self._counts, element))
 
     def remove(self, element):
         """
@@ -67,7 +67,7 @@ class _PBag(object):
             newc = self._counts.remove(element)
         else:
             newc = self._counts.set(element, self._counts[element] - 1)
-        return _PBag(newc)
+        return PBag(newc)
 
     def count(self, element):
         """
@@ -127,7 +127,7 @@ class _PBag(object):
         >>> pbag([2, 1, 0]) == pbag([0, 1, 2])
         True
         """
-        if type(other) is not _PBag:
+        if type(other) is not PBag:
             raise TypeError("Can only compare PBag with PBags")
         return self._counts == other._counts
 
@@ -144,10 +144,10 @@ class _PBag(object):
         return hash(self._counts)
 
 
-Container.register(_PBag)
-Iterable.register(_PBag)
-Sized.register(_PBag)
-Hashable.register(_PBag)
+Container.register(PBag)
+Iterable.register(PBag)
+Sized.register(PBag)
+Hashable.register(PBag)
 
 
 def b(*elements):
@@ -174,8 +174,8 @@ def pbag(elements):
     """
     if not elements:
         return _EMPTY_PBAG
-    return _PBag(reduce(_add_to_counters, elements, pmap()))
+    return PBag(reduce(_add_to_counters, elements, pmap()))
 
 
-_EMPTY_PBAG = _PBag(pmap())
+_EMPTY_PBAG = PBag(pmap())
 

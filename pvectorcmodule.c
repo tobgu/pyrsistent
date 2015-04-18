@@ -993,7 +993,12 @@ static PyObject* PVector_mset(PVector *self, PyObject *args) {
 
 
 static PyMethodDef PyrsistentMethods[] = {
-  {"pvector", pyrsistent_pvec, METH_VARARGS, "Factory method for persistent vectors"},
+  {"pvector", pyrsistent_pvec, METH_VARARGS, 
+   "pvector([iterable])\n"
+   "Create a new persistent vector containing the elements in iterable.\n\n"
+   ">>> v1 = pvector([1, 2, 3])\n"
+   ">>> v1\n"
+   "pvector([1, 2, 3])"},
   {NULL, NULL, 0, NULL}
 };
 
@@ -1234,7 +1239,7 @@ static PyTypeObject PVectorEvolverType = {
 
 
 static void cleanNodeRecursively(VNode *node, int level) {
-  debug("Freezing recursively node=%p, level=%u\n", node, level);
+  debug("Cleaning recursively node=%p, level=%u\n", node, level);
 
   int i;
   CLEAR_DIRTY(node);
@@ -1250,9 +1255,9 @@ static void cleanNodeRecursively(VNode *node, int level) {
 }
 
 static void cleanVector(PVector *vector) {
-  // Freezing the vector means that all dirty indications are cleared
+  // Cleaning the vector means that all dirty indications are cleared
   // and that the nodes that were dirty get a ref count of 1 since
-  // they are brand new. Once frozen the vector can be released into
+  // they are brand new. Once cleaned the vector can be released into
   // the wild.
   if(IS_DIRTY(vector->tail)) {
     cleanNodeRecursively(vector->tail, 0);

@@ -505,6 +505,7 @@ class PVector(object):
         use evolvers in excess ;-)).
 
         Create the evolver and perform various mutating updates to it:
+
         >>> v1 = v(1, 2, 3, 4, 5)
         >>> e = v1.evolver()
         >>> e[1] = 22
@@ -515,11 +516,13 @@ class PVector(object):
         9
 
         The underlying pvector remains the same:
+
         >>> v1
         pvector([1, 2, 3, 4, 5])
 
         The changes are kept in the evolver. An updated pvector can be created using the
-        pvector() function on the evolver.
+        persistent() function on the evolver.
+
         >>> v2 = e.persistent()
         >>> v2
         pvector([1, 22, 3, 4, 5, 6, 7, 8, 10])

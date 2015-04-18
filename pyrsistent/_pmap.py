@@ -348,6 +348,7 @@ class PMap(object):
         documentation for the pvector evolver.
 
         Create the evolver and perform various mutating updates to it:
+
         >>> m1 = m(a=1, b=2)
         >>> e = m1.evolver()
         >>> e['c'] = 3
@@ -356,11 +357,13 @@ class PMap(object):
         >>> del e['a']
 
         The underlying pmap remains the same:
+
         >>> m1
         pmap({'a': 1, 'b': 2})
 
         The changes are kept in the evolver. An updated pmap can be created using the
-        pmap() function on the evolver.
+        persistent() function on the evolver.
+
         >>> m2 = e.persistent()
         >>> m2
         pmap({'c': 3, 'b': 2})

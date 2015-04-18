@@ -131,6 +131,7 @@ class PSet(object):
         documentation for the pvector evolver.
 
         Create the evolver and perform various mutating updates to it:
+
         >>> s1 = s(1, 2, 3)
         >>> e = s1.evolver()
         >>> _ = e.add(4)
@@ -139,11 +140,13 @@ class PSet(object):
         >>> _ = e.remove(1)
 
         The underlying pset remains the same:
+
         >>> s1
         pset([1, 2, 3])
 
         The changes are kept in the evolver. An updated pmap can be created using the
-        pset() function on the evolver.
+        persistent() function on the evolver.
+
         >>> s2 = e.persistent()
         >>> s2
         pset([2, 3, 4])
