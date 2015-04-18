@@ -65,7 +65,7 @@ setup(
     author_email='tobias.l.gustafsson@gmail.com',
     url='http://github.com/tobgu/pyrsistent/',
     license='LICENSE.mit',
-    py_modules=['pyrsistent', '_pyrsistent_version'],
+    py_modules=['_pyrsistent_version'],
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
@@ -77,4 +77,5 @@ setup(
     ext_modules=extensions,
     cmdclass={"build_ext": custom_build_ext},
     install_requires=['six'],
+    packages=['pyrsistent']
 )
