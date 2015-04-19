@@ -11,6 +11,14 @@ def _set_fields(dct, bases, name):
             del dct[k]
 
 
+def serialize(fields, format, key, value):
+    serializer = fields[key].serializer
+    if isinstance(value, CheckedType) and serializer is _PFIELD_NO_SERIALIZER:
+        return value.serialize(format)
+
+    return serializer(format, value)
+
+
 def _check_type(destination_cls, field, name, value):
     if field.type and not any(isinstance(value, t) for t in field.type):
         actual_type = type(value)

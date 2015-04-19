@@ -1,6 +1,6 @@
 import six
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException
-from pyrsistent._field_common import _set_fields, _PFIELD_NO_SERIALIZER, _check_type, _PFIELD_NO_INITIAL
+from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize
 from pyrsistent._pmap import PMap, pmap
 
 
@@ -95,14 +95,7 @@ class PRecord(PMap, CheckedType):
         Serialize the current PRecord using custom serializer functions for fields where
         such have been supplied.
         """
-        def _serialize(k, v):
-            serializer = self.__class__._precord_fields[k].serializer
-            if isinstance(v, CheckedType) and serializer is _PFIELD_NO_SERIALIZER:
-                return v.serialize(format)
-
-            return serializer(format, v)
-
-        return dict((k, _serialize(k, v)) for k, v in self.items())
+        return dict((k, serialize(self._precord_fields, format, k, v)) for k, v in self.items())
 
 
 class _PRecordEvolver(PMap._Evolver):

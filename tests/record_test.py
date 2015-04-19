@@ -47,6 +47,7 @@ def test_cannot_assign_wrong_type_to_fields():
         assert e.expected_types == set([int, float])
         assert e.actual_type is type('foo')
 
+
 def test_cannot_construct_with_undeclared_fields():
     with pytest.raises(AttributeError):
         ARecord(z=5)
@@ -98,6 +99,7 @@ def test_field_invariant_must_hold():
     except InvariantException as e:
         assert e.invariant_errors == ('x too small',)
         assert e.missing_fields == ('BRecord.y',)
+
 
 def test_global_invariant_must_hold():
     class BRecord(PRecord):
@@ -165,14 +167,17 @@ def test_global_invariants_are_inherited():
     except InvariantException as e:
         assert e.invariant_errors == ('modulo',)
 
+
 def test_global_invariants_must_be_callable():
     with pytest.raises(TypeError):
         class CRecord(PRecord):
             __invariant__ = 1
 
+
 def test_repr():
     r = ARecord(x=1, y=2)
     assert repr(r) == 'ARecord(x=1, y=2)' or repr(r) == 'ARecord(y=2, x=1)'
+
 
 def test_factory():
     class BRecord(PRecord):
@@ -180,10 +185,12 @@ def test_factory():
 
     assert BRecord(x=2.5) == {'x': 2}
 
+
 def test_factory_must_be_callable():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
             x = field(type=int, factory=1)
+
 
 def test_nested_record_construction():
     class BRecord(PRecord):
@@ -198,12 +205,14 @@ def test_nested_record_construction():
     assert isinstance(r.b, BRecord)
     assert r == {'a': 'foo', 'b': {'x': 5}}
 
+
 def test_pickling():
     x = ARecord(x=2.0, y='bar')
     y = pickle.loads(pickle.dumps(x, -1))
 
     assert x == y
     assert isinstance(y, ARecord)
+
 
 def test_all_invariant_errors_reported():
     class BRecord(PRecord):
@@ -230,14 +239,16 @@ def test_precord_factory_method_is_idempotent():
     r = BRecord(x=1, y=2)
     assert BRecord.create(r) is r
 
+
 def test_serialize():
     class BRecord(PRecord):
         d = field(type=datetime.date,
                   factory=lambda d: datetime.datetime.strptime(d, "%d%m%Y").date(),
-                  serializer=lambda format, d: d.strftime('%Y-%m-%d') if format=='ISO' else d.strftime('%d%m%Y'))
+                  serializer=lambda format, d: d.strftime('%Y-%m-%d') if format == 'ISO' else d.strftime('%d%m%Y'))
 
     assert BRecord(d='14012015').serialize('ISO') == {'d': '2015-01-14'}
     assert BRecord(d='14012015').serialize('other') == {'d': '14012015'}
+
 
 def test_nested_serialize():
     class BRecord(PRecord):
@@ -251,10 +262,12 @@ def test_nested_serialize():
     assert serialized == {'b': {'d': 'bar'}}
     assert isinstance(serialized, dict)
 
+
 def test_serializer_must_be_callable():
     with pytest.raises(TypeError):
         class CRecord(PRecord):
             x = field(serializer=1)
+
 
 def test_transform_without_update_returns_same_precord():
     r = ARecord(x=2.0, y='bar')
@@ -265,8 +278,10 @@ class Application(PRecord):
     name = field(type=(six.text_type,) + six.string_types)
     image = field(type=(six.text_type,) + six.string_types)
 
+
 class ApplicationVector(CheckedPVector):
     __type__ = Application
+
 
 class Node(PRecord):
     applications = field(type=ApplicationVector)

@@ -1,3 +1,4 @@
+from collections import Hashable
 import pytest
 from pyrsistent import field, InvariantException
 from pyrsistent import PClass
@@ -5,8 +6,8 @@ from pyrsistent import PClass
 
 class Point(PClass):
     x = field(type=int, mandatory=True, invariant=lambda x: (x >= 0, 'X negative'))
-    y = field(type=int)
-
+    y = field(type=int, serializer=lambda formatter, y: formatter(y))
+    z = field(type=int, initial=0)
 
 def test_evolve_pclass_instance():
     p = Point(x=1, y=2)
@@ -45,7 +46,7 @@ def test_direct_delete_not_possible():
 
 def test_cannot_construct_with_undeclared_fields():
     with pytest.raises(AttributeError):
-        Point(x=1, z=5)
+        Point(x=1, p=5)
 
 
 def test_cannot_construct_with_wrong_type():
@@ -62,19 +63,71 @@ def test_field_invariant_must_hold():
     with pytest.raises(InvariantException):
         Point(x=-1)
 
+
+def test_initial_value_set_when_not_present_in_arguments():
+    p = Point(x=1, y=2)
+
+    assert p.z == 0
+
+
+class Line(PClass):
+    p1 = field(type=Point)
+    p2 = field(type=Point)
+
+
+def test_can_create_nested_structures_from_dict_and_serialize_back_to_dict():
+    source = dict(p1=dict(x=1, y=2, z=3), p2=dict(x=10, y=20, z=30))
+    l = Line.create(source)
+
+    assert l.p1.x == 1
+    assert l.p1.y == 2
+    assert l.p1.z == 3
+    assert l.p2.x == 10
+    assert l.p2.y == 20
+    assert l.p2.z == 30
+
+    assert l.serialize(format=lambda val: val) == source
+
+
+def test_can_serialize_with_custom_serializer():
+    p = Point(x=1, y=1, z=1)
+
+    assert p.serialize(format=lambda v: v + 17) == {'x': 1, 'y': 18, 'z': 1}
+
+
+def test_implements_proper_equality_based_on_equality_of_fields():
+    p1 = Point(x=1, y=2)
+    p2 = Point(x=3)
+    p3 = Point(x=1, y=2)
+
+    assert p1 == p3
+    assert not p1 != p3
+    assert p1 != p2
+    assert not p1 == p2
+
+
+def test_is_hashable():
+    p1 = Point(x=1, y=2)
+    p2 = Point(x=3, y=2)
+
+    d = {p1: 'A point', p2: 'Another point'}
+
+    p1_like = Point(x=1, y=2)
+    p2_like = Point(x=3, y=2)
+
+    assert isinstance(p1, Hashable)
+    assert d[p1_like] == 'A point'
+    assert d[p2_like] == 'Another point'
+    assert Point(x=10) not in d
+
 # Test list:
-# - Initial/default (make possible to be a lambda if this is not already the case)
-# - Nested construction with other checked types
 # - Global invariant checks
-# - Serialization and creation
 # - Repr
 # - Evolver
 # - Transformation
 # - Inheritance
 # - Pickling
-# - Without/del to remove a member?
-# - Do we want it to be possible to monkey patch by evolution?
-# - Hash and equality
+# - remove() to remove a member?
 
 # TODO
 # - File with shared functions and field handling
