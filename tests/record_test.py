@@ -2,7 +2,7 @@ import pickle
 import datetime
 import pytest
 import six
-from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector, PRecordTypeError
+from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector, PTypeError
 
 
 class ARecord(PRecord):
@@ -41,7 +41,7 @@ def test_cannot_assign_wrong_type_to_fields():
     try:
         ARecord().set('x', 'foo')
         assert False
-    except PRecordTypeError as e:
+    except PTypeError as e:
         assert e.source_class == ARecord
         assert e.field == 'x'
         assert e.expected_types == set([int, float])

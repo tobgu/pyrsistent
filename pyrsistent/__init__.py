@@ -14,7 +14,11 @@ from pyrsistent._pdeque import pdeque, dq, PDeque
 
 from pyrsistent._checked_types import CheckedPMap, CheckedPVector, CheckedPSet, InvariantException, CheckedKeyTypeError, CheckedValueTypeError, CheckedType, optional
 
-from pyrsistent._precord import PRecord, field, PRecordTypeError
+from pyrsistent._field_common import field, PTypeError
+
+from pyrsistent._precord import PRecord
+
+from pyrsistent._pclass import PClass
 
 from pyrsistent._immutable import immutable, pclass
 
@@ -31,6 +35,7 @@ __all__ = ('pmap', 'm', 'PMap',
            'pdeque', 'dq', 'PDeque',
            'CheckedPMap', 'CheckedPVector', 'CheckedPSet', 'InvariantException', 'CheckedKeyTypeError', 'CheckedValueTypeError', 'CheckedType', 'optional',
            'PRecord', 'field', 'PRecordTypeError',
+           'PClass',
            'immutable',
            'freeze', 'thaw', 'mutant',
            'inc', 'discard', 'rex', 'ny')
