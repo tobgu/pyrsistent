@@ -9,6 +9,7 @@ class Point(PClass):
     y = field(type=int, serializer=lambda formatter, y: formatter(y))
     z = field(type=int, initial=0)
 
+
 def test_evolve_pclass_instance():
     p = Point(x=1, y=2)
     p2 = p.set(x=p.x+2)
@@ -120,16 +121,30 @@ def test_is_hashable():
     assert d[p2_like] == 'Another point'
     assert Point(x=10) not in d
 
+
+def test_supports_nested_transformation():
+    l1 = Line(p1=Point(x=2, y=1), p2=Point(x=20, y=10))
+
+    l2 = l1.transform(['p1', 'x'], 3)
+
+    assert l1.p1.x == 2
+
+    assert l2.p1.x == 3
+    assert l2.p1.y == 1
+    assert l2.p2.x == 20
+    assert l2.p2.y == 10
+
+
+def test_repr():
+    l = Line(p1=Point(x=2, y=1), p2=Point(x=20, y=10))
+
+    assert repr(l) == 'Line(p2=Point(y=10, x=20, z=0), p1=Point(y=1, x=2, z=0))'
 # Test list:
 # - Global invariant checks
-# - Repr
-# - Evolver
-# - Transformation
 # - Inheritance
 # - Pickling
 # - remove() to remove a member?
+# - Transformation with matchers?
 
 # TODO
-# - File with shared functions and field handling
-# - Rename PRecordTypeError and move to common file
 # - Difference in when the type error is raised in the PClass and the PRecord right now

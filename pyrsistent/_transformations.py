@@ -56,12 +56,16 @@ def _items(structure):
     try:
         return structure.items()
     except AttributeError:
+        # Support wider range of structures by adding a transform_items() or similar?
         return list(enumerate(structure))
 
 
 def _get(structure, key, default):
     try:
-        return structure[key]
+        try:
+            return structure[key]
+        except TypeError:
+            return getattr(structure, key)
     except (IndexError, KeyError):
         return default
 

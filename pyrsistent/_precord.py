@@ -95,7 +95,7 @@ class PRecord(PMap, CheckedType):
         Serialize the current PRecord using custom serializer functions for fields where
         such have been supplied.
         """
-        return dict((k, serialize(self._precord_fields, format, k, v)) for k, v in self.items())
+        return dict((k, serialize(self._precord_fields[k].serializer, format, v)) for k, v in self.items())
 
 
 class _PRecordEvolver(PMap._Evolver):

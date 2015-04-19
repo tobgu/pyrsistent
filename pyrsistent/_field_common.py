@@ -11,8 +11,7 @@ def _set_fields(dct, bases, name):
             del dct[k]
 
 
-def serialize(fields, format, key, value):
-    serializer = fields[key].serializer
+def serialize(serializer, format, value):
     if isinstance(value, CheckedType) and serializer is _PFIELD_NO_SERIALIZER:
         return value.serialize(format)
 

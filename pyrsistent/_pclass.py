@@ -1,6 +1,7 @@
 import six
 from pyrsistent._checked_types import InvariantException, CheckedType
 from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize
+from pyrsistent._transformations import transform
 
 
 class _PClassMeta(type):
@@ -57,7 +58,9 @@ class PClass(CheckedType):
 
     @classmethod
     def create(cls, kwargs):
-        # Return kwargs if kwargs instance of cls?
+        if isinstance(kwargs, cls):
+            return kwargs
+
         return cls(**kwargs)
 
     def serialize(self, format=None):
@@ -65,9 +68,12 @@ class PClass(CheckedType):
         for name in self._pclass_fields:
             value = getattr(self, name, _MISSING_VALUE)
             if value is not _MISSING_VALUE:
-                result[name] = serialize(self._pclass_fields, format, name, value)
+                result[name] = serialize(self._pclass_fields[name].serializer, format, value)
 
         return result
+
+    def transform(self, *transformations):
+        return transform(self, transformations)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -94,3 +100,37 @@ class PClass(CheckedType):
 
     def __delattr__(self, key):
             raise AttributeError("Can't delete attribute, key={0}".format(key))
+
+    def _to_dict(self):
+        result = {}
+        for key in self._pclass_fields:
+            value = getattr(self, key, _MISSING_VALUE)
+            if value is not _MISSING_VALUE:
+                result[key] = value
+
+        return result
+
+    def __repr__(self):
+        return "{0}({1})".format(self.__class__.__name__,
+                                 ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self._to_dict().items()))
+
+    def evolver(self):
+        return _PClassEvolver(self.__class__, self._to_dict())
+
+
+class _PClassEvolver(object):
+    def __init__(self, base_cls, initial_dict):
+        self.base_cls = base_cls
+        self.data = initial_dict
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def set(self, key, value):
+        self[key] = value
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def persistent(self):
+        return self.base_cls(**self.data)
