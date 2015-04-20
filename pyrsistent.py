@@ -7,6 +7,7 @@ from numbers import Integral
 import sys
 import re
 import warnings
+import operator
 
 import six
 
@@ -19,13 +20,9 @@ BRANCH_FACTOR = 32
 BIT_MASK = BRANCH_FACTOR - 1
 SHIFT = _bitcount(BIT_MASK)
 
-def _comparator(f):
-    @wraps(f)
-    def wrapper(*args, **kwds):
-        if isinstance(args[0], PVector) and isinstance(args[1], PVector):
-            return f(*args, **kwds)
-        return NotImplemented
-    return wrapper
+
+def compare_pvector(v, other, operator):
+    return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)
 
 
 class _PVectorImpl(object):
@@ -78,29 +75,23 @@ class _PVectorImpl(object):
         # by far of those tried since it uses the speed of the built in python list directly.
         return iter(self.tolist())
 
-    @_comparator
     def __ne__(self, other):
-        return self.tolist() != other.tolist()
+        return compare_pvector(self, other, operator.ne)
 
-    @_comparator
     def __eq__(self, other):
-        return self is other or self.tolist() == other.tolist()
+        return self is other or compare_pvector(self, other, operator.eq)
 
-    @_comparator
     def __gt__(self, other):
-        return self.tolist() > other.tolist()
+        return compare_pvector(self, other, operator.gt)
 
-    @_comparator
     def __lt__(self, other):
-        return self.tolist() < other.tolist()
+        return compare_pvector(self, other, operator.lt)
 
-    @_comparator
     def __ge__(self, other):
-        return self.tolist() >= other.tolist()
+        return compare_pvector(self, other, operator.ge)
 
-    @_comparator
     def __le__(self, other):
-        return self.tolist() <= other.tolist()
+        return compare_pvector(self, other, operator.le)
 
     def __mul__(self, times):
         if times <= 0 or self is _EMPTY_PVECTOR:

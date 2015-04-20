@@ -321,10 +321,26 @@ static PyObject* PVector_richcompare(PyObject *v, PyObject *w, int op) {
     PVector *vt, *wt;
     Py_ssize_t i;
     Py_ssize_t vlen, wlen;
+    PyObject *list;
+    PyObject *result;
 
     if(!PVector_CheckExact(v) || !PVector_CheckExact(w)) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+      if(PVector_CheckExact(v)) {
+        list = PVector_toList((PVector*)v);
+        result = PyObject_RichCompare(list , w, op);
+        Py_DECREF(list);
+        return result; 
+      }
+
+      if(PVector_CheckExact(w)) {
+        list = PVector_toList((PVector*)w);
+        result = PyObject_RichCompare(v, list, op);
+        Py_DECREF(list);
+        return result; 
+      }
+
+      Py_INCREF(Py_NotImplemented);
+      return Py_NotImplemented;
     }
 
     if((op == Py_EQ) && (v == w)) {
