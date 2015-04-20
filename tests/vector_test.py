@@ -237,20 +237,6 @@ def test_addition(pvector):
     assert list(v) == [1, 2, 3, 4]
 
 
-def test_slicing_reverse(pvector):
-    seq = pvector(range(10))
-    seq2 = seq[::-1]
-
-    assert seq2[0] == 9
-    assert seq2[1] == 8
-    assert len(seq2) == 10
-
-    seq3 = seq[-3: -7: -1]
-    assert seq3[0] == 7
-    assert seq3[3] == 4
-    assert len(seq3) == 4
-
-
 def test_sorted(pvector):
     seq = pvector([5, 2, 3, 1])
     assert [1, 2, 3, 5] == sorted(seq)
@@ -281,11 +267,6 @@ def test_index_error_negative(pvector):
 def test_is_sequence(pvector):
     from collections import Sequence
     assert isinstance(pvector(), Sequence)
-
-
-def test_is_hashable(pvector):
-    from collections import Hashable
-    assert isinstance(pvector(), Hashable)
 
 
 def test_empty_repr(pvector):
@@ -738,17 +719,34 @@ def test_evolver_is_dirty(pvector):
     e.persistent()
     assert not e.is_dirty()
 
+
 def test_vector_insert_one_step_beyond_end(pvector):
     # This test exists to get the transform functionality under memory
     # leak supervision. Most of the transformation tests are in test_transform.py.
     v = pvector([1, 2])
     assert v.transform([2], 3) == pvector([1, 2, 3])
 
+
 def test_evolver_with_no_updates_returns_same_pvector(pvector):
     v = pvector([1, 2])
     assert v.evolver().persistent() is v
+
 
 def test_evolver_returns_itself_on_evolving_operations(pvector):
     # Does this to be able to chain operations
     v = pvector([1, 2])
     assert v.evolver().append(3).extend([4, 5]).set(1, 6).persistent() == pvector([1, 6, 3, 4, 5])
+
+
+def test_compare_with_list(pvector):
+    v = pvector([1, 2, 3])
+
+    assert v == [1, 2, 3]
+    assert v != [1, 2]
+    assert v > [1, 2]
+    assert v < [2, 2]
+    assert [1, 2] < v
+    assert v <= [1, 2, 3]
+    assert v <= [1, 2, 4]
+    assert v >= [1, 2, 3]
+    assert v >= [1, 2]

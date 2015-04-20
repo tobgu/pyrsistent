@@ -1,8 +1,12 @@
 Revision history
 ----------------
+
 v10.0.0, 2015-
   * New type PClass
   * Rename PRecordTypeError -> PTypeError, it is now also raised by PClass
+
+v0.9.4, 2015-04-20
+  * Fix #34, PVector now compares against built in list type
 
 v0.9.3, 2015-04-06
   * Rename pclass back to immutable and deprecate the usage of the pclass function. PClass will be used by
