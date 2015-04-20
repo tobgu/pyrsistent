@@ -1,5 +1,8 @@
 Revision history
 ----------------
+v0.9.4, 2015-04-20
+  * Fix #34, PVector now compares against built in list type
+
 v0.9.3, 2015-04-06
   * Rename pclass back to immutable and deprecate the usage of the pclass function. PClass will be used by
     a new, different type in upcoming releases.
