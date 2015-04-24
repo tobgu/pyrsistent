@@ -62,10 +62,11 @@ def _items(structure):
 
 def _get(structure, key, default):
     try:
-        try:
+        if hasattr(structure, '__getitem__'):
             return structure[key]
-        except TypeError:
-            return getattr(structure, key)
+
+        return getattr(structure, key)
+
     except (IndexError, KeyError):
         return default
 
