@@ -1,4 +1,5 @@
 from collections import Hashable
+import math
 import pytest
 from pyrsistent import field, InvariantException
 from pyrsistent import PClass
@@ -139,9 +140,23 @@ def test_repr():
     l = Line(p1=Point(x=2, y=1), p2=Point(x=20, y=10))
 
     assert repr(l) == 'Line(p2=Point(y=10, x=20, z=0), p1=Point(y=1, x=2, z=0))'
+
+
+def test_global_invariant_check():
+    class UnitCirclePoint(PClass):
+        __invariant__ = lambda cp: (0.99 < math.sqrt(cp.x*cp.x + cp.y*cp.y) < 1.01,
+                                    "Point not on unit circle")
+        x = field(type=float)
+        y = field(type=float)
+
+    UnitCirclePoint(x=1.0, y=0.0)
+
+    with pytest.raises(InvariantException):
+        UnitCirclePoint(x=1.0, y=1.0)
+
+
+
 # Test list:
-# - Global invariant checks
-# - Inheritance
 # - Pickling
 # - remove() to remove a member?
 # - Transformation with matchers?

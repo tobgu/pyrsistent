@@ -1,4 +1,5 @@
 from collections import Iterable
+from pyrsistent._checked_types import InvariantException
 from pyrsistent import CheckedType
 
 
@@ -9,6 +10,20 @@ def _set_fields(dct, bases, name):
         if isinstance(v, _PField):
             dct[name][k] = v
             del dct[k]
+
+
+def set_global_invariants(dct, bases, name):
+    dct[name] = [dct['__invariant__']] if '__invariant__' in dct else []
+    dct[name] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
+    if not all(callable(invariant) for invariant in dct[name]):
+        raise TypeError('Global invariants must be callable')
+
+
+def check_global_invariants(subject, invariants):
+        error_codes = tuple(error_code for is_ok, error_code in
+                            (invariant(subject) for invariant in invariants) if not is_ok)
+        if error_codes:
+            raise InvariantException(error_codes, (), 'Global invariant failed')
 
 
 def serialize(serializer, format, value):

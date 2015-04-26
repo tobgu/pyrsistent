@@ -1,17 +1,14 @@
 import six
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException
-from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize
+from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize, set_global_invariants, \
+    check_global_invariants
 from pyrsistent._pmap import PMap, pmap
 
 
 class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         _set_fields(dct, bases, name='_precord_fields')
-        # Global invariants are inherited
-        dct['_precord_invariants'] = [dct['__invariant__']] if '__invariant__' in dct else []
-        dct['_precord_invariants'] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
-        if not all(callable(invariant) for invariant in dct['_precord_invariants']):
-            raise TypeError('Global invariants must be callable')
+        set_global_invariants(dct, bases, '_precord_invariants')
 
         dct['_precord_mandatory_fields'] = \
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
@@ -147,10 +144,7 @@ class _PRecordEvolver(PMap._Evolver):
             raise InvariantException(tuple(self._invariant_error_codes), tuple(self._missing_fields),
                                      'Field invariant failed')
 
-        error_codes = tuple(error_code for is_ok, error_code in
-                            (invariant(result) for invariant in cls._precord_invariants) if not is_ok)
-        if error_codes:
-            raise InvariantException(error_codes, (), 'Global invariant failed')
+        check_global_invariants(result, cls._precord_invariants)
 
         return result
 

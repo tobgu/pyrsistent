@@ -1,12 +1,14 @@
 import six
 from pyrsistent._checked_types import InvariantException, CheckedType
-from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize
+from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize, set_global_invariants, \
+    check_global_invariants
 from pyrsistent._transformations import transform
 
 
 class _PClassMeta(type):
     def __new__(mcs, name, bases, dct):
         _set_fields(dct, bases, name='_pclass_fields')
+        set_global_invariants(dct, bases, '_pclass_invariants')
         dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
         return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
 
@@ -40,6 +42,8 @@ class PClass(CheckedType):
         if kwargs:
             raise AttributeError("'{0}' are not among the specified fields for {1}".format(
                 ', '.join(kwargs), cls.__name__))
+
+        check_global_invariants(result, cls._pclass_invariants)
 
         result._pclass_frozen = True
         return result
