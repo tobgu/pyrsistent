@@ -2,7 +2,10 @@ import pickle
 import datetime
 import pytest
 import six
-from pyrsistent import PRecord, field, InvariantException, ny, CheckedPSet, CheckedPVector, PTypeError
+from pyrsistent import (
+    PRecord, field, InvariantException, ny, pset, PSet, CheckedPVector,
+    PTypeError, pset_field, pvector_field, pmap_field, pmap, PMap,
+    pvector, PVector)
 
 
 class ARecord(PRecord):
@@ -307,3 +310,317 @@ def test_nested_create_serialize():
     restored = Node.create(serialized)
 
     assert restored == node
+
+
+def test_pset_field_initial_value():
+    """
+    ``pset_field`` results in initial value that is empty.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    assert Record() == Record(value=[])
+
+def test_pset_field_custom_initial():
+    """
+    A custom initial value can be passed in.
+    """
+    class Record(PRecord):
+        value = pset_field(int, initial=(1, 2))
+    assert Record() == Record(value=[1, 2])
+
+def test_pset_field_factory():
+    """
+    ``pset_field`` has a factory that creates a ``PSet``.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    record = Record(value=[1, 2])
+    assert isinstance(record.value, PSet)
+
+def test_pset_field_checked_set():
+    """
+    ``pset_field`` results in a set that enforces its type.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    record = Record(value=[1, 2])
+    with pytest.raises(TypeError):
+        record.value.add("hello")
+
+def test_pset_field_type():
+    """
+    ``pset_field`` enforces its type.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    record = Record()
+    with pytest.raises(TypeError):
+        record.set("value", None)
+
+def test_pset_field_mandatory():
+    """
+    ``pset_field`` is a mandatory field.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    record = Record(value=[1])
+    with pytest.raises(InvariantException):
+        record.remove("value")
+
+def test_pset_field_default_non_optional():
+    """
+    By default ``pset_field`` is non-optional, i.e. does not allow
+    ``None``.
+    """
+    class Record(PRecord):
+        value = pset_field(int)
+    with pytest.raises(TypeError):
+        Record(value=None)
+
+def test_pset_field_explicit_non_optional():
+    """
+    If ``optional`` argument is ``False`` then ``pset_field`` is
+    non-optional, i.e. does not allow ``None``.
+    """
+    class Record(PRecord):
+        value = pset_field(int, optional=False)
+    with pytest.raises(TypeError):
+        Record(value=None)
+
+def test_pset_field_optional():
+    """
+    If ``optional`` argument is true, ``None`` is acceptable alternative
+    to a set.
+    """
+    class Record(PRecord):
+        value = pset_field(int, optional=True)
+    assert ((Record(value=[1, 2]).value, Record(value=None).value) ==
+            (pset([1, 2]), None))
+
+def test_pset_field_name():
+    """
+    The created set class name is based on the type of items in the set.
+    """
+    class Something(object):
+        pass
+
+    class Record(PRecord):
+        value = pset_field(Something)
+        value2 = pset_field(int)
+    assert ((Record().value.__class__.__name__,
+             Record().value2.__class__.__name__) ==
+            ("SomethingPSet", "IntPSet"))
+
+
+def test_pvector_field_initial_value():
+    """
+    ``pvector_field`` results in initial value that is empty.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    assert Record() == Record(value=[])
+
+def test_pvector_field_custom_initial():
+    """
+    A custom initial value can be passed in.
+    """
+    class Record(PRecord):
+        value = pvector_field(int, initial=(1, 2))
+    assert Record() == Record(value=[1, 2])
+
+def test_pvector_field_factory():
+    """
+    ``pvector_field`` has a factory that creates a ``PVector``.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    record = Record(value=[1, 2])
+    assert isinstance(record.value, PVector)
+
+def test_pvector_field_checked_vector():
+    """
+    ``pvector_field`` results in a vector that enforces its type.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    record = Record(value=[1, 2])
+    with pytest.raises(TypeError):
+        record.value.append("hello")
+
+def test_pvector_field_type():
+    """
+    ``pvector_field`` enforces its type.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    record = Record()
+    with pytest.raises(TypeError):
+        record.set("value", None)
+
+def test_pvector_field_mandatory():
+    """
+    ``pvector_field`` is a mandatory field.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    record = Record(value=[1])
+    with pytest.raises(InvariantException):
+        record.remove("value")
+
+def test_pvector_field_default_non_optional():
+    """
+    By default ``pvector_field`` is non-optional, i.e. does not allow
+    ``None``.
+    """
+    class Record(PRecord):
+        value = pvector_field(int)
+    with pytest.raises(TypeError):
+        Record(value=None)
+
+def test_pvector_field_explicit_non_optional():
+    """
+    If ``optional`` argument is ``False`` then ``pvector_field`` is
+    non-optional, i.e. does not allow ``None``.
+    """
+    class Record(PRecord):
+        value = pvector_field(int, optional=False)
+    with pytest.raises(TypeError):
+        Record(value=None)
+
+def test_pvector_field_optional():
+    """
+    If ``optional`` argument is true, ``None`` is acceptable alternative
+    to a sequence.
+    """
+    class Record(PRecord):
+        value = pvector_field(int, optional=True)
+    assert ((Record(value=[1, 2]).value, Record(value=None).value) ==
+            (pvector([1, 2]), None))
+
+def test_pvector_field_name():
+    """
+    The created set class name is based on the type of items in the set.
+    """
+    class Something(object):
+        pass
+
+    class Record(PRecord):
+        value = pvector_field(Something)
+        value2 = pvector_field(int)
+    assert ((Record().value.__class__.__name__,
+             Record().value2.__class__.__name__) ==
+            ("SomethingPVector", "IntPVector"))
+
+
+def test_pmap_field_initial_value():
+    """
+    ``pmap_field`` results in initial value that is empty.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int)
+    assert Record() == Record(value={})
+
+def test_pmap_field_factory():
+    """
+    ``pmap_field`` has a factory that creates a ``PMap``.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int)
+    record = Record(value={1:  1234})
+    assert isinstance(record.value, PMap)
+
+def test_pmap_field_checked_map_key():
+    """
+    ``pmap_field`` results in a map that enforces its key type.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, type(None))
+    record = Record(value={1: None})
+    with pytest.raises(TypeError):
+        record.value.set("hello", None)
+
+def test_pmap_field_checked_map_value():
+    """
+    ``pmap_field`` results in a map that enforces its value type.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, type(None))
+    record = Record(value={1: None})
+    with pytest.raises(TypeError):
+        record.value.set(2, 4)
+
+def test_pmap_field_mandatory():
+    """
+    ``pmap_field`` is a mandatory field.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int)
+    record = Record()
+    with pytest.raises(InvariantException):
+        record.remove("value")
+
+def test_pmap_field_default_non_optional():
+    """
+    By default ``pmap_field`` is non-optional, i.e. does not allow
+    ``None``.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int)
+    # Ought to be TypeError, but pyrsistent doesn't quite allow that:
+    with pytest.raises(AttributeError):
+        Record(value=None)
+
+def test_pmap_field_explicit_non_optional():
+    """
+    If ``optional`` argument is ``False`` then ``pmap_field`` is
+    non-optional, i.e. does not allow ``None``.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int, optional=False)
+    # Ought to be TypeError, but pyrsistent doesn't quite allow that:
+    with pytest.raises(AttributeError):
+        Record(value=None)
+
+def test_pmap_field_optional():
+    """
+    If ``optional`` argument is true, ``None`` is acceptable alternative
+    to a set.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, int, optional=True)
+    assert ((Record(value={1: 2}).value, Record(value=None).value) ==
+            pmap({1: 2}), None)
+
+def test_pmap_field_name():
+    """
+    The created map class name is based on the types of items in the map.
+    """
+    class Something(object):
+        pass
+
+    class Another(object):
+        pass
+
+    class Record(PRecord):
+        value = pmap_field(Something, Another)
+        value2 = pmap_field(int, float)
+    assert ((Record().value.__class__.__name__,
+             Record().value2.__class__.__name__) ==
+            ("SomethingAnotherPMap", "IntFloatPMap"))
+
+def test_pmap_field_invariant():
+    """
+    The ``invariant`` parameter is passed through to ``field``.
+    """
+    class Record(PRecord):
+        value = pmap_field(
+            int, int,
+            invariant=(
+                lambda pmap: (len(pmap) == 1, "Exactly one item required.")
+            )
+        )
+    with pytest.raises(InvariantException):
+        Record(value={})
+    with pytest.raises(InvariantException):
+        Record(value={1: 2, 3: 4})
+    assert Record(value={1: 2}).value == {1: 2}
