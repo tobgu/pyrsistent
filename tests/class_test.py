@@ -138,9 +138,11 @@ def test_supports_nested_transformation():
 
 
 def test_repr():
-    l = Line(p1=Point(x=2, y=1), p2=Point(x=20, y=10))
+    class ARecord(PClass):
+        a = field()
+        b = field()
 
-    assert repr(l) == 'Line(p2=Point(y=10, x=20, z=0), p1=Point(y=1, x=2, z=0))'
+    assert repr(ARecord(a=1, b=2)) in ('ARecord(a=1, b=2)', 'ARecord(b=2, a=1)')
 
 
 def test_global_invariant_check():
