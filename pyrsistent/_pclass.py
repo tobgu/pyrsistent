@@ -1,7 +1,7 @@
 import six
 from pyrsistent._checked_types import InvariantException, CheckedType, _restore_pickle
-from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize, set_global_invariants, \
-    check_global_invariants
+from pyrsistent._field_common import (_set_fields, _check_type, _PFIELD_NO_INITIAL, serialize,
+                                      set_global_invariants, check_global_invariants)
 from pyrsistent._transformations import transform
 
 
@@ -103,7 +103,7 @@ class PClass(CheckedType):
         super(PClass, self).__setattr__(key, value)
 
     def __delattr__(self, key):
-            raise AttributeError("Can't delete attribute, key={0}".format(key))
+            raise AttributeError("Can't delete attribute, key={0}, use remove()".format(key))
 
     def _to_dict(self):
         result = {}
@@ -126,6 +126,11 @@ class PClass(CheckedType):
     def evolver(self):
         return _PClassEvolver(self.__class__, self._to_dict())
 
+    def remove(self, name):
+        evolver = self.evolver()
+        del evolver[name]
+        return evolver.persistent()
+
 
 class _PClassEvolver(object):
     def __init__(self, base_cls, initial_dict):
@@ -140,6 +145,12 @@ class _PClassEvolver(object):
 
     def __setitem__(self, key, value):
         self.data[key] = value
+
+    def __delitem__(self, item):
+        if item in self.data:
+            del self.data[item]
+        else:
+            raise AttributeError(item)
 
     def persistent(self):
         return self.base_cls(**self.data)

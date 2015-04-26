@@ -164,10 +164,22 @@ def test_supports_pickling():
     assert isinstance(p2, Point)
 
 
-# Test list:
-# - Pickling
-# - remove() to remove a member?
-# - Transformation with matchers?
+def test_can_remove_optional_member():
+    p1 = Point(x=1, y=2)
+    p2 = p1.remove('y')
 
-# TODO
-# - Difference in when the type error is raised in the PClass and the PRecord right now
+    assert p2 == Point(x=1)
+
+
+def test_cannot_remove_mandatory_member():
+    p1 = Point(x=1, y=2)
+
+    with pytest.raises(InvariantException):
+        p1.remove('x')
+
+
+def test_cannot_remove_non_existing_member():
+    p1 = Point(x=1)
+
+    with pytest.raises(AttributeError):
+        p1.remove('y')

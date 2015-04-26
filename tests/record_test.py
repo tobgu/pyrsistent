@@ -88,6 +88,13 @@ def test_remove():
     assert r2 == {'x': 1}
 
 
+def test_remove_non_existing_member():
+    r = ARecord(x=1, y='foo')
+
+    with pytest.raises(KeyError):
+        r.remove('z')
+
+
 def test_field_invariant_must_hold():
     class BRecord(PRecord):
         x = field(invariant=lambda x: (x > 1, 'x too small'))
