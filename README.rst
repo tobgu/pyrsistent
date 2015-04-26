@@ -277,6 +277,19 @@ this behaviour.
     >>> ERecord.create({'d': {'x': '1'}})
     ERecord(d=DRecord(x=1))
 
+Collection fields
+*****************
+
+It is also possible to have fields with ``pyrsistent`` collections.
+
+.. code:: python
+
+   >>> class MultiRecord(PRecord):
+   ...     set_of_ints = pset_field(int)
+   ...     map_int_to_str = pmap_field(int, str)
+   ...     vector_of_strs = pvector_field(str)
+   ...
+	
 Serialization
 *************
 PRecords support serialization back to dicts. Default serialization will take keys and values

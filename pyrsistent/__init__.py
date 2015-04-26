@@ -14,7 +14,8 @@ from pyrsistent._pdeque import pdeque, dq, PDeque
 
 from pyrsistent._checked_types import CheckedPMap, CheckedPVector, CheckedPSet, InvariantException, CheckedKeyTypeError, CheckedValueTypeError, CheckedType, optional
 
-from pyrsistent._field_common import field, PTypeError
+from pyrsistent._field_common import (
+    field, PTypeError, pset_field, pmap_field, pvector_field)
 
 from pyrsistent._precord import PRecord
 
