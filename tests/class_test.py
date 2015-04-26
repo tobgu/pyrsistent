@@ -1,5 +1,6 @@
 from collections import Hashable
 import math
+import pickle
 import pytest
 from pyrsistent import field, InvariantException
 from pyrsistent import PClass
@@ -154,6 +155,13 @@ def test_global_invariant_check():
     with pytest.raises(InvariantException):
         UnitCirclePoint(x=1.0, y=1.0)
 
+
+def test_supports_pickling():
+    p1 = Point(x=2, y=1)
+    p2 = pickle.loads(pickle.dumps(p1, -1))
+
+    assert p1 == p2
+    assert isinstance(p2, Point)
 
 
 # Test list:

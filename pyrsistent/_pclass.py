@@ -1,5 +1,5 @@
 import six
-from pyrsistent._checked_types import InvariantException, CheckedType
+from pyrsistent._checked_types import InvariantException, CheckedType, _restore_pickle
 from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize, set_global_invariants, \
     check_global_invariants
 from pyrsistent._transformations import transform
@@ -117,6 +117,11 @@ class PClass(CheckedType):
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
                                  ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self._to_dict().items()))
+
+    def __reduce__(self):
+        # Pickling support
+        data = dict((key, getattr(self, key)) for key in self._pclass_fields if hasattr(self, key))
+        return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):
         return _PClassEvolver(self.__class__, self._to_dict())
