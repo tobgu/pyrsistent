@@ -1,6 +1,7 @@
 from collections import Iterable
-from pyrsistent._checked_types import InvariantException
-from pyrsistent import CheckedType
+from pyrsistent import (
+    CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
+    optional as optional_type, InvariantException)
 
 
 def _set_fields(dct, bases, name):
@@ -122,3 +123,99 @@ class PTypeError(TypeError):
         self.field = field
         self.expected_types = expected_types
         self.actual_type = actual_type
+
+
+def _sequence_field(checked_class, suffix, item_type, optional, initial):
+    """
+    Create checked field for either ``PSet`` or ``PVector``.
+
+    :param checked_class: ``CheckedPSet`` or ``CheckedPVector``.
+    :param suffix: Suffix for new type name.
+    :param item_type: The required type for the items in the set.
+    :param bool optional: If true, ``None`` can be used as a value for
+        this field.
+    :param initial: Initial value to pass to factory.
+
+    :return: A ``field`` containing a checked class.
+    """
+    class TheType(checked_class):
+        __type__ = item_type
+    TheType.__name__ = item_type.__name__.capitalize() + suffix
+
+    if optional:
+        def factory(argument):
+            if argument is None:
+                return None
+            else:
+                return TheType(argument)
+    else:
+        factory = TheType
+    return field(type=optional_type(TheType) if optional else TheType,
+                 factory=factory, mandatory=True,
+                 initial=factory(initial))
+
+
+def pset_field(item_type, optional=False, initial=()):
+    """
+    Create checked ``PSet`` field.
+
+    :param item_type: The required type for the items in the set.
+    :param bool optional: If true, ``None`` can be used as a value for
+        this field.
+    :param initial: Initial value to pass to factory if no value is given
+        for the field.
+
+    :return: A ``field`` containing a ``CheckedPSet`` of the given type.
+    """
+    return _sequence_field(CheckedPSet, "PSet", item_type, optional,
+                           initial)
+
+
+def pvector_field(item_type, optional=False, initial=()):
+    """
+    Create checked ``PVector`` field.
+
+    :param item_type: The required type for the items in the vector.
+    :param bool optional: If true, ``None`` can be used as a value for
+        this field.
+    :param initial: Initial value to pass to factory if no value is given
+        for the field.
+
+    :return: A ``field`` containing a ``CheckedPVector`` of the given type.
+    """
+    return _sequence_field(CheckedPVector, "PVector", item_type, optional,
+                           initial)
+
+
+_valid = lambda item: (True, "")
+
+
+def pmap_field(key_type, value_type, optional=False, invariant=_valid):
+    """
+    Create a checked ``PMap`` field.
+
+    :param key: The required type for the keys of the map.
+    :param value: The required type for the values of the map.
+    :param bool optional: If true, ``None`` can be used as a value for
+        this field.
+    :param invariant: Pass-through to ``field``.
+
+    :return: A ``field`` containing a ``CheckedPMap``.
+    """
+    class TheMap(CheckedPMap):
+        __key_type__ = key_type
+        __value_type__ = value_type
+    TheMap.__name__ = (key_type.__name__.capitalize() +
+                       value_type.__name__.capitalize() + "PMap")
+
+    if optional:
+        def factory(argument):
+            if argument is None:
+                return None
+            else:
+                return TheMap(argument)
+    else:
+        factory = TheMap
+    return field(mandatory=True, initial=TheMap(),
+                 type=optional_type(TheMap) if optional else TheMap,
+                 factory=factory, invariant=invariant)
