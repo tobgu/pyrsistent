@@ -124,7 +124,7 @@ class PClass(CheckedType):
         return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):
-        return _PClassEvolver(self.__class__, self._to_dict())
+        return _PClassEvolver(self, self._to_dict())
 
     def remove(self, name):
         evolver = self.evolver()
@@ -133,24 +133,37 @@ class PClass(CheckedType):
 
 
 class _PClassEvolver(object):
-    def __init__(self, base_cls, initial_dict):
-        self.base_cls = base_cls
+    def __init__(self, original, initial_dict):
+        self.original = original
         self.data = initial_dict
+        self.is_dirty = False
 
     def __getitem__(self, item):
         return self.data[item]
 
     def set(self, key, value):
-        self[key] = value
+        if self.data.get(key, _MISSING_VALUE) is not value:
+            self.data[key] = value
+            self.is_dirty = True
+
+        return self
 
     def __setitem__(self, key, value):
-        self.data[key] = value
+        self.set(key, value)
 
-    def __delitem__(self, item):
+    def remove(self, item):
         if item in self.data:
             del self.data[item]
-        else:
-            raise AttributeError(item)
+            self.is_dirty = True
+            return self
+
+        raise AttributeError(item)
+
+    def __delitem__(self, item):
+        self.remove(item)
 
     def persistent(self):
-        return self.base_cls(**self.data)
+        if self.is_dirty:
+            return self.original.__class__(**self.data)
+
+        return self.original

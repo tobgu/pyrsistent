@@ -185,3 +185,24 @@ def test_cannot_remove_non_existing_member():
 
     with pytest.raises(AttributeError):
         p1.remove('y')
+
+
+def test_evolver_without_evolution_returns_original_instance():
+    p1 = Point(x=1)
+    e = p1.evolver()
+
+    assert e.persistent() is p1
+
+
+def test_evolver_with_evolution_to_same_element_returns_original_instance():
+    p1 = Point(x=1)
+    e = p1.evolver()
+    e.set('x', p1.x)
+
+    assert e.persistent() is p1
+
+
+def test_evolver_supports_chained_set_and_remove():
+    p1 = Point(x=1, y=2)
+
+    assert p1.evolver().set('x', 3).remove('y').persistent() == Point(x=3)
