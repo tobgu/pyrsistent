@@ -1,10 +1,4 @@
-import warnings
 import six
-
-
-def pclass(*args, **kwargs):
-    warnings.warn("'pclass' has been renamed to 'immutable' please use that name instead", DeprecationWarning)
-    return immutable(*args, **kwargs)
 
 
 def immutable(members='', name='Immutable', verbose=False):

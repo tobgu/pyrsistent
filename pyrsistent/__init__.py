@@ -23,7 +23,7 @@ from pyrsistent._precord import PRecord
 
 from pyrsistent._pclass import PClass
 
-from pyrsistent._immutable import immutable, pclass
+from pyrsistent._immutable import immutable
 
 from pyrsistent._helpers import freeze, thaw, mutant
 

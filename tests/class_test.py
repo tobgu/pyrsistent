@@ -2,8 +2,7 @@ from collections import Hashable
 import math
 import pickle
 import pytest
-from pyrsistent import field, InvariantException
-from pyrsistent import PClass
+from pyrsistent import field, InvariantException, PClass
 
 
 class Point(PClass):
