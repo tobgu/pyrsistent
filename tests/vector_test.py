@@ -5,7 +5,7 @@ import pytest
 def pvector(request):
     m = pytest.importorskip(request.param)
     if request.param == 'pyrsistent._pvector':
-        return m._pvector
+        return m.python_pvector
     return m.pvector
 
 

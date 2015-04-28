@@ -2,7 +2,7 @@ from collections import Iterable
 import six
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
-from pyrsistent._pvector import _PVectorImpl, _pvector
+from pyrsistent._pvector import PythonPVector, python_pvector
 
 
 class CheckedType(object):
@@ -154,7 +154,7 @@ def _checked_type_create(cls, source_data):
         return cls(source_data)
 
 @six.add_metaclass(_CheckedTypeMeta)
-class CheckedPVector(_PVectorImpl, CheckedType):
+class CheckedPVector(PythonPVector, CheckedType):
     """
     A CheckedPVector is a PVector which allows specifying type and invariant checks.
 
@@ -169,10 +169,10 @@ class CheckedPVector(_PVectorImpl, CheckedType):
     __slots__ = ()
 
     def __new__(cls, initial=()):
-        if type(initial) == _PVectorImpl:
+        if type(initial) == PythonPVector:
             return super(CheckedPVector, cls).__new__(cls, initial._count, initial._shift, initial._root, initial._tail)
 
-        return CheckedPVector.Evolver(cls, _pvector()).extend(initial).persistent()
+        return CheckedPVector.Evolver(cls, python_pvector()).extend(initial).persistent()
 
     def set(self, key, value):
         return self.evolver().set(key, value).persistent()
@@ -193,7 +193,7 @@ class CheckedPVector(_PVectorImpl, CheckedType):
         # Pickling support
         return _restore_pickle, (self.__class__, list(self),)
 
-    class Evolver(_PVectorImpl.Evolver):
+    class Evolver(PythonPVector.Evolver):
         __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, vector):

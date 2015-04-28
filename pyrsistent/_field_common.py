@@ -1,10 +1,10 @@
 from collections import Iterable
-from pyrsistent import (
+from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
     optional as optional_type, InvariantException)
 
 
-def _set_fields(dct, bases, name):
+def set_fields(dct, bases, name):
     dct[name] = dict(sum([list(b.__dict__.get(name, {}).items()) for b in bases], []))
 
     for k, v in list(dct.items()):
@@ -28,13 +28,13 @@ def check_global_invariants(subject, invariants):
 
 
 def serialize(serializer, format, value):
-    if isinstance(value, CheckedType) and serializer is _PFIELD_NO_SERIALIZER:
+    if isinstance(value, CheckedType) and serializer is PFIELD_NO_SERIALIZER:
         return value.serialize(format)
 
     return serializer(format, value)
 
 
-def _check_type(destination_cls, field, name, value):
+def check_type(destination_cls, field, name, value):
     if field.type and not any(isinstance(value, t) for t in field.type):
         actual_type = type(value)
         message = "Invalid type for field {0}.{1}, was {2}".format(destination_cls.__name__, name, actual_type.__name__)
@@ -52,15 +52,15 @@ class _PField(object):
         self.factory = factory
         self.serializer = serializer
 
-_PFIELD_NO_TYPE = ()
-_PFIELD_NO_INVARIANT = lambda _: (True, None)
-_PFIELD_NO_FACTORY = lambda x: x
-_PFIELD_NO_INITIAL = object()
-_PFIELD_NO_SERIALIZER = lambda _, value: value
+PFIELD_NO_TYPE = ()
+PFIELD_NO_INVARIANT = lambda _: (True, None)
+PFIELD_NO_FACTORY = lambda x: x
+PFIELD_NO_INITIAL = object()
+PFIELD_NO_SERIALIZER = lambda _, value: value
 
 
-def field(type=_PFIELD_NO_TYPE, invariant=_PFIELD_NO_INVARIANT, initial=_PFIELD_NO_INITIAL,
-          mandatory=False, factory=_PFIELD_NO_FACTORY, serializer=_PFIELD_NO_SERIALIZER):
+def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_INITIAL,
+          mandatory=False, factory=PFIELD_NO_FACTORY, serializer=PFIELD_NO_SERIALIZER):
     """
     Field specification factory for :py:class:`PRecord`.
 
@@ -75,7 +75,7 @@ def field(type=_PFIELD_NO_TYPE, invariant=_PFIELD_NO_INVARIANT, initial=_PFIELD_
     types = set(type) if isinstance(type, Iterable) else set([type])
 
     # If no factory is specified and the type is another CheckedType use the factory method of that CheckedType
-    if factory is _PFIELD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], CheckedType):
+    if factory is PFIELD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], CheckedType):
         # TODO: Should this option be looked up at execution time rather than at field construction time?
         #       that would allow checking against all the types specified and if none matches the
         #       first
@@ -94,7 +94,7 @@ def _check_field_parameters(field):
         if not isinstance(t, type):
             raise TypeError('Type paramenter expected, not {0}'.format(type(t)))
 
-    if field.initial is not _PFIELD_NO_INITIAL and field.type and not any(isinstance(field.initial, t) for t in field.type):
+    if field.initial is not PFIELD_NO_INITIAL and field.type and not any(isinstance(field.initial, t) for t in field.type):
         raise TypeError('Initial has invalid type {0}'.format(type(t)))
 
     if not callable(field.invariant):
@@ -190,7 +190,7 @@ def pvector_field(item_type, optional=False, initial=()):
 _valid = lambda item: (True, "")
 
 
-def pmap_field(key_type, value_type, optional=False, invariant=_valid):
+def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIANT):
     """
     Create a checked ``PMap`` field.
 

@@ -12,7 +12,9 @@ from pyrsistent._plist import plist, l, PList
 
 from pyrsistent._pdeque import pdeque, dq, PDeque
 
-from pyrsistent._checked_types import CheckedPMap, CheckedPVector, CheckedPSet, InvariantException, CheckedKeyTypeError, CheckedValueTypeError, CheckedType, optional
+from pyrsistent._checked_types import (
+    CheckedPMap, CheckedPVector, CheckedPSet, InvariantException, CheckedKeyTypeError,
+    CheckedValueTypeError, CheckedType, optional)
 
 from pyrsistent._field_common import (
     field, PTypeError, pset_field, pmap_field, pvector_field)
@@ -35,7 +37,7 @@ __all__ = ('pmap', 'm', 'PMap',
            'plist', 'l', 'PList',
            'pdeque', 'dq', 'PDeque',
            'CheckedPMap', 'CheckedPVector', 'CheckedPSet', 'InvariantException', 'CheckedKeyTypeError', 'CheckedValueTypeError', 'CheckedType', 'optional',
-           'PRecord', 'field', 'PRecordTypeError',
+           'PRecord', 'field', 'PRecordTypeError', 'pset_field', 'pmap_field', 'pvector_field',
            'PClass',
            'immutable',
            'freeze', 'thaw', 'mutant',

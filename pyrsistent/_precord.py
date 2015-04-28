@@ -1,20 +1,21 @@
 import six
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException
-from pyrsistent._field_common import _set_fields, _check_type, _PFIELD_NO_INITIAL, serialize, set_global_invariants, \
-    check_global_invariants
+from pyrsistent._field_common import (
+    set_fields, check_type, PFIELD_NO_INITIAL, serialize,
+    set_global_invariants, check_global_invariants)
 from pyrsistent._pmap import PMap, pmap
 
 
 class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
-        _set_fields(dct, bases, name='_precord_fields')
+        set_fields(dct, bases, name='_precord_fields')
         set_global_invariants(dct, bases, '_precord_invariants')
 
         dct['_precord_mandatory_fields'] = \
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
 
         dct['_precord_initial_values'] = \
-            dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not _PFIELD_NO_INITIAL)
+            dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not PFIELD_NO_INITIAL)
 
         dct['__slots__'] = ()
 
@@ -117,7 +118,7 @@ class _PRecordEvolver(PMap._Evolver):
                 self._missing_fields += e.missing_fields
                 return self
 
-            _check_type(self._destination_cls, field, key, value)
+            check_type(self._destination_cls, field, key, value)
 
             is_ok, error_code = field.invariant(value)
             if not is_ok:

@@ -18,14 +18,14 @@ def compare_pvector(v, other, operator):
     return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)
 
 
-class _PVectorImpl(object):
+class PythonPVector(object):
     """
     Support structure for PVector that implements structural sharing for vectors using a trie.
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
 
     def __new__(cls, count, shift, root, tail):
-        self = super(_PVectorImpl, cls).__new__(cls)
+        self = super(PythonPVector, cls).__new__(cls)
         self._count = count
         self._shift = shift
         self._root = root
@@ -52,7 +52,7 @@ class _PVectorImpl(object):
         if index < 0:
             index += self._count
 
-        return _PVectorImpl._node_for(self, index)[index & BIT_MASK]
+        return PythonPVector._node_for(self, index)[index & BIT_MASK]
 
     def __add__(self, other):
         return self.extend(other)
@@ -163,7 +163,7 @@ class _PVectorImpl(object):
             if self._count <= index < self._count + len(self._extra_tail):
                 return self._extra_tail[index - self._count]
 
-            return _PVectorImpl._node_for(self, index)[index & BIT_MASK]
+            return PythonPVector._node_for(self, index)[index & BIT_MASK]
 
         def _reset(self, v):
             self._count = v._count
@@ -233,7 +233,7 @@ class _PVectorImpl(object):
         def persistent(self):
             result = self._orig_pvector
             if self.is_dirty():
-                result = _PVectorImpl(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
+                result = PythonPVector(self._count, self._shift, self._root, self._tail).extend(self._extra_tail)
                 self._reset(result)
 
             return result
@@ -245,7 +245,7 @@ class _PVectorImpl(object):
             return bool(self._dirty_nodes or self._extra_tail)
 
     def evolver(self):
-        return _PVectorImpl.Evolver(self)
+        return PythonPVector.Evolver(self)
 
     def set(self, i, val):
         # This method could be implemented by a call to mset() but doing so would cause
@@ -262,9 +262,9 @@ class _PVectorImpl(object):
             if i >= self._tail_offset:
                 new_tail = list(self._tail)
                 new_tail[i & BIT_MASK] = val
-                return _PVectorImpl(self._count, self._shift, self._root, new_tail)
+                return PythonPVector(self._count, self._shift, self._root, new_tail)
 
-            return _PVectorImpl(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
+            return PythonPVector(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
 
         if i == self._count:
             return self.append(val)
@@ -311,11 +311,11 @@ class _PVectorImpl(object):
         if len(self._tail) < BRANCH_FACTOR:
             new_tail = list(self._tail)
             new_tail.append(val)
-            return _PVectorImpl(self._count + 1, self._shift, self._root, new_tail)
+            return PythonPVector(self._count + 1, self._shift, self._root, new_tail)
 
         # Full tail, push into tree
         new_root, new_shift = self._create_new_root()
-        return _PVectorImpl(self._count + 1, new_shift, new_root, [val])
+        return PythonPVector(self._count + 1, new_shift, new_root, [val])
 
     def _new_path(self, level, node):
         if level == 0:
@@ -348,7 +348,7 @@ class _PVectorImpl(object):
     def extend(self, obj):
         # Mutates the new vector directly for efficiency but that's only an
         # implementation detail, once it is returned it should be considered immutable
-        l = obj.tolist() if isinstance(obj, _PVectorImpl) else list(obj)
+        l = obj.tolist() if isinstance(obj, PythonPVector) else list(obj)
         if l:
             new_vector = self.append(l[0])
             new_vector._mutating_extend(l[1:])
@@ -637,12 +637,12 @@ class PVector(object):
         True
         """
 
-_EMPTY_PVECTOR = _PVectorImpl(0, SHIFT, [], [])
-PVector.register(_PVectorImpl)
+_EMPTY_PVECTOR = PythonPVector(0, SHIFT, [], [])
+PVector.register(PythonPVector)
 Sequence.register(PVector)
 Hashable.register(PVector)
 
-def _pvector(iterable=()):
+def python_pvector(iterable=()):
     """
     Create a new persistent vector containing the elements in iterable.
 
@@ -657,7 +657,7 @@ try:
     from pvectorc import pvector
     PVector.register(type(pvector()))
 except ImportError:
-    pvector = _pvector
+    pvector = python_pvector
 
 
 def v(*elements):

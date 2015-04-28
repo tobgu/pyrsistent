@@ -1,13 +1,13 @@
 import six
 from pyrsistent._checked_types import InvariantException, CheckedType, _restore_pickle
-from pyrsistent._field_common import (_set_fields, _check_type, _PFIELD_NO_INITIAL, serialize,
+from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize,
                                       set_global_invariants, check_global_invariants)
 from pyrsistent._transformations import transform
 
 
 class _PClassMeta(type):
     def __new__(mcs, name, bases, dct):
-        _set_fields(dct, bases, name='_pclass_fields')
+        set_fields(dct, bases, name='_pclass_fields')
         set_global_invariants(dct, bases, '_pclass_invariants')
         dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
         return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
@@ -24,14 +24,14 @@ class PClass(CheckedType):
         for name, field in cls._pclass_fields.items():
             if name in kwargs:
                 value = field.factory(kwargs[name])
-                _check_type(cls, field, name, value)
+                check_type(cls, field, name, value)
                 is_ok, error_code = field.invariant(value)
                 if not is_ok:
                     invariant_errors.append(error_code)
                 else:
                     setattr(result, name, value)
                     del kwargs[name]
-            elif field.initial is not _PFIELD_NO_INITIAL:
+            elif field.initial is not PFIELD_NO_INITIAL:
                 setattr(result, name, field.initial)
             elif field.mandatory:
                 missing_fields.append('{0}.{1}'.format(cls.__name__, name))
