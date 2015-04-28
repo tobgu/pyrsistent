@@ -573,6 +573,7 @@ Christopher Armstrong https://github.com/radix
 
 Anders Hovmöller https://github.com/boxed
 
+Itamar Turner-Trauring https://github.com/itamarst
 
 Contributing
 ------------

@@ -1,9 +1,17 @@
 Revision history
 ----------------
 
-v10.0.0, 2015-
-  * New type PClass
+v10.0.0, 2015-04-27
+  * New type PClass, a persistent version of a Python object. Related to issues #30 and #32.
+    Thanks @exarkun and @radix for input on this one!
   * Rename PRecordTypeError -> PTypeError, it is now also raised by PClass
+  * New convenience functions, pvector_field, pmap_field and pset_field to create PRecord/PClass
+    fields for checked collections. Issues #26 and #36. Thanks to @itamarst for this!
+  * Removed deprecated function set_in() on PMap and PVector.
+  * Removed deprecated factory function pclass.
+  * Major internal restructuring breaking pyrsistent.py into multiple files. This should
+    not affect those only using the public interface but if you experience problems please
+    let me know.
 
 v0.9.4, 2015-04-20
   * Fix #34, PVector now compares against built in list type
