@@ -282,10 +282,10 @@ this behaviour.
 
 Collection fields
 *****************
-
 It is also possible to have fields with ``pyrsistent`` collections.
 
 .. code:: python
+
    >>> from pyrsistent import pset_field, pmap_field, pvector_field
    >>> class MultiRecord(PRecord):
    ...     set_of_ints = pset_field(int)
