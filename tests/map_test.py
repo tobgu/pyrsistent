@@ -154,6 +154,10 @@ def test_update_no_arguments():
     assert x.update() is x
 
 
+def test_addition():
+    assert m(x=1, y=2) + m(y=3, z=4) == m(x=1, y=3, z=4)
+
+
 def test_set_in_base_case():
     # Works as set when called with only one key
     x = m(a=1, b=2)
@@ -344,9 +348,11 @@ def test_evolver_remove_element_not_present():
 
     assert str(error.value) == "'c'"
 
+
 def test_copy_returns_reference_to_self():
     m1 = m(a=10)
     assert m1.copy() is m1
+
 
 def test_dot_access_of_non_existing_element_raises_attribute_error():
     m1 = m(a=10)

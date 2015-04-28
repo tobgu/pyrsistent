@@ -120,6 +120,8 @@ Random access and insert is log32(n) where n is the size of the map.
     # Evolve by merging with other mappings
     >>> m5.update(m(a=2, c=3), {'a': 17, 'd': 35})
     pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
+    >>> pmap({'x': 1, 'y': 2}) + pmap({'y': 3, 'z': 4})
+    pmap({'y': 3, 'x': 1, 'z': 4})
 
     # Dict-like methods to convert to list and iterate
     >>> m3.items()
@@ -201,7 +203,7 @@ by providing an iterable of types.
     BRecord(y=None, x=3)
     >>> BRecord(x=3.0)
     Traceback (most recent call last):
-    PRecordTypeError: Invalid type for field BRecord.x, was float
+    PTypeError: Invalid type for field BRecord.x, was float
 
 Mandatory fields
 ****************
@@ -283,7 +285,7 @@ Collection fields
 It is also possible to have fields with ``pyrsistent`` collections.
 
 .. code:: python
-
+   >>> from pyrsistent import pset_field, pmap_field, pvector_field
    >>> class MultiRecord(PRecord):
    ...     set_of_ints = pset_field(int)
    ...     map_int_to_str = pmap_field(int, str)
@@ -350,7 +352,7 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     # But also makes asserts that types and invariants hold
     >>> lottery_0215.transform([0, 'name'], 999)
     Traceback (most recent call last):
-    PRecordTypeError: Invalid type for field Lottery.name, was int
+    PTypeError: Invalid type for field Lottery.name, was int
 
     >>> lottery_0215.transform([0, 'numbers'], set())
     Traceback (most recent call last):

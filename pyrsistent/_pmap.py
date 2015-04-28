@@ -212,6 +212,9 @@ class PMap(object):
 
         return evolver.persistent()
 
+    def __add__(self, other):
+        return self.update(other)
+
     def set_in(self, keys, val):
         """
         Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
