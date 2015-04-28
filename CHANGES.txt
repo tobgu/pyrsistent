@@ -1,6 +1,9 @@
 Revision history
 ----------------
 
+v10.0.1, 2015-04-27
+  * Fix broken README.rst
+
 v10.0.0, 2015-04-27
   * New type PClass, a persistent version of a Python object. Related to issues #30 and #32.
     Thanks @exarkun and @radix for input on this one!
