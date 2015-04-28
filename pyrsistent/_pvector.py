@@ -568,20 +568,6 @@ class PVector(object):
         """
 
     @abstractmethod
-    def set_in(self, keys, val):
-        """
-        Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
-        do not exist will be inserted as new PMaps.
-
-        >>> from pyrsistent import v, m
-        >>> v1 = v(1, 2, m(a=5, b=6))
-        >>> v1.set_in((2, 'b'), 17)
-        pvector([1, 2, pmap({'a': 5, 'b': 17})])
-        >>> v1.set_in((2, 'c', 'd'), 17)
-        pvector([1, 2, pmap({'a': 5, 'c': pmap({'d': 17}), 'b': 6})])
-        """
-
-    @abstractmethod
     def index(self, value, *args, **kwargs):
         """
         Return first index of value. Additional indexes may be supplied to limit the search to a

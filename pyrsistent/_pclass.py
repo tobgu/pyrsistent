@@ -17,6 +17,14 @@ _MISSING_VALUE = object()
 
 @six.add_metaclass(_PClassMeta)
 class PClass(CheckedType):
+    """
+    A PClass is a python class with a fixed set of specified fields. PClasses are declared as python classes inheriting
+    from PClass. It is defined the same way that PRecords are and behaves like a PRecord in all aspects except that it
+    is not a PMap and hence not a collection but rather a plain Python object.
+
+
+    More documentation and examples of PClass usage is available at https://github.com/tobgu/pyrsistent
+    """
     def __new__(cls, **kwargs):    # Support *args?
         result = super(PClass, cls).__new__(cls)
         missing_fields = []
@@ -49,6 +57,24 @@ class PClass(CheckedType):
         return result
 
     def set(self, *args, **kwargs):
+        """
+        Set a field in the instance. Returns a new instance with the updated value. The original instance remains
+        unmodified. Accepts key-value pairs or single string representing the field name and a value.
+
+        >>> from pyrsistent import PClass, field
+        >>> class AClass(PClass):
+        ...     x = field()
+        ...
+        >>> a = AClass(x=1)
+        >>> a2 = a.set(x=2)
+        >>> a3 = a.set('x', 3)
+        >>> a
+        AClass(x=1)
+        >>> a2
+        AClass(x=2)
+        >>> a3
+        AClass(x=3)
+        """
         if args:
             return self.__class__(**{args[0]: args[1]})
 
@@ -62,12 +88,20 @@ class PClass(CheckedType):
 
     @classmethod
     def create(cls, kwargs):
+        """
+        Factory method. Will create a new PClass of the current type and assign the values
+        specified in kwargs.
+        """
         if isinstance(kwargs, cls):
             return kwargs
 
         return cls(**kwargs)
 
     def serialize(self, format=None):
+        """
+        Serialize the current PClass using custom serializer functions for fields where
+        such have been supplied.
+        """
         result = {}
         for name in self._pclass_fields:
             value = getattr(self, name, _MISSING_VALUE)
@@ -77,6 +111,12 @@ class PClass(CheckedType):
         return result
 
     def transform(self, *transformations):
+        """
+        Apply transformations to the currency PClass. For more details on transformations see
+        the documentation for PMap. Transformations on PClasses do not support key matching
+        since the PClass is not a collection. Apart from that the transformations available
+        for other persistent types work as expected.
+        """
         return transform(self, transformations)
 
     def __eq__(self, other):
@@ -124,9 +164,16 @@ class PClass(CheckedType):
         return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):
+        """
+        Returns an evolver for this object.
+        """
         return _PClassEvolver(self, self._to_dict())
 
     def remove(self, name):
+        """
+        Remove attribute given by name from the current instance. Raises AttributeError if the
+        attribute doesn't exist.
+        """
         evolver = self.evolver()
         del evolver[name]
         return evolver.persistent()

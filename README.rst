@@ -33,6 +33,7 @@ The collection types and key features currently implemented are:
 * PMap_, similar to dict
 * PSet_, similar to set
 * PRecord_, a PMap on steroids with fixed fields, optional type and invariant checking and much more
+* PClass_, a Python class fixed fields, optional type and invariant checking and much more
 * `Checked collections`_, PVector, PMap and PSet with optional type and invariance checks and more
 * PBag, similar to collections.Counter
 * PList, a classic singly linked list
@@ -314,8 +315,29 @@ to take care of fields that require special treatment.
 .. _instar: https://github.com/boxed/instar/
 .. _transformations: https://github.com/boxed/instar/
 
+.. _PClass:
+
+PClass
+~~~~~~
+A PClass is a python class with a fixed set of specified fields. PClasses are declared as python classes inheriting
+from PClass. It is defined the same way that PRecords are and behaves like a PRecord in all aspects except that it
+is not a PMap and hence not a collection but rather a plain Python object.
+
+.. code:: python
+
+    >>> from pyrsistent import PClass, field
+    >>> class AClass(PClass):
+    ...     x = field()
+    ...
+    >>> a = AClass(x=3)
+    >>> a
+    AClass(x=3)
+    >>> a.x
+    3
+
+
 Checked collections
--------------------
+~~~~~~~~~~~~~~~~~~~
 Checked collections currently come in three flavors: CheckedPVector, CheckedPMap and CheckedPSet.
 
 .. code:: python
