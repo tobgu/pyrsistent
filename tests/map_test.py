@@ -158,23 +158,23 @@ def test_addition():
     assert m(x=1, y=2) + m(y=3, z=4) == m(x=1, y=3, z=4)
 
 
-def test_set_in_base_case():
+def test_transform_base_case():
     # Works as set when called with only one key
     x = m(a=1, b=2)
     
-    assert x.set_in(['a'], 3) == m(a=3, b=2)
+    assert x.transform(['a'], 3) == m(a=3, b=2)
 
 
-def test_set_in_nested_maps():
+def test_transform_nested_maps():
     x = m(a=1, b=m(c=3, d=m(e=6, f=7)))
     
-    assert x.set_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
+    assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
 
 
-def test_set_in_levels_missing():
+def test_transform_levels_missing():
     x = m(a=1, b=m(c=3))
     
-    assert x.set_in(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
+    assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
 
 
 class HashDummy(object):

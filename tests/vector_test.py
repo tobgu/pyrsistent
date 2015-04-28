@@ -355,50 +355,50 @@ def test_repeat(pvector):
     assert -3 * pvector([1, 2]) is pvector()
 
 
-def test_set_zero_key_length(pvector):
+def test_transform_zero_key_length(pvector):
     x = pvector([1, 2])
 
-    assert x.set_in([], 3) == 3
+    assert x.transform([], 3) == 3
 
 
-def test_set_in_base_case(pvector):
+def test_transform_base_case(pvector):
     x = pvector([1, 2])
 
-    assert x.set_in([1], 3) == pvector([1, 3])
+    assert x.transform([1], 3) == pvector([1, 3])
 
 
-def test_set_in_nested_vectors(pvector):
+def test_transform_nested_vectors(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
-    assert x.set_in([2, 0], 999) == pvector([1, 2, pvector([999, 4]), 5])
+    assert x.transform([2, 0], 999) == pvector([1, 2, pvector([999, 4]), 5])
 
 
-def test_set_in_when_appending(pvector):
+def test_transform_when_appending(pvector):
     from pyrsistent import m
     x = pvector([1, 2])
 
-    assert x.set_in([2, 'd'], 999) == pvector([1, 2, m(d=999)])
+    assert x.transform([2, 'd'], 999) == pvector([1, 2, m(d=999)])
 
 
-def test_set_in_index_error_out_range(pvector):
+def test_transform_index_error_out_range(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
     with pytest.raises(IndexError):
-        x.set_in([2, 10], 999)
+        x.transform([2, 10], 999)
 
 
-def test_set_in_index_error_wrong_type(pvector):
+def test_transform_index_error_wrong_type(pvector):
     x = pvector([1, 2, pvector([3, 4]), 5])
 
     with pytest.raises(TypeError):
-        x.set_in([2, 'foo'], 999)
+        x.transform([2, 'foo'], 999)
 
 
-def test_set_in_non_setable_type(pvector):
+def test_transform_non_setable_type(pvector):
     x = pvector([1, 2, 5])
 
     with pytest.raises(TypeError):
-        x.set_in([2, 3], 999)
+        x.transform([2, 3], 999)
 
 
 def test_reverse(pvector):

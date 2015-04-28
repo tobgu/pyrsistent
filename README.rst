@@ -113,7 +113,7 @@ Random access and insert is log32(n) where n is the size of the map.
 
     # Evolution of nested persistent structures
     >>> m4 = m(a=5, b=6, c=v(1, 2))
-    >>> m4.set_in(('c', 1), 17)
+    >>> m4.transform(('c', 1), 17)
     pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
     >>> m5 = m(a=1, b=2)
 

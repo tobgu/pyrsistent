@@ -124,11 +124,6 @@ class PythonPVector(object):
         # Taking the easy way out again...
         return hash(self._totuple())
 
-    def set_in(self, keys, val):
-        import warnings
-        warnings.warn("set_in is deprecated, use transform instead", DeprecationWarning, stacklevel=2)
-        return self.transform(keys, val)
-
     def transform(self, *transformations):
         return transform(self, transformations)
 

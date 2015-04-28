@@ -548,8 +548,6 @@ static PyObject* PVector_append(PVector *self, PyObject *obj);
 
 static PyObject* PVector_transform(PVector *self, PyObject *obj);
 
-static PyObject* PVector_set_in(PVector *self, PyObject *obj);
-
 static PyObject* PVector_set(PVector *self, PyObject *obj);
 
 static PyObject* PVector_mset(PVector *self, PyObject *args);
@@ -584,7 +582,6 @@ static PyMethodDef PVector_methods[] = {
 	{"set",         (PyCFunction)PVector_set, METH_VARARGS, "Inserts an element at the specified position"},
 	{"extend",      (PyCFunction)PVector_extend, METH_O|METH_COEXIST, "Extend"},
         {"transform",   (PyCFunction)PVector_transform, METH_VARARGS, "Apply one or more transformations"},
-        {"set_in",      (PyCFunction)PVector_set_in, METH_VARARGS, "Set in"},
         {"index",       (PyCFunction)PVector_index, METH_VARARGS, "Return first index of value"},
 	{"count",       (PyCFunction)PVector_count, METH_O, "Return number of occurrences of value"},
         {"__reduce__",  (PyCFunction)PVector_pickle_reduce, METH_NOARGS, "Pickle support method"},
@@ -964,10 +961,6 @@ static PyObject* internalSet(PVector *self, Py_ssize_t position, PyObject *argOb
 }
 
 static PyObject* PVector_transform(PVector *self, PyObject *obj) {
-  return transform(self, obj);
-}
-
-static PyObject* PVector_set_in(PVector *self, PyObject *obj) {
   return transform(self, obj);
 }
 

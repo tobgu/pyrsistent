@@ -215,20 +215,6 @@ class PMap(object):
     def __add__(self, other):
         return self.update(other)
 
-    def set_in(self, keys, val):
-        """
-        Insert val into nested persistent structure at position specified by Iterable keys. Any levels that
-        do not exist will be inserted as new PMaps.
-
-        >>> from pyrsistent import v
-        >>> m1 = m(a=5, b=6, c=v(1, 2))
-        >>> m1.set_in(('c', 1), 17)
-        pmap({'a': 5, 'c': pvector([1, 17]), 'b': 6})
-        """
-        import warnings
-        warnings.warn("set_in is deprecated, use 467 instead", DeprecationWarning, stacklevel=2)
-        return self.transform(keys, val)
-
     def __reduce__(self):
         # Pickling support
         return pmap, (dict(self),)
