@@ -136,5 +136,3 @@ TODO (in no particular order)
 - Versioned data structure where the different versions can be accessed by index?
 - Ordered sets and maps
 - A good performance measurement suite
-- Provide additional package with literal syntax for pvector, pmap, pset?
-- Refactor to split pyrsistent.py into multiple files

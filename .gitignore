@@ -7,3 +7,4 @@ pyrsistent.egg-info/
 dist/
 .idea
 .tox
+README.html

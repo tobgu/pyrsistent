@@ -1,5 +1,6 @@
 Introduction
 ============
+.. _Pyrthon: https://www.github.com/tobgu/pyrthon/
 
 Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in 
 the sense that they are immutable.
@@ -16,6 +17,9 @@ Pyrsistent is influenced by persistent data structures such as those found in th
 data structures are designed to share common elements through path copying.
 It aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
 program without hassle.
+
+If you want to go all in on persistent data structures and use literal syntax to define them in your code rather
+than function calls check out Pyrthon_.
 
 Examples
 --------
