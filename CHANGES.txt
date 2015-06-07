@@ -1,5 +1,7 @@
 Revision history
 ----------------
+v10.0.2, 2015-06-07
+  * Fix #38, construction from serialized object for pvector/pset/pmap fields.
 
 v10.0.1, 2015-04-27
   * Fix broken README.rst
