@@ -147,9 +147,10 @@ def _sequence_field(checked_class, suffix, item_type, optional, initial):
             if argument is None:
                 return None
             else:
-                return TheType(argument)
+                return TheType.create(argument)
     else:
-        factory = TheType
+        factory = TheType.create
+
     return field(type=optional_type(TheType) if optional else TheType,
                  factory=factory, mandatory=True,
                  initial=factory(initial))
@@ -213,9 +214,10 @@ def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIA
             if argument is None:
                 return None
             else:
-                return TheMap(argument)
+                return TheMap.create(argument)
     else:
-        factory = TheMap
+        factory = TheMap.create
+
     return field(mandatory=True, initial=TheMap(),
                  type=optional_type(TheMap) if optional else TheMap,
                  factory=factory, invariant=invariant)

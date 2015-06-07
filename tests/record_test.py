@@ -5,7 +5,7 @@ import six
 from pyrsistent import (
     PRecord, field, InvariantException, ny, pset, PSet, CheckedPVector,
     PTypeError, pset_field, pvector_field, pmap_field, pmap, PMap,
-    pvector, PVector)
+    pvector, PVector, v, m)
 
 
 class ARecord(PRecord):
@@ -511,6 +511,15 @@ def test_pvector_field_name():
              Record().value2.__class__.__name__) ==
             ("SomethingPVector", "IntPVector"))
 
+def test_pvector_field_create_from_nested_serialized_data():
+    class Foo(PRecord):
+        foo = field(type=str)
+
+    class Bar(PRecord):
+        bar = pvector_field(Foo)
+
+    data = Bar(bar=v(Foo(foo="foo")))
+    Bar.create(data.serialize()) == data
 
 def test_pmap_field_initial_value():
     """
@@ -624,3 +633,14 @@ def test_pmap_field_invariant():
     with pytest.raises(InvariantException):
         Record(value={1: 2, 3: 4})
     assert Record(value={1: 2}).value == {1: 2}
+
+
+def test_pmap_field_create_from_nested_serialized_data():
+    class Foo(PRecord):
+        foo = field(type=str)
+
+    class Bar(PRecord):
+        bar = pmap_field(str, Foo)
+
+    data = Bar(bar=m(foo_key=Foo(foo="foo")))
+    Bar.create(data.serialize()) == data
