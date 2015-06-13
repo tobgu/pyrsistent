@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v10.0.3, 2015-06-13
+  * Fix #40, make it possible to disable the C extension by setting the
+    PYRSISTENT_NO_C_EXTENSION environment variable.
+
 v10.0.2, 2015-06-07
   * Fix #38, construction from serialized object for pvector/pset/pmap fields.
 
