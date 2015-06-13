@@ -635,8 +635,12 @@ def python_pvector(iterable=()):
 
 try:
     # Use the C extension as underlying trie implementation if it is available
-    from pvectorc import pvector
-    PVector.register(type(pvector()))
+    import os
+    if os.environ.get('PYRSISTENT_NO_C_EXTENSION'):
+        pvector = python_pvector
+    else:
+        from pvectorc import pvector
+        PVector.register(type(pvector()))
 except ImportError:
     pvector = python_pvector
 

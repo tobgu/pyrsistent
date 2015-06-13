@@ -750,3 +750,22 @@ def test_compare_with_list(pvector):
     assert v <= [1, 2, 4]
     assert v >= [1, 2, 3]
     assert v >= [1, 2]
+
+
+def test_python_no_c_extension_with_environment_variable():
+    from six.moves import reload_module
+    import pyrsistent._pvector
+    import pyrsistent
+    import os
+
+    os.environ['PYRSISTENT_NO_C_EXTENSION'] = 'TRUE'
+
+    reload_module(pyrsistent._pvector)
+    reload_module(pyrsistent)
+
+    assert type(pyrsistent.pvector()) is pyrsistent._pvector.PythonPVector
+
+    del os.environ['PYRSISTENT_NO_C_EXTENSION']
+
+    reload_module(pyrsistent._pvector)
+    reload_module(pyrsistent)
