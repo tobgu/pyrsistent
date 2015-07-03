@@ -1,6 +1,9 @@
 import pickle
 import pytest
 
+from pyrsistent._pvector import python_pvector
+
+
 @pytest.fixture(scope='session', params=['pyrsistent._pvector', 'pvectorc'])
 def pvector(request):
     m = pytest.importorskip(request.param)
@@ -229,6 +232,33 @@ def test_slicing_reverse(pvector):
     assert seq3[0] == 7
     assert seq3[3] == 4
     assert len(seq3) == 4
+
+
+def test_delete_index():
+    seq = python_pvector([1, 2, 3])
+    assert seq.delete(0) == python_pvector([2, 3])
+    assert seq.delete(1) == python_pvector([1, 3])
+    assert seq.delete(2) == python_pvector([1, 2])
+    assert seq.delete(-1) == python_pvector([1, 2])
+    assert seq.delete(-2) == python_pvector([1, 3])
+    assert seq.delete(-3) == python_pvector([2, 3])
+
+
+def test_delete_index_out_of_bounds():
+    with pytest.raises(IndexError):
+        python_pvector([]).delete(0)
+    with pytest.raises(IndexError):
+        python_pvector([]).delete(-1)
+
+
+def test_delete_slice():
+    seq = python_pvector(range(5))
+    assert seq.delete(1, 4) == python_pvector([0, 4])
+    assert seq.delete(4, 1) == seq
+    assert seq.delete(0, 1) == python_pvector([1, 2, 3, 4])
+    assert seq.delete(6, 8) == seq
+    assert seq.delete(-1, 1) == seq
+    assert seq.delete(1, -1) == python_pvector([0, 4])
 
 
 def test_addition(pvector):

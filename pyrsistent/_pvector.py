@@ -380,6 +380,24 @@ class PythonPVector(object):
     def count(self, value):
         return self.tolist().count(value)
 
+    def delete(self, index, stop=None):
+        """
+        Delete a portion of the vector by index or range.
+        """
+        if index < 0:
+            index = len(self) + index
+        if stop is None:
+            # convention is to only raise IndexError for index OOB, not slices
+            if not (0 <= index < len(self)):
+                raise IndexError(index)
+            stop = index + 1
+        elif stop < 0:
+            stop = len(self) + stop
+        elif stop < index:
+            return self
+        return self[:index] + self[stop:]
+
+
 @six.add_metaclass(ABCMeta)
 class PVector(object):
     """
