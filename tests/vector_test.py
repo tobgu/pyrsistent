@@ -768,6 +768,35 @@ def test_evolver_returns_itself_on_evolving_operations(pvector):
     assert v.evolver().append(3).extend([4, 5]).set(1, 6).persistent() == pvector([1, 6, 3, 4, 5])
 
 
+def test_evolver_delete_by_index():
+    e = python_pvector([1, 2, 3]).evolver()
+
+    del e[0]
+
+    assert e.persistent() == python_pvector([2, 3])
+    assert e.append(4).persistent() == python_pvector([2, 3, 4])
+
+
+def test_evolver_delete_by_slice():
+    e = python_pvector([1, 2, 3, 4, 5]).evolver()
+
+    del e[1:4:2]
+
+    assert e.persistent() == python_pvector([1, 3, 5])
+
+
+def test_evolver_delete_function_by_index():
+    e = python_pvector([1, 2, 3]).evolver()
+
+    assert e.delete(1).persistent() == python_pvector([1, 3])
+
+
+def test_evolver_delete_function_by_slice():
+    e = python_pvector([1, 2, 3, 4]).evolver()
+
+    assert e.delete(1, 3).persistent() == python_pvector([1, 4])
+
+
 def test_compare_with_list(pvector):
     v = pvector([1, 2, 3])
 

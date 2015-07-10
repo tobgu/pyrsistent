@@ -15,6 +15,7 @@ def test_remove():
     m = freeze({'foo': {'bar': {'baz': 1}}})
     assert m.transform(['foo', 'bar', 'baz'], discard) == {'foo': {'bar': {}}}
 
+# TODO remove/discard on pvector
 
 def test_predicate_no_match():
     m = freeze({'foo': {'bar': {'baz': 1}}})
