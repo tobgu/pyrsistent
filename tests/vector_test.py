@@ -259,6 +259,7 @@ def test_delete_slice():
     assert seq.delete(6, 8) == seq
     assert seq.delete(-1, 1) == seq
     assert seq.delete(1, -1) == python_pvector([0, 4])
+    assert seq.delete(1, 4, 2) == python_pvector([0, 2, 4])
 
 
 def test_addition(pvector):
@@ -794,7 +795,7 @@ def test_evolver_delete_function_by_index():
 def test_evolver_delete_function_by_slice():
     e = python_pvector([1, 2, 3, 4]).evolver()
 
-    assert e.delete(1, 3).persistent() == python_pvector([1, 4])
+    assert e.delete(1, 3, 1).persistent() == python_pvector([1, 4])
 
 
 def test_compare_with_list(pvector):

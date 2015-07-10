@@ -18,6 +18,13 @@ def compare_pvector(v, other, operator):
     return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)
 
 
+def _index_or_slice(index, stop, step):
+    if stop is None and step is None:
+        return index
+
+    return slice(index, stop, step)
+
+
 class PythonPVector(object):
     """
     Support structure for PVector that implements structural sharing for vectors using a trie.
@@ -225,12 +232,8 @@ class PythonPVector(object):
 
             return ret
 
-        def delete(self, index, stop=None):
-            if stop is None:
-                del self[index]
-            else:
-                del self[index:stop]
-
+        def delete(self, index, stop=None, step=None):
+            del self[_index_or_slice(index, stop, step)]
             return self
 
         def __delitem__(self, key):
@@ -398,16 +401,12 @@ class PythonPVector(object):
     def count(self, value):
         return self.tolist().count(value)
 
-    def delete(self, index, stop=None):
+    def delete(self, index, stop=None, step=None):
         """
         Delete a portion of the vector by index or range.
         """
         l = self.tolist()
-        if stop is None:
-            del l[index]
-        else:
-            del l[index:stop]
-
+        del l[_index_or_slice(index, stop, step)]
         return _EMPTY_PVECTOR.extend(l)
 
 
