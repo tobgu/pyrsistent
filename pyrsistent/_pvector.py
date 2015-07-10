@@ -384,18 +384,13 @@ class PythonPVector(object):
         """
         Delete a portion of the vector by index or range.
         """
-        if index < 0:
-            index = len(self) + index
+        l = self.tolist()
         if stop is None:
-            # convention is to only raise IndexError for index OOB, not slices
-            if not (0 <= index < len(self)):
-                raise IndexError(index)
-            stop = index + 1
-        elif stop < 0:
-            stop = len(self) + stop
-        elif stop < index:
-            return self
-        return self[:index] + self[stop:]
+            del l[index]
+        else:
+            del l[index:stop]
+
+        return _EMPTY_PVECTOR.extend(l)
 
 
 @six.add_metaclass(ABCMeta)
