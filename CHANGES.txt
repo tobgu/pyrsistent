@@ -1,13 +1,20 @@
 Revision history
 ----------------
-v10.0.3, 2015-06-13
+v0.11.0, 2015-07-11
+  * #42, delete() function added to PVector to allow deletion of elements by index
+    and range. Will perform a full copy of the vector, no structural sharing.
+    Thanks @radix for helping out with this one!
+  * Fix #39, explicitly disallow ordering for PMap and PBag, Python 3 style
+  * Fix #37, PMap.values()/keys()/items() now returns PVectors instead of lists
+
+v0.10.3, 2015-06-13
   * Fix #40, make it possible to disable the C extension by setting the
     PYRSISTENT_NO_C_EXTENSION environment variable.
 
-v10.0.2, 2015-06-07
+v0.10.2, 2015-06-07
   * Fix #38, construction from serialized object for pvector/pset/pmap fields.
 
-v10.0.1, 2015-04-27
+v0.10.1, 2015-04-27
   * Fix broken README.rst
 
 v10.0.0, 2015-04-27
