@@ -1,11 +1,10 @@
 from collections import Mapping, Hashable
-from functools import total_ordering
 from itertools import chain
 import six
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
 
-@total_ordering
+
 class PMap(object):
     """
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
@@ -131,6 +130,10 @@ class PMap(object):
 
     def __lt__(self, other):
         raise TypeError('PMaps are not orderable')
+
+    __le__ = __lt__
+    __gt__ = __lt__
+    __ge__ = __lt__
 
     def __str__(self):
         return self.__repr__()
