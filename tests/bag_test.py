@@ -95,3 +95,17 @@ def test_contains():
 
 def test_not_contains():
     assert 1 not in b(2)
+
+
+def test_pbag_is_unorderable():
+    with pytest.raises(TypeError):
+        _ = b(1) < b(2)
+
+    with pytest.raises(TypeError):
+        _ = b(1) <= b(2)
+
+    with pytest.raises(TypeError):
+        _ = b(1) > b(2)
+
+    with pytest.raises(TypeError):
+        _ = b(1) >= b(2)

@@ -365,3 +365,17 @@ def test_dot_access_of_non_existing_element_raises_attribute_error():
         m1.b
 
     assert "'b'" in str(error.value)
+
+
+def test_pmap_unorderable():
+    with pytest.raises(TypeError):
+        _ = m(a=1) < m(b=2)
+
+    with pytest.raises(TypeError):
+        _ = m(a=1) <= m(b=2)
+
+    with pytest.raises(TypeError):
+        _ = m(a=1) > m(b=2)
+
+    with pytest.raises(TypeError):
+        _ = m(a=1) >= m(b=2)

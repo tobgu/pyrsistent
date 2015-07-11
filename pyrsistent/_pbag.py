@@ -1,12 +1,12 @@
 from collections import Container, Iterable, Sized, Hashable
-from functools import reduce
+from functools import reduce, total_ordering
 from pyrsistent._pmap import pmap
 
 
 def _add_to_counters(counters, element):
     return counters.set(element, counters.get(element, 0) + 1)
 
-
+@total_ordering
 class PBag(object):
     """
     A persistent bag/multiset type.
@@ -130,6 +130,9 @@ class PBag(object):
         if type(other) is not PBag:
             raise TypeError("Can only compare PBag with PBags")
         return self._counts == other._counts
+
+    def __lt__(self, other):
+        raise TypeError('PBags are not orderable')
 
     def __hash__(self):
         """
