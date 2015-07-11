@@ -234,32 +234,36 @@ def test_slicing_reverse(pvector):
     assert len(seq3) == 4
 
 
-def test_delete_index():
-    seq = python_pvector([1, 2, 3])
-    assert seq.delete(0) == python_pvector([2, 3])
-    assert seq.delete(1) == python_pvector([1, 3])
-    assert seq.delete(2) == python_pvector([1, 2])
-    assert seq.delete(-1) == python_pvector([1, 2])
-    assert seq.delete(-2) == python_pvector([1, 3])
-    assert seq.delete(-3) == python_pvector([2, 3])
+def test_delete_index(pvector):
+    seq = pvector([1, 2, 3])
+    assert seq.delete(0) == pvector([2, 3])
+    assert seq.delete(1) == pvector([1, 3])
+    assert seq.delete(2) == pvector([1, 2])
+    assert seq.delete(-1) == pvector([1, 2])
+    assert seq.delete(-2) == pvector([1, 3])
+    assert seq.delete(-3) == pvector([2, 3])
 
 
-def test_delete_index_out_of_bounds():
+def test_delete_index_out_of_bounds(pvector):
     with pytest.raises(IndexError):
-        python_pvector([]).delete(0)
+        pvector([]).delete(0)
     with pytest.raises(IndexError):
-        python_pvector([]).delete(-1)
+        pvector([]).delete(-1)
 
 
-def test_delete_slice():
-    seq = python_pvector(range(5))
-    assert seq.delete(1, 4) == python_pvector([0, 4])
+def test_delete_index_malformed(pvector):
+    with pytest.raises(TypeError):
+        pvector([]).delete('a')
+
+
+def test_delete_slice(pvector):
+    seq = pvector(range(5))
+    assert seq.delete(1, 4) == pvector([0, 4])
     assert seq.delete(4, 1) == seq
-    assert seq.delete(0, 1) == python_pvector([1, 2, 3, 4])
+    assert seq.delete(0, 1) == pvector([1, 2, 3, 4])
     assert seq.delete(6, 8) == seq
     assert seq.delete(-1, 1) == seq
-    assert seq.delete(1, -1) == python_pvector([0, 4])
-    assert seq.delete(1, 4, 2) == python_pvector([0, 2, 4])
+    assert seq.delete(1, -1) == pvector([0, 4])
 
 
 def test_addition(pvector):
@@ -795,7 +799,7 @@ def test_evolver_delete_function_by_index():
 def test_evolver_delete_function_by_slice():
     e = python_pvector([1, 2, 3, 4]).evolver()
 
-    assert e.delete(1, 3, 1).persistent() == python_pvector([1, 4])
+    assert e.delete(1, 3).persistent() == python_pvector([1, 4])
 
 
 def test_compare_with_list(pvector):

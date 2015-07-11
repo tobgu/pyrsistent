@@ -18,11 +18,11 @@ def compare_pvector(v, other, operator):
     return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)
 
 
-def _index_or_slice(index, stop, step):
-    if stop is None and step is None:
+def _index_or_slice(index, stop):
+    if stop is None:
         return index
 
-    return slice(index, stop, step)
+    return slice(index, stop)
 
 
 class PythonPVector(object):
@@ -232,8 +232,8 @@ class PythonPVector(object):
 
             return ret
 
-        def delete(self, index, stop=None, step=None):
-            del self[_index_or_slice(index, stop, step)]
+        def delete(self, index, stop=None):
+            del self[_index_or_slice(index, stop)]
             return self
 
         def __delitem__(self, key):
@@ -401,12 +401,9 @@ class PythonPVector(object):
     def count(self, value):
         return self.tolist().count(value)
 
-    def delete(self, index, stop=None, step=None):
-        """
-        Delete a portion of the vector by index or range.
-        """
+    def delete(self, index, stop=None):
         l = self.tolist()
-        del l[_index_or_slice(index, stop, step)]
+        del l[_index_or_slice(index, stop)]
         return _EMPTY_PVECTOR.extend(l)
 
 
@@ -646,6 +643,18 @@ class PVector(object):
         False
         >>> very_short_news.articles[0] is news_paper.articles[0]
         True
+        """
+
+    @abstractmethod
+    def delete(self, index, stop=None):
+        """
+        Delete a portion of the vector by index or range.
+
+        >>> v1 = v(1, 2, 3, 4, 5)
+        >>> v1.delete(1)
+        pvector([1, 3, 4, 5])
+        >>> v1.delete(1, 3)
+        pvector([1, 4, 5])
         """
 
 _EMPTY_PVECTOR = PythonPVector(0, SHIFT, [], [])

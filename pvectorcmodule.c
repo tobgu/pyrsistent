@@ -249,6 +249,7 @@ static PyObject *PVector_toList(PVector *self) {
   return list;
 }
 
+
 static PyObject *PVector_repr(PVector *self) {
   // Reuse the list repr code, a bit less efficient but saves some code
   PyObject *list = PVector_toList(self);
@@ -556,6 +557,8 @@ static PyObject* PVector_subscript(PVector* self, PyObject* item);
 
 static PyObject* PVector_extend(PVector *self, PyObject *args);
 
+static PyObject* PVector_delete(PVector *self, PyObject *args);
+
 static PySequenceMethods PVector_sequence_methods = {
     (lenfunc)PVector_len,            /* sq_length */
     (binaryfunc)PVector_extend,      /* sq_concat */
@@ -588,6 +591,7 @@ static PyMethodDef PVector_methods[] = {
         {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
 	{"mset",        (PyCFunction)PVector_mset, METH_VARARGS, "Inserts multiple elements at the specified positions"},
         {"tolist",      (PyCFunction)PVector_toList, METH_NOARGS, "Convert to list"},
+        {"delete",      (PyCFunction)PVector_delete, METH_VARARGS, "Delete element(s)"},
 	{NULL}
 };
 
@@ -979,6 +983,7 @@ static PyObject* PVector_set(PVector *self, PyObject *args) {
   return internalSet(self, position, argObj);
 }
 
+
 static PyObject* PVector_mset(PVector *self, PyObject *args) {
   Py_ssize_t size = PyTuple_Size(args);
   if(size % 2) {
@@ -998,6 +1003,54 @@ static PyObject* PVector_mset(PVector *self, PyObject *args) {
   PyObject* vector = PVectorEvolver_persistent(evolver);
   Py_DECREF(evolver);
   return vector;
+}
+
+static PyObject* PVector_delete(PVector *self, PyObject *args) {
+  Py_ssize_t index;
+  PyObject *stop_obj = NULL;
+  Py_ssize_t stop;
+  PyObject *list;
+  PyObject *result;
+
+  if(!PyArg_ParseTuple(args, "n|O:delete", &index, &stop_obj)) {
+    return NULL;
+  }
+
+  if (index < 0) {
+    index += self->count;
+  }
+
+  if (stop_obj != NULL) {
+    if (PyIndex_Check(stop_obj)) {
+      stop = PyNumber_AsSsize_t(stop_obj, PyExc_IndexError);
+      if (stop == -1 && PyErr_Occurred()) {
+        return NULL;
+      }
+    } else {
+      PyErr_Format(PyExc_TypeError, "Stop index must be integer, not %.200s", Py_TYPE(stop_obj)->tp_name);
+      return NULL;
+    }
+
+    if (stop < 0) {
+      stop += self->count;
+    }
+  } else {
+    if (index < 0 || index >= self->count) {
+      PyErr_SetString(PyExc_IndexError, "delete index out of range");
+      return NULL;
+    }
+
+    stop = index + 1;
+  }
+
+  list = PVector_toList(self);
+  if(PyList_SetSlice(list, index, stop, NULL) < 0) {
+    return NULL;
+  }
+
+  result = PVector_extend(EMPTY_VECTOR, list);
+  Py_DECREF(list);
+  return result;
 }
 
 
