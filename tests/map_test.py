@@ -1,7 +1,7 @@
 from collections import Mapping, Hashable
 from operator import add
 import pytest
-from pyrsistent import pmap, m
+from pyrsistent import pmap, m, PVector
 import pickle
 
 def test_instance_of_hashable():
@@ -52,15 +52,19 @@ def test_remove_non_existing_element_raises_key_error():
 
     assert str(error.value) == "'b'"
 
+
 def test_various_iterations():
     assert set(['a', 'b']) == set(m(a=1, b=2))
     assert ['a', 'b'] == sorted(m(a=1, b=2).keys())
+    assert isinstance(m().keys(), PVector)
 
     assert set([1, 2]) == set(m(a=1, b=2).itervalues())
     assert [1, 2] == sorted(m(a=1, b=2).values())
+    assert isinstance(m().values(), PVector)
 
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).iteritems())
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).items())
+    assert isinstance(m().items(), PVector)
 
 
 def test_initialization_with_two_elements():

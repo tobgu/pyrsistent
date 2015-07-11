@@ -111,13 +111,13 @@ class PMap(object):
                     yield k, v
 
     def values(self):
-        return list(self.itervalues())
+        return pvector(self.itervalues())
 
     def keys(self):
-        return list(self.iterkeys())
+        return pvector(self.iterkeys())
 
     def items(self):
-        return list(self.iteritems())
+        return pvector(self.iteritems())
 
     def __len__(self):
         return self._size
