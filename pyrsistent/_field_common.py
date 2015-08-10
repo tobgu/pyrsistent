@@ -132,7 +132,7 @@ def _sequence_field(checked_class, suffix, item_type, optional, initial):
     :param checked_class: ``CheckedPSet`` or ``CheckedPVector``.
     :param suffix: Suffix for new type name.
     :param item_type: The required type for the items in the set.
-    :param bool optional: If true, ``None`` can be used as a value for
+    :param optional: If true, ``None`` can be used as a value for
         this field.
     :param initial: Initial value to pass to factory.
 
@@ -161,7 +161,7 @@ def pset_field(item_type, optional=False, initial=()):
     Create checked ``PSet`` field.
 
     :param item_type: The required type for the items in the set.
-    :param bool optional: If true, ``None`` can be used as a value for
+    :param optional: If true, ``None`` can be used as a value for
         this field.
     :param initial: Initial value to pass to factory if no value is given
         for the field.
@@ -177,7 +177,7 @@ def pvector_field(item_type, optional=False, initial=()):
     Create checked ``PVector`` field.
 
     :param item_type: The required type for the items in the vector.
-    :param bool optional: If true, ``None`` can be used as a value for
+    :param optional: If true, ``None`` can be used as a value for
         this field.
     :param initial: Initial value to pass to factory if no value is given
         for the field.
@@ -197,7 +197,7 @@ def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIA
 
     :param key: The required type for the keys of the map.
     :param value: The required type for the values of the map.
-    :param bool optional: If true, ``None`` can be used as a value for
+    :param optional: If true, ``None`` can be used as a value for
         this field.
     :param invariant: Pass-through to ``field``.
 
