@@ -67,7 +67,7 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param type: a type or iterable with types that are allowed for this field
     :param invariant: a function specifying an invariant that must hold for the field
     :param initial: value of field if not specified when instantiating the record
-    :param mandatorty: boolean specifying if the field is mandatory or not
+    :param mandatory: boolean specifying if the field is mandatory or not
     :param factory: function called when field is set.
     :param serializer: function that returns a serialized version of the field
     """
