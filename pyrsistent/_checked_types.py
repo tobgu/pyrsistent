@@ -53,12 +53,12 @@ def _store_types(dct, bases, destination_name, source_name):
 
 
 def _store_invariants(dct, bases, destination_name, source_name):
-        # Invariants are inherited
-        dct[destination_name] = [dct[source_name]] if source_name in dct else []
-        dct[destination_name] += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
-        dct[destination_name] = tuple(dct[destination_name])
-        if not all(callable(invariant) for invariant in dct[destination_name]):
-            raise TypeError('Invariants must be callable')
+    # Invariants are inherited
+    dct[destination_name] = [dct[source_name]] if source_name in dct else []
+    dct[destination_name] += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
+    dct[destination_name] = tuple(dct[destination_name])
+    if not all(callable(invariant) for invariant in dct[destination_name]):
+        raise TypeError('Invariants must be callable')
 
 
 class _CheckedTypeMeta(type):

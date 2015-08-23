@@ -222,3 +222,20 @@ def test_string_as_type_specifier():
     assert isinstance(l.value, Numbers)
     assert list(l.value) == [1, 2]
     assert l.next.next is None
+
+
+class NaturalNumbers(PClass):
+    small_even_natural = field(type=int, invariant=lambda x: ((x > 0, 'x negative'),
+                                                              (x % 2 == 0, 'x odd'),
+                                                              (x < 10, 'x too large')))
+    natural = field(invariant=lambda x: (x > 0, 'natural negative'))
+
+
+def test_multiple_invariants_on_field():
+    # If the invariant returns a list of tests the results of running those tests will be
+    # a tuple containing result data of all failing tests.
+    try:
+        NaturalNumbers(small_even_natural=-1, natural=-2)
+        assert False
+    except InvariantException as e:
+        assert set(e.invariant_errors) == set([('x negative', 'x odd'), 'natural negative'])

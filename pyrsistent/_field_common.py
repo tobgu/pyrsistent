@@ -22,10 +22,10 @@ def set_global_invariants(dct, bases, name):
 
 
 def check_global_invariants(subject, invariants):
-        error_codes = tuple(error_code for is_ok, error_code in
-                            (invariant(subject) for invariant in invariants) if not is_ok)
-        if error_codes:
-            raise InvariantException(error_codes, (), 'Global invariant failed')
+    error_codes = tuple(error_code for is_ok, error_code in
+                        (invariant(subject) for invariant in invariants) if not is_ok)
+    if error_codes:
+        raise InvariantException(error_codes, (), 'Global invariant failed')
 
 
 def serialize(serializer, format, value):
@@ -70,6 +70,31 @@ PFIELD_NO_INITIAL = object()
 PFIELD_NO_SERIALIZER = lambda _, value: value
 
 
+def _merge_invariant_results(result):
+    verdict = True
+    data = []
+    for verd, dat in result:
+        if not verd:
+            verdict = False
+            data.append(dat)
+
+    return verdict, tuple(data)
+
+
+def _wrap_invariant(invariant):
+    # Invariant functions may return the outcome of several tests
+    # In those cases the results have to be merged before beeing passed
+    # back to the client.
+    def f(*args, **kwargs):
+        result = invariant(*args, **kwargs)
+        if isinstance(result[0], bool):
+            return result
+
+        return _merge_invariant_results(result)
+
+    return f
+
+
 def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_INITIAL,
           mandatory=False, factory=PFIELD_NO_FACTORY, serializer=PFIELD_NO_SERIALIZER):
     """
@@ -83,8 +108,9 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param serializer: function that returns a serialized version of the field
     """
     types = set(type) if isinstance(type, Iterable) and not isinstance(type, six.string_types) else set([type])
-    field = _PField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
-                    factory=factory, serializer=serializer)
+    invariant_function = _wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
+    field = _PField(type=types, invariant=invariant_function, initial=initial,
+                    mandatory=mandatory, factory=factory, serializer=serializer)
 
     _check_field_parameters(field)
 
