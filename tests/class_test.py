@@ -2,7 +2,7 @@ from collections import Hashable
 import math
 import pickle
 import pytest
-from pyrsistent import field, InvariantException, PClass
+from pyrsistent import field, InvariantException, PClass, optional, CheckedPVector
 
 
 class Point(PClass):
@@ -205,3 +205,20 @@ def test_evolver_supports_chained_set_and_remove():
     p1 = Point(x=1, y=2)
 
     assert p1.evolver().set('x', 3).remove('y').persistent() == Point(x=3)
+
+
+class Numbers(CheckedPVector):
+    __type__ = int
+
+
+class LinkedList(PClass):
+    value = field(type='tests.class_test.Numbers')
+    next = field(type=optional('tests.class_test.LinkedList'))
+
+
+def test_string_as_type_specifier():
+    l = LinkedList(value=[1, 2], next=LinkedList(value=[3, 4], next=None))
+
+    assert isinstance(l.value, Numbers)
+    assert list(l.value) == [1, 2]
+    assert l.next.next is None

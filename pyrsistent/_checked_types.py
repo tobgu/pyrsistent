@@ -48,8 +48,8 @@ def _store_types(dct, bases, destination_name, source_name):
     dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
     dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
     dct[destination_name] = tuple(dct[destination_name])
-    if not all(isinstance(t, type) for t in dct[destination_name]):
-        raise TypeError('Type specifications must be types')
+    if not all(isinstance(t, type) or isinstance(t, basestring) for t in dct[destination_name]):
+        raise TypeError('Type specifications must be types or strings')
 
 
 def _store_invariants(dct, bases, destination_name, source_name):

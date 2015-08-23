@@ -1,4 +1,5 @@
 from collections import Iterable
+import six
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
     optional as optional_type, InvariantException)
@@ -34,23 +35,46 @@ def serialize(serializer, format, value):
     return serializer(format, value)
 
 
+def _get_class(type_name):
+    module_name, class_name = type_name.rsplit('.', 1)
+    module = __import__(module_name, fromlist=[class_name])
+    return getattr(module, class_name)
+
+
+def _get_type(typ):
+    if isinstance(typ, type):
+        return typ
+
+    return _get_class(typ)
+
+
 def check_type(destination_cls, field, name, value):
-    if field.type and not any(isinstance(value, t) for t in field.type):
+    if field.type and not any(isinstance(value, _get_type(t)) for t in field.type):
         actual_type = type(value)
         message = "Invalid type for field {0}.{1}, was {2}".format(destination_cls.__name__, name, actual_type.__name__)
         raise PTypeError(destination_cls, name, field.type, actual_type, message)
 
 
 class _PField(object):
-    __slots__ = ('type', 'invariant', 'initial', 'mandatory', 'factory', 'serializer')
+    __slots__ = ('type', 'invariant', 'initial', 'mandatory', '_factory', 'serializer')
 
     def __init__(self, type, invariant, initial, mandatory, factory, serializer):
         self.type = type
         self.invariant = invariant
         self.initial = initial
         self.mandatory = mandatory
-        self.factory = factory
+        self._factory = factory
         self.serializer = serializer
+
+    @property
+    def factory(self):
+        # If no factory is specified and the type is another CheckedType use the factory method of that CheckedType
+        if self._factory is PFIELD_NO_FACTORY and len(self.type) == 1:
+            typ = _get_type(tuple(self.type)[0])
+            if issubclass(typ, CheckedType):
+                return typ.create
+
+        return self._factory
 
 PFIELD_NO_TYPE = ()
 PFIELD_NO_INVARIANT = lambda _: (True, None)
@@ -71,16 +95,7 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param factory: function called when field is set.
     :param serializer: function that returns a serialized version of the field
     """
-
-    types = set(type) if isinstance(type, Iterable) else set([type])
-
-    # If no factory is specified and the type is another CheckedType use the factory method of that CheckedType
-    if factory is PFIELD_NO_FACTORY and len(types) == 1 and issubclass(tuple(types)[0], CheckedType):
-        # TODO: Should this option be looked up at execution time rather than at field construction time?
-        #       that would allow checking against all the types specified and if none matches the
-        #       first
-        factory = tuple(types)[0].create
-
+    types = set(type) if isinstance(type, tuple) or isinstance(type, list) else set([type])
     field = _PField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
                     factory=factory, serializer=serializer)
 
@@ -91,8 +106,8 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
 
 def _check_field_parameters(field):
     for t in field.type:
-        if not isinstance(t, type):
-            raise TypeError('Type paramenter expected, not {0}'.format(type(t)))
+        if not isinstance(t, type) and not isinstance(t, six.string_types):
+            raise TypeError('Type parameter expected, not {0}'.format(type(t)))
 
     if field.initial is not PFIELD_NO_INITIAL and field.type and not any(isinstance(field.initial, t) for t in field.type):
         raise TypeError('Initial has invalid type {0}'.format(type(t)))

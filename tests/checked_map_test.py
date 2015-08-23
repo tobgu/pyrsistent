@@ -120,3 +120,6 @@ def test_pickling():
 
     assert x == y
     assert isinstance(y, FloatToIntMap)
+
+
+# TODO Use string to specify types
