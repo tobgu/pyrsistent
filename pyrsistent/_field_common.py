@@ -2,7 +2,7 @@ from collections import Iterable
 import six
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
-    optional as optional_type, InvariantException)
+    optional as optional_type, InvariantException, get_type)
 
 
 def set_fields(dct, bases, name):
@@ -35,21 +35,8 @@ def serialize(serializer, format, value):
     return serializer(format, value)
 
 
-def _get_class(type_name):
-    module_name, class_name = type_name.rsplit('.', 1)
-    module = __import__(module_name, fromlist=[class_name])
-    return getattr(module, class_name)
-
-
-def _get_type(typ):
-    if isinstance(typ, type):
-        return typ
-
-    return _get_class(typ)
-
-
 def check_type(destination_cls, field, name, value):
-    if field.type and not any(isinstance(value, _get_type(t)) for t in field.type):
+    if field.type and not any(isinstance(value, get_type(t)) for t in field.type):
         actual_type = type(value)
         message = "Invalid type for field {0}.{1}, was {2}".format(destination_cls.__name__, name, actual_type.__name__)
         raise PTypeError(destination_cls, name, field.type, actual_type, message)
@@ -70,7 +57,7 @@ class _PField(object):
     def factory(self):
         # If no factory is specified and the type is another CheckedType use the factory method of that CheckedType
         if self._factory is PFIELD_NO_FACTORY and len(self.type) == 1:
-            typ = _get_type(tuple(self.type)[0])
+            typ = get_type(tuple(self.type)[0])
             if issubclass(typ, CheckedType):
                 return typ.create
 
@@ -95,7 +82,7 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param factory: function called when field is set.
     :param serializer: function that returns a serialized version of the field
     """
-    types = set(type) if isinstance(type, tuple) or isinstance(type, list) else set([type])
+    types = set(type) if isinstance(type, Iterable) and not isinstance(type, six.string_types) else set([type])
     field = _PField(type=types, invariant=invariant, initial=initial, mandatory=mandatory,
                     factory=factory, serializer=serializer)
 

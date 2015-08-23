@@ -181,3 +181,19 @@ def test_multiple_optional_types():
 
     with pytest.raises(TypeError):
         numbers.append('foo')
+
+
+class NaturalsVectorStr(CheckedPVector):
+    __type__ = 'tests.checked_vector_test.Naturals'
+
+
+def test_check_with_string_specification():
+    naturals_list = [Naturals([1, 2]), Naturals([3, 4])]
+    nv = NaturalsVectorStr(naturals_list)
+    assert nv == naturals_list
+
+
+def test_create_with_string_specification():
+    naturals_list = [[1, 2], [3, 4]]
+    nv = NaturalsVectorStr.create(naturals_list)
+    assert nv == naturals_list

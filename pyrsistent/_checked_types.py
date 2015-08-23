@@ -41,14 +41,14 @@ class InvariantException(Exception):
 
 def _store_types(dct, bases, destination_name, source_name):
     def to_list(elem):
-        if not isinstance(elem, Iterable):
+        if not isinstance(elem, Iterable) or isinstance(elem, six.string_types):
             return [elem]
         return list(elem)
 
     dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
     dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
     dct[destination_name] = tuple(dct[destination_name])
-    if not all(isinstance(t, type) or isinstance(t, basestring) for t in dct[destination_name]):
+    if not all(isinstance(t, type) or isinstance(t, six.string_types) for t in dct[destination_name]):
         raise TypeError('Type specifications must be types or strings')
 
 
@@ -113,14 +113,31 @@ class CheckedValueTypeError(CheckedTypeError):
     pass
 
 
+def _get_class(type_name):
+    module_name, class_name = type_name.rsplit('.', 1)
+    module = __import__(module_name, fromlist=[class_name])
+    return getattr(module, class_name)
+
+
+def get_type(typ):
+    if isinstance(typ, type):
+        return typ
+
+    return _get_class(typ)
+
+
+def get_types(typs):
+    return [get_type(typ) for typ in typs]
+
+
 def _check_types(it, expected_types, source_class, exception_type=CheckedValueTypeError):
     if expected_types:
         for e in it:
-            if not any(isinstance(e, t) for t in expected_types):
+            if not any(isinstance(e, get_type(t)) for t in expected_types):
                 actual_type = type(e)
                 msg = "Type {source_class} can only be used with {expected_types}, not {actual_type}".format(
                     source_class=source_class.__name__,
-                    expected_types=tuple(et.__name__ for et in expected_types),
+                    expected_types=tuple(get_type(et).__name__ for et in expected_types),
                     actual_type=actual_type.__name__)
                 raise exception_type(source_class, expected_types, actual_type, e, msg)
 
@@ -144,7 +161,7 @@ def _checked_type_create(cls, source_data):
 
         # Recursively apply create methods of checked types if the types of the supplied data
         # does not match any of the valid types.
-        types = cls._checked_types
+        types = get_types(cls._checked_types)
         checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
         if checked_type:
             return cls([checked_type.create(data)
@@ -383,9 +400,9 @@ class CheckedPMap(PMap, CheckedType):
 
         # Recursively apply create methods of checked types if the types of the supplied data
         # does not match any of the valid types.
-        key_types = cls._checked_key_types
+        key_types = get_types(cls._checked_key_types)
         checked_key_type = next((t for t in key_types if issubclass(t, CheckedType)), None)
-        value_types = cls._checked_value_types
+        value_types = get_types(cls._checked_value_types)
         checked_value_type = next((t for t in value_types if issubclass(t, CheckedType)), None)
 
         if checked_key_type or checked_value_type:

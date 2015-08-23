@@ -210,6 +210,10 @@ by providing an iterable of types.
     Traceback (most recent call last):
     PTypeError: Invalid type for field BRecord.x, was float
 
+
+Type information may also be given as strings to avoid circular import problems and
+allow definitions of recursive structures.
+
 Mandatory fields
 ****************
 Fields are not mandatory by default but can be specified as such. If fields are missing an
