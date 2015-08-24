@@ -1,14 +1,13 @@
 import six
-from pyrsistent._checked_types import InvariantException, CheckedType, _restore_pickle
-from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize,
-                                      set_global_invariants, check_global_invariants)
+from pyrsistent._checked_types import (InvariantException, CheckedType, _restore_pickle, store_invariants)
+from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
 from pyrsistent._transformations import transform
 
 
 class _PClassMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_pclass_fields')
-        set_global_invariants(dct, bases, '_pclass_invariants')
+        store_invariants(dct, bases, '_pclass_invariants', '__invariant__')
         dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
         return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
 

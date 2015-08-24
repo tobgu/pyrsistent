@@ -2,7 +2,7 @@ from collections import Iterable
 import six
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
-    optional as optional_type, InvariantException, get_type)
+    optional as optional_type, InvariantException, get_type, wrap_invariant)
 
 
 def set_fields(dct, bases, name):
@@ -12,13 +12,6 @@ def set_fields(dct, bases, name):
         if isinstance(v, _PField):
             dct[name][k] = v
             del dct[k]
-
-
-def set_global_invariants(dct, bases, name):
-    dct[name] = [dct['__invariant__']] if '__invariant__' in dct else []
-    dct[name] += [b.__dict__['__invariant__'] for b in bases if '__invariant__' in b.__dict__]
-    if not all(callable(invariant) for invariant in dct[name]):
-        raise TypeError('Global invariants must be callable')
 
 
 def check_global_invariants(subject, invariants):
@@ -68,32 +61,7 @@ PFIELD_NO_INVARIANT = lambda _: (True, None)
 PFIELD_NO_FACTORY = lambda x: x
 PFIELD_NO_INITIAL = object()
 PFIELD_NO_SERIALIZER = lambda _, value: value
-
-
-def _merge_invariant_results(result):
-    verdict = True
-    data = []
-    for verd, dat in result:
-        if not verd:
-            verdict = False
-            data.append(dat)
-
-    return verdict, tuple(data)
-
-
-def _wrap_invariant(invariant):
-    # Invariant functions may return the outcome of several tests
-    # In those cases the results have to be merged before beeing passed
-    # back to the client.
-    def f(*args, **kwargs):
-        result = invariant(*args, **kwargs)
-        if isinstance(result[0], bool):
-            return result
-
-        return _merge_invariant_results(result)
-
-    return f
-
+PFIELD_NO_SERIALIZER = lambda _, value: value
 
 def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_INITIAL,
           mandatory=False, factory=PFIELD_NO_FACTORY, serializer=PFIELD_NO_SERIALIZER):
@@ -108,7 +76,7 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param serializer: function that returns a serialized version of the field
     """
     types = set(type) if isinstance(type, Iterable) and not isinstance(type, six.string_types) else set([type])
-    invariant_function = _wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
+    invariant_function = wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
     field = _PField(type=types, invariant=invariant_function, initial=initial,
                     mandatory=mandatory, factory=factory, serializer=serializer)
 

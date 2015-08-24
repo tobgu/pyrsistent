@@ -52,19 +52,44 @@ def _store_types(dct, bases, destination_name, source_name):
         raise TypeError('Type specifications must be types or strings')
 
 
-def _store_invariants(dct, bases, destination_name, source_name):
+def _merge_invariant_results(result):
+    verdict = True
+    data = []
+    for verd, dat in result:
+        if not verd:
+            verdict = False
+            data.append(dat)
+
+    return verdict, tuple(data)
+
+
+def wrap_invariant(invariant):
+    # Invariant functions may return the outcome of several tests
+    # In those cases the results have to be merged before beeing passed
+    # back to the client.
+    def f(*args, **kwargs):
+        result = invariant(*args, **kwargs)
+        if isinstance(result[0], bool):
+            return result
+
+        return _merge_invariant_results(result)
+
+    return f
+
+
+def store_invariants(dct, bases, destination_name, source_name):
     # Invariants are inherited
-    dct[destination_name] = [dct[source_name]] if source_name in dct else []
-    dct[destination_name] += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
-    dct[destination_name] = tuple(dct[destination_name])
-    if not all(callable(invariant) for invariant in dct[destination_name]):
+    invariants = [dct[source_name]] if source_name in dct else []
+    invariants += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
+    if not all(callable(invariant) for invariant in invariants):
         raise TypeError('Invariants must be callable')
 
+    dct[destination_name] = tuple(wrap_invariant(inv) for inv in invariants)
 
 class _CheckedTypeMeta(type):
     def __new__(mcs, name, bases, dct):
         _store_types(dct, bases, '_checked_types', '__type__')
-        _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
+        store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
         def default_serializer(self, _, value):
             if isinstance(value, CheckedType):
@@ -332,7 +357,7 @@ class _CheckedMapTypeMeta(type):
     def __new__(mcs, name, bases, dct):
         _store_types(dct, bases, '_checked_key_types', '__key_type__')
         _store_types(dct, bases, '_checked_value_types', '__value_type__')
-        _store_invariants(dct, bases, '_checked_invariants', '__invariant__')
+        store_invariants(dct, bases, '_checked_invariants', '__invariant__')
 
         def default_serializer(self, _, key, value):
             sk = key

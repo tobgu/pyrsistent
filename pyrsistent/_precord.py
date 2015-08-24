@@ -1,15 +1,14 @@
 import six
-from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException
+from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException, store_invariants
 from pyrsistent._field_common import (
-    set_fields, check_type, PFIELD_NO_INITIAL, serialize,
-    set_global_invariants, check_global_invariants)
+    set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
 from pyrsistent._pmap import PMap, pmap
 
 
 class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_precord_fields')
-        set_global_invariants(dct, bases, '_precord_invariants')
+        store_invariants(dct, bases, '_precord_invariants', '__invariant__')
 
         dct['_precord_mandatory_fields'] = \
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
