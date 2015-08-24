@@ -75,7 +75,7 @@ class PClass(CheckedType):
         AClass(x=3)
         """
         if args:
-            return self.__class__(**{args[0]: args[1]})
+            kwargs[args[0]] = args[1]
 
         for key in self._pclass_fields:
             if key not in kwargs:

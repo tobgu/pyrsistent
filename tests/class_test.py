@@ -25,7 +25,7 @@ def test_evolve_pclass_instance():
 
     p3 = p2.set('x', 4)
     assert p3.x == 4
-
+    assert p3.y == 2
 
 def test_direct_assignment_not_possible():
     p = Point(x=1, y=2)
