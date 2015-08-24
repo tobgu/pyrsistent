@@ -130,7 +130,7 @@ Random access and insert is log32(n) where n is the size of the map.
 
     # Dict-like methods to convert to list and iterate
     >>> m3.items()
-    [('a', 5), ('c', 3), ('b', 2)]
+    pvector([('a', 5), ('c', 3), ('b', 2)])
     >>> list(m3)
     ['a', 'c', 'b']
 
@@ -210,10 +210,6 @@ by providing an iterable of types.
     Traceback (most recent call last):
     PTypeError: Invalid type for field BRecord.x, was float
 
-
-Type information may also be given as strings to avoid circular import problems and
-allow definitions of recursive structures.
-
 Mandatory fields
 ****************
 Fields are not mandatory by default but can be specified as such. If fields are missing an
@@ -265,6 +261,24 @@ Global invariants are inherited to subclasses.
     ...    print(e.invariant_errors)
     ...
     ('x larger than y',)
+
+Invariants may also contain multiple assertions. For those cases the invariant function should
+return a tuple of invariant tuples as described above. This structure is reflected in the
+invariant_errors attribute of the exception which will contain tuples with data from all failed
+invariants. Eg:
+
+.. code:: python
+
+    >>> class EvenX(PRecord):
+    ...     x = field(invariant=lambda x: ((x > 0, 'x negative'), (x % 2 == 0, 'x odd')))
+    ...
+    >>> try:
+    ...    EvenX(x=-1)
+    ... except InvariantException as e:
+    ...    print(e.invariant_errors)
+    ...
+    (('x negative', 'x odd'),)
+
 
 Factories
 *********

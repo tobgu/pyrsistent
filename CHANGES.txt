@@ -1,5 +1,12 @@
 Revision history
 ----------------
+
+v0.11.1, 2015-08-24
+  * Fix #51, PClass.set() broken when used with string+value argument.
+  * #50, make it possible to specify more than one assertion in an invariant
+  * #48, make it possible to make recursive type references by using a string
+    as type specification.
+
 v0.11.0, 2015-07-11
   * #42, delete() function added to PVector to allow deletion of elements by index
     and range. Will perform a full copy of the vector, no structural sharing.
