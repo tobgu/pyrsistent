@@ -4,6 +4,8 @@ Hypothesis-based tests for pvector.
 
 import gc
 
+from pytest import fixture
+
 from pyrsistent import pvector
 
 from hypothesis import given, strategies as st
@@ -16,26 +18,68 @@ class TestObject(object):
     def __init__(self):
         self.id = id(self)
 
-    def check(self):
+    def __repr__(self):
+        return "<%s>" % (self.id,)
+
+    def __del__(self):
         # If self is a dangling memory reference this check might fail. Or
         # segfault :)
-        assert self.id == id(self)
+        if self.id != id(self):
+            raise RuntimeError()
 
 
-def final_check(*pvectors):
+@fixture(scope="module")
+def gc_when_done(request):
+    request.addfinalizer(gc.collect)
+
+
+def test_setup(gc_when_done):
     """
-    Final sanity check on given pvectors.
+    Ensure we GC when tests finish.
     """
-    gc.collect()
-    for p in pvectors:
-        for obj in p:
-            obj.check()
 
-PVectors = st.lists(st.builds(TestObject)).map(lambda l: pvector(l))
+
+Lists = st.lists(st.builds(TestObject))
+PVectors = Lists.map(lambda l: pvector(l))
+
+
+@given(Lists)
+def test_pvector(l):
+    """
+    ``pvector`` can be roundtripped to a list.
+    """
+    p = pvector(l)
+    assert list(p) == l
+    for i in range(len(l)):
+        assert p[i] is l[i]
 
 
 @given(PVectors)
 def test_append(p):
-    result = p.append(TestObject())
+    """
+    ``append()`` adds an item to the end of the pvector.
+    """
+    obj = TestObject()
+    result = p.append(obj)
     assert result[:-1] == p
-    final_check(result, p)
+    assert result[-1] is obj
+
+
+@given(PVectors, PVectors)
+def test_extend_with_pvector(p, p2):
+    """
+    ``extend()`` adds all items in given pvector to the end.
+    """
+    result = p.extend(p2)
+    assert result[:len(p)] == p
+    assert result[len(p):] == p2
+
+
+@given(PVectors, st.lists(st.builds(TestObject)))
+def test_extend_with_list(p, l):
+    """
+    ``extend()`` adds all items in given list to the end.
+    """
+    result = p.extend(l)
+    assert result[:len(p)] == p
+    assert list(result[len(p):]) == l
