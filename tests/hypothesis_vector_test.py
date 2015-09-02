@@ -3,12 +3,13 @@ Hypothesis-based tests for pvector.
 """
 
 import gc
+from random import randint
 
 from pytest import fixture
 
 from pyrsistent import pvector
 
-from hypothesis import strategies as st
+from hypothesis import strategies as st, assume
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 
 
@@ -41,7 +42,7 @@ def test_setup(gc_when_done):
 
 
 # Pairs of a list and corresponding pvector:
-PVectorAndLists = st.lists(st.builds(TestObject)).map(
+PVectorAndLists = st.lists(st.builds(TestObject), average_size=10).map(
     lambda l: (l, pvector(l)))
 
 
@@ -79,9 +80,21 @@ class PVectorBuilder(RuleBasedStateMachine):
         """
         l, pv = start
         l2, pv2 = end
+        # compare() has O(N**2) behavior, so don't want too-large lists:
+        assume(len(l) + len(l2) < 50)
         l3 = l[:]
         l3.extend(l2)
         return l3, pv.extend(pv2)
+
+    @rule(target=sequences, former=sequences)
+    def remove(self, former):
+        l, pv = former
+        if not l:
+            return former
+        l2 = l[:]
+        i = randint(0, len(l) - 1)
+        del l2[i]
+        return l2, pv.delete(i)
 
     @rule(pair=sequences)
     def compare(self, pair):
@@ -101,4 +114,4 @@ class PVectorBuilder(RuleBasedStateMachine):
 
 PVectorBuilderTests = PVectorBuilder.TestCase
 # Reduce number of tested examples:
-PVectorBuilderTests.settings.max_examples = 30
+PVectorBuilderTests.settings.max_examples = 50
