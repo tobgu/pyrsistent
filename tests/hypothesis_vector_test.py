@@ -4,6 +4,7 @@ Hypothesis-based tests for pvector.
 
 import gc
 from random import randint
+import pickle
 
 from pytest import fixture
 
@@ -110,6 +111,17 @@ class PVectorBuilder(RuleBasedStateMachine):
         obj = TestObject()
         l2[i] = obj
         return l2, pv.set(i, obj)
+
+    @rule(target=sequences, former=sequences)
+    def subset(self, former):
+        """
+        A subset of the previous sequence.
+        """
+        l, pv = former
+        assume(l)
+        i = randint(0, len(l) - 1)
+        j = randint(i, len(l) - 1)
+        return l[i:j], pv[i:j]
 
     @rule(pair=sequences)
     def compare(self, pair):
