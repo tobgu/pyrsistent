@@ -340,20 +340,15 @@ def test_evolver_set_with_reallocation_edge_case():
     # Demonstrates a bug in evolver that also affects updates. Under certain
     # circumstances, the result of `x.update(y)` will **not** have all the
     # keys from `y`.
-    x = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6,
-         'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11}
-    y = pmap().update(x)
-    # At this point, y has size 11 & buckets 8, so next new element will
-    # trigger reallocate.
-    e = y.evolver()
-    e.set('NEW', 'STUFF')
-    e.set('k', x['k'])  # If we use a different value, the problem goes away.
-    z = e.persistent()
+    foo = object()
+    x = pmap({'a': foo}, pre_size=1)
+    e = x.evolver()
+    e['b'] = 3000
+    # Bug is triggered when we do a reallocation and the new value is
+    # identical to the old one.
+    e['a'] = foo
 
-    assert 'NEW' in z  # Clearer error message.
-    assert z == pmap(
-        {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6,
-         'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'NEW': 'STUFF'})
+    assert 'b' in e.persistent()
 
 
 def test_evolver_remove_element():
