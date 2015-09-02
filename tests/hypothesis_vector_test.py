@@ -88,13 +88,28 @@ class PVectorBuilder(RuleBasedStateMachine):
 
     @rule(target=sequences, former=sequences)
     def remove(self, former):
+        """
+        Remove an item from the sequences.
+        """
         l, pv = former
-        if not l:
-            return former
+        assume(l)
         l2 = l[:]
         i = randint(0, len(l) - 1)
         del l2[i]
         return l2, pv.delete(i)
+
+    @rule(target=sequences, former=sequences)
+    def set(self, former):
+        """
+        Overwrite an item in the sequence.
+        """
+        l, pv = former
+        assume(l)
+        l2 = l[:]
+        i = randint(0, len(l) - 1)
+        obj = TestObject()
+        l2[i] = obj
+        return l2, pv.set(i, obj)
 
     @rule(pair=sequences)
     def compare(self, pair):
