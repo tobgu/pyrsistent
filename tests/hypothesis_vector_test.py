@@ -117,6 +117,8 @@ class PVectorBuilder(RuleBasedStateMachine):
         The list and pvector must match.
         """
         l, pv = pair
+        # compare() has O(N**2) behavior, so don't want too-large lists:
+        assume(len(l) < 50)
         assert l == pv
         assert len(l) == len(pv)
         length = len(l)
