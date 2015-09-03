@@ -4,7 +4,7 @@ Hypothesis-based tests for pvector.
 
 import gc
 from random import randint
-import pickle
+from functools import wraps
 
 from pytest import fixture
 
@@ -47,6 +47,26 @@ PVectorAndLists = st.lists(st.builds(TestObject), average_size=10).map(
     lambda l: (l, pvector(l)))
 
 
+def verify_inputs_unmodified(original):
+    """
+    Decorator that asserts that the wrapped function does not modify its
+    inputs.
+    """
+    def to_tuples(pairs):
+        return [(tuple(l), tuple(pv)) for (l, pv) in pairs]
+
+    @wraps(original)
+    def wrapper(self, **kwargs):
+        inputs = kwargs.values()
+        tuple_inputs = to_tuples(inputs)
+        try:
+            return original(self, **kwargs)
+        finally:
+            # Ensure inputs were unmodified:
+            assert to_tuples(inputs) == tuple_inputs
+    return wrapper
+
+
 class PVectorBuilder(RuleBasedStateMachine):
     """
     Build a list and matching pvector step-by-step.
@@ -64,6 +84,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return start
 
     @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
     def append(self, former):
         """
         Append an item to the pair of sequences.
@@ -75,6 +96,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return l2, pv.append(obj)
 
     @rule(target=sequences, start=sequences, end=sequences)
+    @verify_inputs_unmodified
     def extend(self, start, end):
         """
         Extend a pair of sequences with another pair of sequences.
@@ -88,6 +110,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return l3, pv.extend(pv2)
 
     @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
     def remove(self, former):
         """
         Remove an item from the sequences.
@@ -100,6 +123,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return l2, pv.delete(i)
 
     @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
     def set(self, former):
         """
         Overwrite an item in the sequence.
@@ -113,6 +137,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return l2, pv.set(i, obj)
 
     @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
     def subset(self, former):
         """
         A subset of the previous sequence.
@@ -124,6 +149,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         return l[i:j], pv[i:j]
 
     @rule(pair=sequences)
+    @verify_inputs_unmodified
     def compare(self, pair):
         """
         The list and pvector must match.
