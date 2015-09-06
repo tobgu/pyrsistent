@@ -258,13 +258,12 @@ class PMap(object):
         return self
 
     class _Evolver(object):
-        __slots__ = ('_buckets_evolver', '_size', '_original_pmap', '_dirty')
+        __slots__ = ('_buckets_evolver', '_size', '_original_pmap')
 
         def __init__(self, original_pmap):
             self._original_pmap = original_pmap
             self._buckets_evolver = original_pmap._buckets.evolver()
             self._size = original_pmap._size
-            self._dirty = False
 
         def __getitem__(self, key):
             return PMap._getitem(self._buckets_evolver, key)
@@ -298,10 +297,6 @@ class PMap(object):
             return self
 
         def _reallocate(self, new_size):
-            # Preserve dirtiness from before allocation so we don't lose
-            # writes. Must do this before we call `persistent` on
-            # `_buckets_evolver` as that resets dirtiness.
-            self._dirty = self.is_dirty()
             new_list = new_size * [None]
             buckets = self._buckets_evolver.persistent()
             for k, v in chain.from_iterable(x for x in buckets if x):
@@ -311,14 +306,17 @@ class PMap(object):
                 else:
                     new_list[index] = [(k, v)]
 
-            self._buckets_evolver = pvector().extend(new_list).evolver()
+            # A reallocation should always result in a dirty buckets evolver to avoid
+            # possible loss of elements when doing the reallocation.
+            self._buckets_evolver = pvector().evolver()
+            self._buckets_evolver.extend(new_list)
 
         def is_dirty(self):
-            return self._buckets_evolver.is_dirty() or self._dirty
+            return self._buckets_evolver.is_dirty()
 
         def persistent(self):
             if self.is_dirty():
-                return PMap(self._size, self._buckets_evolver.persistent())
+                self._original_pmap = PMap(self._size, self._buckets_evolver.persistent())
 
             return self._original_pmap
 

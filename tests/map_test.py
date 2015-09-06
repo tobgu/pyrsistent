@@ -348,7 +348,9 @@ def test_evolver_set_with_reallocation_edge_case():
     # identical to the old one.
     e['a'] = foo
 
-    assert 'b' in e.persistent()
+    y = e.persistent()
+    assert 'b' in y
+    assert y is e.persistent()
 
 
 def test_evolver_remove_element():
