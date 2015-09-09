@@ -1,5 +1,10 @@
 Revision history
 ----------------
+v0.11.2, 2015-09-09
+  * Fix bug causing potential element loss when reallocating PMap. Thanks to @jml for finding
+    this and submitting a PR with a fix!
+  * Removed python 3.2 test build from Travis. There is nothing breaking 3.2 compatibility in this
+    release but there will be no effort moving forward to keep the 3.2 compatibility.
 
 v0.11.1, 2015-08-24
   * Fix #51, PClass.set() broken when used with string+value argument.
