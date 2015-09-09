@@ -8,3 +8,4 @@ dist/
 .idea
 .tox
 README.html
+.hypothesis
