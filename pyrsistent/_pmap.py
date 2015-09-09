@@ -306,14 +306,17 @@ class PMap(object):
                 else:
                     new_list[index] = [(k, v)]
 
-            self._buckets_evolver = pvector().extend(new_list).evolver()
+            # A reallocation should always result in a dirty buckets evolver to avoid
+            # possible loss of elements when doing the reallocation.
+            self._buckets_evolver = pvector().evolver()
+            self._buckets_evolver.extend(new_list)
 
         def is_dirty(self):
             return self._buckets_evolver.is_dirty()
 
         def persistent(self):
             if self.is_dirty():
-                return PMap(self._size, self._buckets_evolver.persistent())
+                self._original_pmap = PMap(self._size, self._buckets_evolver.persistent())
 
             return self._original_pmap
 

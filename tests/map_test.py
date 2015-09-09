@@ -336,6 +336,23 @@ def test_evolver_update_with_relocation():
     assert e.persistent() == pmap({'a': 1000, 'b': 3000, 'c': 4000, 'd': 6000})
 
 
+def test_evolver_set_with_reallocation_edge_case():
+    # Demonstrates a bug in evolver that also affects updates. Under certain
+    # circumstances, the result of `x.update(y)` will **not** have all the
+    # keys from `y`.
+    foo = object()
+    x = pmap({'a': foo}, pre_size=1)
+    e = x.evolver()
+    e['b'] = 3000
+    # Bug is triggered when we do a reallocation and the new value is
+    # identical to the old one.
+    e['a'] = foo
+
+    y = e.persistent()
+    assert 'b' in y
+    assert y is e.persistent()
+
+
 def test_evolver_remove_element():
     e = m(a=1000, b=2000).evolver()
     assert 'a' in e
