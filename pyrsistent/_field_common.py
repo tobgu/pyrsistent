@@ -2,7 +2,8 @@ from collections import Iterable
 import six
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
-    optional as optional_type, InvariantException, get_type, wrap_invariant)
+    optional as optional_type, InvariantException, get_type, wrap_invariant,
+    _restore_pickle)
 
 
 def set_fields(dct, bases, name):
@@ -121,12 +122,42 @@ class PTypeError(TypeError):
         self.actual_type = actual_type
 
 
-def _sequence_field(checked_class, suffix, item_type, optional, initial):
+SEQ_FIELD_TYPE_SUFFIXES = {
+    CheckedPVector: "PVector",
+    CheckedPSet: "PSet",
+}
+
+# Global dictionary to hold auto-generated field types: used for unpickling
+_seq_field_types = {}
+
+def _restore_seq_field_pickle(checked_class, item_type, data):
+    """Unpickling function for auto-generated PVec/PSet field types."""
+    type_ = _seq_field_types[checked_class, item_type]
+    return _restore_pickle(type_, data)
+
+def _make_seq_field_type(checked_class, item_type):
+    """Create a subclass of the given checked class with the given item type."""
+    type_ = _seq_field_types.get((checked_class, item_type))
+    if type_ is not None:
+        return type_
+
+    class TheType(checked_class):
+        __type__ = item_type
+
+        def __reduce__(self):
+            return (_restore_seq_field_pickle,
+                    (checked_class, item_type, list(self)))
+
+    suffix = SEQ_FIELD_TYPE_SUFFIXES[checked_class]
+    TheType.__name__ = item_type.__name__.capitalize() + suffix
+    _seq_field_types[checked_class, item_type] = TheType
+    return TheType
+
+def _sequence_field(checked_class, item_type, optional, initial):
     """
     Create checked field for either ``PSet`` or ``PVector``.
 
     :param checked_class: ``CheckedPSet`` or ``CheckedPVector``.
-    :param suffix: Suffix for new type name.
     :param item_type: The required type for the items in the set.
     :param optional: If true, ``None`` can be used as a value for
         this field.
@@ -134,9 +165,7 @@ def _sequence_field(checked_class, suffix, item_type, optional, initial):
 
     :return: A ``field`` containing a checked class.
     """
-    class TheType(checked_class):
-        __type__ = item_type
-    TheType.__name__ = item_type.__name__.capitalize() + suffix
+    TheType = _make_seq_field_type(checked_class, item_type)
 
     if optional:
         def factory(argument):
@@ -164,7 +193,7 @@ def pset_field(item_type, optional=False, initial=()):
 
     :return: A ``field`` containing a ``CheckedPSet`` of the given type.
     """
-    return _sequence_field(CheckedPSet, "PSet", item_type, optional,
+    return _sequence_field(CheckedPSet, item_type, optional,
                            initial)
 
 
@@ -180,11 +209,39 @@ def pvector_field(item_type, optional=False, initial=()):
 
     :return: A ``field`` containing a ``CheckedPVector`` of the given type.
     """
-    return _sequence_field(CheckedPVector, "PVector", item_type, optional,
+    return _sequence_field(CheckedPVector, item_type, optional,
                            initial)
 
 
 _valid = lambda item: (True, "")
+
+
+# Global dictionary to hold auto-generated field types: used for unpickling
+_pmap_field_types = {}
+
+def _restore_pmap_field_pickle(key_type, value_type, data):
+    """Unpickling function for auto-generated PMap field types."""
+    type_ = _pmap_field_types[key_type, value_type]
+    return _restore_pickle(type_, data)
+
+def _make_pmap_field_type(key_type, value_type):
+    """Create a subclass of CheckedPMap with the given key and value types."""
+    type_ = _pmap_field_types.get((key_type, value_type))
+    if type_ is not None:
+        return type_
+
+    class TheMap(CheckedPMap):
+        __key_type__ = key_type
+        __value_type__ = value_type
+
+        def __reduce__(self):
+            return (_restore_pmap_field_pickle,
+                    (self.__key_type__, self.__value_type__, dict(self)))
+
+    TheMap.__name__ = (key_type.__name__.capitalize() +
+                       value_type.__name__.capitalize() + "PMap")
+    _pmap_field_types[key_type, value_type] = TheMap
+    return TheMap
 
 
 def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIANT):
@@ -199,11 +256,7 @@ def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIA
 
     :return: A ``field`` containing a ``CheckedPMap``.
     """
-    class TheMap(CheckedPMap):
-        __key_type__ = key_type
-        __value_type__ = value_type
-    TheMap.__name__ = (key_type.__name__.capitalize() +
-                       value_type.__name__.capitalize() + "PMap")
+    TheMap = _make_pmap_field_type(key_type, value_type)
 
     if optional:
         def factory(argument):

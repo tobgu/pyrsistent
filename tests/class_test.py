@@ -2,13 +2,21 @@ from collections import Hashable
 import math
 import pickle
 import pytest
-from pyrsistent import field, InvariantException, PClass, optional, CheckedPVector
+from pyrsistent import (
+    field, InvariantException, PClass, optional, CheckedPVector,
+    pmap_field, pset_field, pvector_field)
 
 
 class Point(PClass):
     x = field(type=int, mandatory=True, invariant=lambda x: (x >= 0, 'X negative'))
     y = field(type=int, serializer=lambda formatter, y: formatter(y))
     z = field(type=int, initial=0)
+
+
+class TypedContainerObj(PClass):
+    map = pmap_field(str, str)
+    set = pset_field(str)
+    vec = pvector_field(str)
 
 
 def test_evolve_pclass_instance():
@@ -163,6 +171,12 @@ def test_supports_pickling():
 
     assert p1 == p2
     assert isinstance(p2, Point)
+
+
+def test_supports_pickling_with_typed_fields():
+    obj = TypedContainerObj(map={'foo': 'bar'}, set=['hello', 'there'], vec=['a', 'b'])
+    obj2 = pickle.loads(pickle.dumps(obj))
+    assert obj == obj2
 
 
 def test_can_remove_optional_member():
