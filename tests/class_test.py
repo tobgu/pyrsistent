@@ -173,7 +173,7 @@ def test_supports_pickling():
     assert isinstance(p2, Point)
 
 
-def test_supports_pickling_with_typed_fields():
+def test_supports_pickling_with_typed_container_fields():
     obj = TypedContainerObj(map={'foo': 'bar'}, set=['hello', 'there'], vec=['a', 'b'])
     obj2 = pickle.loads(pickle.dumps(obj))
     assert obj == obj2

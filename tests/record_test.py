@@ -13,6 +13,12 @@ class ARecord(PRecord):
     y = field()
 
 
+class RecordContainingContainers(PRecord):
+    map = pmap_field(str, str)
+    vec = pvector_field(str)
+    set = pset_field(str)
+
+
 def test_create():
     r = ARecord(x=1, y='foo')
     assert r.x == 1
@@ -223,6 +229,11 @@ def test_pickling():
     assert x == y
     assert isinstance(y, ARecord)
 
+def test_supports_pickling_with_typed_container_fields():
+    obj = RecordContainingContainers(
+        map={'foo': 'bar'}, set=['hello', 'there'], vec=['a', 'b'])
+    obj2 = pickle.loads(pickle.dumps(obj))
+    assert obj == obj2
 
 def test_all_invariant_errors_reported():
     class BRecord(PRecord):
