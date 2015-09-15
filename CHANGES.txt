@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.11.3, 2015-09-15
+  * Fix #57, support pickling of PClasses and PRecords using pmap_field, pvector_field, and pset_field.
+    Thanks @radix for reporting this and submitting a fix for it!
+
 v0.11.2, 2015-09-09
   * Fix bug causing potential element loss when reallocating PMap. Thanks to @jml for finding
     this and submitting a PR with a fix!
