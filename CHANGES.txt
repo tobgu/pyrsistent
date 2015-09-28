@@ -1,5 +1,10 @@
 Revision history
 ----------------
+v0.11.4, 2015-09-28
+ * Fix #59, make it possible to create weakrefs to all collection types.
+   Thanks @itamarst for reporting it.
+ * Fix #58, add __str__ to InvariantException. Thanks @tomprince for reporting it.
+
 v0.11.3, 2015-09-15
   * Fix #57, support pickling of PClasses and PRecords using pmap_field, pvector_field, and pset_field.
     Thanks @radix for reporting this and submitting a fix for it!
