@@ -9,3 +9,4 @@ dist/
 .tox
 README.html
 .hypothesis
+.cache

@@ -35,6 +35,7 @@ def test_evolve_pclass_instance():
     assert p3.x == 4
     assert p3.y == 2
 
+
 def test_direct_assignment_not_possible():
     p = Point(x=1, y=2)
 
@@ -65,13 +66,19 @@ def test_cannot_construct_with_wrong_type():
 
 
 def test_cannot_construct_without_mandatory_fields():
-    with pytest.raises(InvariantException):
+    try:
         Point(y=1)
+        assert False
+    except InvariantException as e:
+        assert "[Point.x]" in str(e)
 
 
 def test_field_invariant_must_hold():
-    with pytest.raises(InvariantException):
+    try:
         Point(x=-1)
+        assert False
+    except InvariantException as e:
+        assert "X negative" in str(e)
 
 
 def test_initial_value_set_when_not_present_in_arguments():
