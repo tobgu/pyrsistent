@@ -1,3 +1,4 @@
+import itertools
 import six
 from pyrsistent._checked_types import (InvariantException, CheckedType, _restore_pickle, store_invariants)
 from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
@@ -9,6 +10,11 @@ class _PClassMeta(type):
         set_fields(dct, bases, name='_pclass_fields')
         store_invariants(dct, bases, '_pclass_invariants', '__invariant__')
         dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
+
+        # There must only be one __weakref__ entry
+        if '__weakref__' not in list(itertools.chain(*[getattr(b, '__slots__', tuple()) for b in bases])):
+            dct['__slots__'] += ('__weakref__',)
+
         return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
 
 _MISSING_VALUE = object()

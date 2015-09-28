@@ -27,7 +27,7 @@ class PSet(object):
     >>> s3
     pset([1, 3, 4])
     """
-    __slots__ = ('_map',)
+    __slots__ = ('_map', '__weakref__')
 
     def __new__(cls, m):
         self = super(PSet, cls).__new__(cls)

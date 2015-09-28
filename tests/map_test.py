@@ -396,3 +396,8 @@ def test_pmap_unorderable():
 
     with pytest.raises(TypeError):
         _ = m(a=1) >= m(b=2)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(m(a=1))

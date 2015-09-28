@@ -40,7 +40,7 @@ class PMap(object):
     >>> m3['c']
     3
     """
-    __slots__ = ('_size', '_buckets')
+    __slots__ = ('_size', '_buckets', '__weakref__')
 
     def __new__(cls, size, buckets):
         self = super(PMap, cls).__new__(cls)

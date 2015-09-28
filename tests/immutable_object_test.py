@@ -59,6 +59,7 @@ def test_cannot_replace_frozen_member():
     with pytest.raises(AttributeError):
         t.set(y_=18)
 
+
 def test_derived_class_with_new():
     d = DerivedWithNew(1, 2)
     d2 = d.set(x=3)

@@ -45,7 +45,7 @@ class PDeque(object):
     >>> y.appendleft(4)
     pdeque([4, 1, 2], maxlen=3)
     """
-    __slots__ = ('_left_list', '_right_list', '_length', '_maxlen')
+    __slots__ = ('_left_list', '_right_list', '_length', '_maxlen', '__weakref__')
 
     def __new__(cls, left_list, right_list, length, maxlen=None):
         instance = super(PDeque, cls).__new__(cls)

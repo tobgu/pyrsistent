@@ -192,3 +192,9 @@ def test_remove_missing_element():
 
 def test_mcons():
     assert plist([1, 2]).mcons([3, 4]) == plist([4, 3, 1, 2])
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(plist())
+    weakref.ref(plist([1, 2]))

@@ -655,3 +655,8 @@ def test_pmap_field_create_from_nested_serialized_data():
 
     data = Bar(bar=m(foo_key=Foo(foo="foo")))
     Bar.create(data.serialize()) == data
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(ARecord(x=1, y=2))

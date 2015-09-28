@@ -197,3 +197,8 @@ def test_create_with_string_specification():
     naturals_list = [[1, 2], [3, 4]]
     nv = NaturalsVectorStr.create(naturals_list)
     assert nv == naturals_list
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(Naturals([]))

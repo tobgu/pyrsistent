@@ -272,3 +272,8 @@ def test_multiple_global_invariants():
         assert False
     except InvariantException as e:
         assert e.invariant_errors == (('x', 'y'),)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(Point(x=1, y=2))

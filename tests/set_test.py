@@ -154,3 +154,8 @@ def test_pickling_empty_set():
 
 def test_pickling_non_empty_map():
     assert pickle.loads(pickle.dumps(s(1, 2), -1)) == s(1, 2)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(s(1))

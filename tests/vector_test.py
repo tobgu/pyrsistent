@@ -833,3 +833,8 @@ def test_python_no_c_extension_with_environment_variable():
 
     reload_module(pyrsistent._pvector)
     reload_module(pyrsistent)
+
+
+def test_supports_weakref(pvector):
+    import weakref
+    weakref.ref(pvector())

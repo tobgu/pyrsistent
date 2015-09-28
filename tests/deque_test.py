@@ -261,3 +261,8 @@ def test_index():
 
 def test_literalish():
     assert dq(1, 2, 3) == pdeque([1, 2, 3])
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(dq(1, 2))

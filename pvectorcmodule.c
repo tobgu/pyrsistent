@@ -49,6 +49,7 @@ typedef struct {
   unsigned int shift;
   VNode *root;
   VNode *tail;
+  PyObject *in_weakreflist; /* List of weak references */
 } PVector;
 
 typedef struct {
@@ -227,6 +228,10 @@ static void PVector_dealloc(PVector *self) {
   debug("Dealloc(): self=%p, self->count=%u, tail->refCount=%u, root->refCount=%u, self->shift=%u, self->tail=%p, self->root=%p\n",
         self, self->count, NODE_REF_COUNT(self->tail), NODE_REF_COUNT(self->root), self->shift, self->tail, self->root);
 
+  if (self->in_weakreflist != NULL) {
+    PyObject_ClearWeakRefs((PyObject *) self);
+  }
+  
   PyObject_GC_UnTrack((PyObject*)self);
   Py_TRASHCAN_SAFE_BEGIN(self);
 
@@ -510,6 +515,7 @@ static PVector* rawCopyPVector(PVector* vector) {
   newVector->shift = vector->shift;
   newVector->root = vector->root;
   newVector->tail = vector->tail;
+  newVector->in_weakreflist = NULL;
   PyObject_GC_Track((PyObject*)newVector);
   return newVector;
 }
@@ -622,7 +628,7 @@ static PyTypeObject PVectorType = {
   (traverseproc)PVector_traverse,             /* tp_traverse       */
   0,                                          /* tp_clear          */
   PVector_richcompare,                        /* tp_richcompare    */
-  0,                                          /* tp_weaklistoffset */
+  offsetof(PVector, in_weakreflist),          /* tp_weaklistoffset */
   PVectorIter_iter,                           /* tp_iter           */
   0,                                          /* tp_iternext       */
   PVector_methods,                            /* tp_methods        */
@@ -659,6 +665,7 @@ static PVector* emptyNewPvec(void) {
   pvec->shift = SHIFT;
   pvec->root = newNode();
   pvec->tail = newNode();
+  pvec->in_weakreflist = NULL;
   PyObject_GC_Track((PyObject*)pvec);
   return pvec;
 }
@@ -681,6 +688,7 @@ static PVector* newPvec(unsigned int count, unsigned int shift, VNode *root) {
   pvec->shift = shift;
   pvec->root = root;
   pvec->tail = newNode();
+  pvec->in_weakreflist = NULL;
   PyObject_GC_Track((PyObject*)pvec);
   return pvec;
 }

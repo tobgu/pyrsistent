@@ -78,3 +78,8 @@ def test_pickling():
 
     assert x == y
     assert isinstance(y, Naturals)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(Naturals([1, 2]))

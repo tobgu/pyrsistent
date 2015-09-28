@@ -145,3 +145,8 @@ def test_type_creation_with_string_specification():
     map = VectorToSetMap.create({content: content})
 
     assert map[FloatVector(content)] == set(content)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(VectorToSetMap({}))

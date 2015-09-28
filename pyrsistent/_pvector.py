@@ -29,7 +29,7 @@ class PythonPVector(object):
     """
     Support structure for PVector that implements structural sharing for vectors using a trie.
     """
-    __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset')
+    __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '__weakref__')
 
     def __new__(cls, count, shift, root, tail):
         self = super(PythonPVector, cls).__new__(cls)

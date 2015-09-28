@@ -109,3 +109,8 @@ def test_pbag_is_unorderable():
 
     with pytest.raises(TypeError):
         _ = b(1) >= b(2)
+
+
+def test_supports_weakref():
+    import weakref
+    weakref.ref(b(1))

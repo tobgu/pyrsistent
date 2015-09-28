@@ -35,7 +35,7 @@ class _PListBuilder(object):
 
 
 class _PListBase(object):
-    __slots__ = ()
+    __slots__ = ('__weakref__',)
 
     # Selected implementations can be taken straight from the Sequence
     # class, other are less suitable. Especially those that work with

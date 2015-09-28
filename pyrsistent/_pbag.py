@@ -30,7 +30,7 @@ class PBag(object):
     pbag([1, 2, 3, 4])
     """
 
-    __slots__ = ('_counts',)
+    __slots__ = ('_counts', '__weakref__')
 
     def __init__(self, counts):
         self._counts = counts
