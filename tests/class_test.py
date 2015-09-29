@@ -277,3 +277,12 @@ def test_multiple_global_invariants():
 def test_supports_weakref():
     import weakref
     weakref.ref(Point(x=1, y=2))
+
+
+def test_supports_weakref_with_multi_level_inheritance():
+    import weakref
+
+    class PPoint(Point):
+        a = field()
+
+    weakref.ref(PPoint(x=1, y=2))

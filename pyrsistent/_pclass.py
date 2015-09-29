@@ -5,14 +5,19 @@ from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL,
 from pyrsistent._transformations import transform
 
 
+def _is_pclass(bases):
+    return len(bases) == 1 and bases[0] == CheckedType
+
+
 class _PClassMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_pclass_fields')
         store_invariants(dct, bases, '_pclass_invariants', '__invariant__')
         dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
 
-        # There must only be one __weakref__ entry
-        if '__weakref__' not in list(itertools.chain(*[getattr(b, '__slots__', tuple()) for b in bases])):
+        # There must only be one __weakref__ entry in the inheritance hierarchy,
+        # lets put it on the top level class.
+        if _is_pclass(bases):
             dct['__slots__'] += ('__weakref__',)
 
         return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
