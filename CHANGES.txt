@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.11.5, 2015-09-29
+ * Fix bug introduced in 0.11.4 that prevented multi level inheritance from PClass.
+ * Make PClassMeta public for friendlier subclassing
+
 v0.11.4, 2015-09-28
  * Fix #59, make it possible to create weakrefs to all collection types.
    Thanks @itamarst for reporting it.
