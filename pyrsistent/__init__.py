@@ -21,7 +21,7 @@ from pyrsistent._field_common import (
 
 from pyrsistent._precord import PRecord
 
-from pyrsistent._pclass import PClass
+from pyrsistent._pclass import PClass, PClassMeta
 
 from pyrsistent._immutable import immutable
 
@@ -38,7 +38,7 @@ __all__ = ('pmap', 'm', 'PMap',
            'pdeque', 'dq', 'PDeque',
            'CheckedPMap', 'CheckedPVector', 'CheckedPSet', 'InvariantException', 'CheckedKeyTypeError', 'CheckedValueTypeError', 'CheckedType', 'optional',
            'PRecord', 'field', 'pset_field', 'pmap_field', 'pvector_field',
-           'PClass',
+           'PClass', 'PClassMeta',
            'immutable',
            'freeze', 'thaw', 'mutant',
            'inc', 'discard', 'rex', 'ny')

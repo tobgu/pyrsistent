@@ -9,7 +9,7 @@ def _is_pclass(bases):
     return len(bases) == 1 and bases[0] == CheckedType
 
 
-class _PClassMeta(type):
+class PClassMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_pclass_fields')
         store_invariants(dct, bases, '_pclass_invariants', '__invariant__')
@@ -20,12 +20,12 @@ class _PClassMeta(type):
         if _is_pclass(bases):
             dct['__slots__'] += ('__weakref__',)
 
-        return super(_PClassMeta, mcs).__new__(mcs, name, bases, dct)
+        return super(PClassMeta, mcs).__new__(mcs, name, bases, dct)
 
 _MISSING_VALUE = object()
 
 
-@six.add_metaclass(_PClassMeta)
+@six.add_metaclass(PClassMeta)
 class PClass(CheckedType):
     """
     A PClass is a python class with a fixed set of specified fields. PClasses are declared as python classes inheriting
