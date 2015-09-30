@@ -1,7 +1,6 @@
 from collections import Container, Iterable, Sized, Hashable
 from functools import reduce
 from pyrsistent._pmap import pmap
-from pyrsistent._helpers import freeze
 
 
 def _add_to_counters(counters, element):
@@ -152,7 +151,7 @@ class PBag(object):
         Combine elements from two PBags.
 
         >>> pbag('abbb') + pbag('bcc')
-        pbag(['c', 'c', 'b', 'b', 'b', 'b', 'a'])
+        pbag(['a', 'b', 'b', 'b', 'b', 'c', 'c'])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -171,7 +170,7 @@ class PBag(object):
         Remove elements from one PBag that are present in another.
 
         >>> pbag('abbbc') - pbag('bccd')
-        pbag(['b', 'b', 'a'])
+        pbag(['a', 'b', 'b'])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -190,7 +189,7 @@ class PBag(object):
         Union: Keep elements that are present in either of two PBags.
 
         >>> pbag('abbb') | pbag('bcc')
-        pbag(['c', 'c', 'b', 'b', 'b', 'a'])
+        pbag(['a', 'b', 'b', 'b', 'c', 'c'])
         """
         if not isinstance(other, PBag):
             return NotImplemented
