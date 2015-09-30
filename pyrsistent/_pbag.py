@@ -140,12 +140,6 @@ class PBag(object):
 
     # Multiset-style operations from collections.Counter
 
-    # It would be cool to implement these by directly calling the methods
-    # of Counter and passing in ._counts, but alas, those methods check 
-    # that the second argument is a Counter and die if it's not. I'm not
-    # sure how to get around that short of reading the whole second
-    # argument's ._counts into a Counter.
-
     def __add__(self, other):
         """ 
         Combine elements from two PBags.
@@ -269,5 +263,3 @@ def pbag(elements):
 
 _EMPTY_PBAG = PBag(pmap())
 
-import doctest
-doctest.testmod()
