@@ -89,12 +89,29 @@ def test_iter_duplicates():
 def test_iter_multiple_elements():
     assert list(b(1, 2, 2)) in ([1, 2, 2], [2, 2, 1])
 
-
 def test_contains():
     assert 1 in b(1)
 
 def test_not_contains():
     assert 1 not in b(2)
+
+def test_add():
+    assert b(3, 3, 3, 2, 2, 1) + b(4, 3, 2, 1) == b(4,
+                                                    3, 3, 3, 3,
+                                                    2, 2, 2,
+                                                    1, 1)
+
+def test_sub():
+    assert b(1, 2, 3, 3) - b(3, 4) == b(1, 2, 3)
+
+def test_or():
+    assert b(1, 2, 2, 3, 3, 3) | b(1, 2, 3, 4, 4) == b(1, 1,
+                                                       2, 2, 2,
+                                                       3, 3, 3, 3,
+                                                       4, 4)
+    
+def test_and():
+    assert b(1, 2, 2, 3, 3, 3) & b(2, 3, 3, 4) == b(2, 3, 3)
 
 
 def test_pbag_is_unorderable():

@@ -138,6 +138,89 @@ class PBag(object):
     __gt__ = __lt__
     __ge__ = __lt__
 
+    # Multiset-style operations from collections.Counter
+
+    # It would be cool to implement these by directly calling the methods
+    # of Counter and passing in ._counts, but alas, those methods check 
+    # that the second argument is a Counter and die if it's not. I'm not
+    # sure how to get around that short of reading the whole second
+    # argument's ._counts into a Counter.
+
+    def __add__(self, other):
+        """ 
+        Combine elements from two PBags.
+
+        >>> pbag('abbb') + pbag('bcc')
+        pbag(['c', 'c', 'b', 'b', 'b', 'b', 'a'])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = pmap().evolver()
+        for elem, count in self._counts.iteritems():
+            newcount = count + other.count(elem)
+            if newcount > 0:
+                result[elem] = newcount
+        for elem, count in other._counts.iteritems():
+            if elem not in self and count > 0:
+                result[elem] = count
+        return PBag(result.persistent())
+
+    def __sub__(self, other):
+        """ 
+        Remove elements from one PBag that are present in another.
+
+        >>> pbag('abbbc') - pbag('bccd')
+        pbag(['b', 'b', 'a'])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = pmap().evolver()
+        for elem, count in self._counts.iteritems():
+            newcount = count - other.count(elem)
+            if newcount > 0:
+                result[elem] = newcount
+        for elem, count in other._counts.iteritems():
+            if elem not in self and count < 0:
+                result[elem] = 0 - count
+        return PBag(result.persistent())
+
+    def __or__(self, other):
+        """ 
+        Union: Keep elements that are present in either of two PBags.
+
+        >>> pbag('abbb') | pbag('bcc')
+        pbag(['c', 'c', 'b', 'b', 'b', 'a'])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = pmap().evolver()
+        for elem, count in self._counts.iteritems():
+            other_count = other.count(elem)
+            newcount = other_count if count < other_count else count
+            if newcount > 0:
+                result[elem] = newcount
+        for elem, count in other._counts.iteritems():
+            if elem not in self and count > 0:
+                result[elem] = count
+        return PBag(result.persistent())
+
+    def __and__(self, other):
+        """
+        Intersection: Only keep elements that are present in both PBags.
+        
+        >>> pbag('abbb') & pbag('bcc')
+        pbag(['b'])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = {}
+        for elem, count in self._counts.iteritems():
+            other_count = other.count(elem)
+            newcount = count if count < other_count else other_count
+            if newcount > 0:
+                result[elem] = newcount
+        return PBag(result.persistent())
+
     def __hash__(self):
         """
         Hash based on value of elements.
