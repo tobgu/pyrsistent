@@ -138,6 +138,72 @@ class PBag(object):
     __gt__ = __lt__
     __ge__ = __lt__
 
+    # Multiset-style operations similar to collections.Counter
+
+    def __add__(self, other):
+        """ 
+        Combine elements from two PBags.
+
+        >>> pbag([1, 2, 2]) + pbag([2, 3, 3])
+        pbag([1, 2, 2, 2, 3, 3])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = self._counts.evolver()
+        for elem, other_count in other._counts.iteritems():
+            result[elem] = self.count(elem) + other_count
+        return PBag(result.persistent())
+
+    def __sub__(self, other):
+        """ 
+        Remove elements from one PBag that are present in another.
+
+        >>> pbag([1, 2, 2, 2, 3]) - pbag([2, 3, 3, 4])
+        pbag([1, 2, 2])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = self._counts.evolver()
+        for elem, other_count in other._counts.iteritems():
+            newcount = self.count(elem) - other_count
+            if newcount > 0:
+                result[elem] = newcount
+            elif elem in self:
+                result.remove(elem)
+        return PBag(result.persistent())
+        
+    def __or__(self, other):
+        """ 
+        Union: Keep elements that are present in either of two PBags.
+
+        >>> pbag([1, 2, 2, 2]) | pbag([2, 3, 3])
+        pbag([1, 2, 2, 2, 3, 3])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = self._counts.evolver()
+        for elem, other_count in other._counts.iteritems():
+            count = self.count(elem)
+            newcount = max(count, other_count)
+            result[elem] = newcount
+        return PBag(result.persistent())
+        
+    def __and__(self, other):
+        """
+        Intersection: Only keep elements that are present in both PBags.
+        
+        >>> pbag([1, 2, 2, 2]) & pbag([2, 3, 3])
+        pbag([2])
+        """
+        if not isinstance(other, PBag):
+            return NotImplemented
+        result = pmap().evolver()
+        for elem, count in self._counts.iteritems():
+            newcount = min(count, other.count(elem))
+            if newcount > 0:
+                result[elem] = newcount
+        return PBag(result.persistent())
+    
     def __hash__(self):
         """
         Hash based on value of elements.
