@@ -150,8 +150,8 @@ class PBag(object):
         """ 
         Combine elements from two PBags.
 
-        >>> pbag('abbb') + pbag('bcc')
-        pbag(['a', 'b', 'b', 'b', 'b', 'c', 'c'])
+        >>> pbag([1, 2, 2]) + pbag([2, 3, 3])
+        pbag([1, 2, 2, 2, 3, 3])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -169,8 +169,8 @@ class PBag(object):
         """ 
         Remove elements from one PBag that are present in another.
 
-        >>> pbag('abbbc') - pbag('bccd')
-        pbag(['a', 'b', 'b'])
+        >>> pbag([1, 2, 2, 2, 3]) - pbag([2, 3, 3, 4])
+        pbag([1, 2, 2])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -188,8 +188,8 @@ class PBag(object):
         """ 
         Union: Keep elements that are present in either of two PBags.
 
-        >>> pbag('abbb') | pbag('bcc')
-        pbag(['a', 'b', 'b', 'b', 'c', 'c'])
+        >>> pbag([1, 2, 2, 2]) | pbag([2, 3, 3])
+        pbag([1, 2, 2, 2, 3, 3])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -208,8 +208,8 @@ class PBag(object):
         """
         Intersection: Only keep elements that are present in both PBags.
         
-        >>> pbag('abbb') & pbag('bcc')
-        pbag(['b'])
+        >>> pbag([1, 2, 2, 2]) & pbag([2, 3, 3])
+        pbag([2])
         """
         if not isinstance(other, PBag):
             return NotImplemented
@@ -269,3 +269,5 @@ def pbag(elements):
 
 _EMPTY_PBAG = PBag(pmap())
 
+import doctest
+doctest.testmod()
