@@ -1,6 +1,7 @@
 from collections import Container, Iterable, Sized, Hashable
 from functools import reduce
 from pyrsistent._pmap import pmap
+from pyrsistent._helpers import freeze
 
 
 def _add_to_counters(counters, element):
@@ -213,7 +214,7 @@ class PBag(object):
         """
         if not isinstance(other, PBag):
             return NotImplemented
-        result = {}
+        result = pmap().evolver()
         for elem, count in self._counts.iteritems():
             other_count = other.count(elem)
             newcount = count if count < other_count else other_count
