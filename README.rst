@@ -599,6 +599,8 @@ Itamar Turner-Trauring https://github.com/itamarst
 
 Jonathan Lange https://github.com/jml
 
+Richard Futrell https://github.com/Futrell
+
 Contributing
 ------------
 

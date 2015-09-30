@@ -1,5 +1,8 @@
 Revision history
 ----------------
+v0.11.6, 2015-09-30
+ * Add +, -, & and | operations to PBag. Thanks @Futrell for this!
+
 v0.11.5, 2015-09-29
  * Fix bug introduced in 0.11.4 that prevented multi level inheritance from PClass.
  * Make PClassMeta public for friendlier subclassing
