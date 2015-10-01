@@ -1,5 +1,3 @@
-import pytest
-
 from pyrsistent import pmap
 import random
 
@@ -7,8 +5,11 @@ import gc
 
 
 def test_segfault_issue_52():
-    threshold = gc.get_threshold()
-    gc.set_threshold(1, 1, 1)  # fail fast
+    threshold = None
+    if hasattr(gc, 'get_threshold'):
+        # PyPy is lacking these functions
+        threshold = gc.get_threshold()
+        gc.set_threshold(1, 1, 1)  # fail fast
 
     v = [pmap()]
 
@@ -25,4 +26,5 @@ def test_segfault_issue_52():
             except AttributeError:  # evolver on string
                 continue
 
-    gc.set_threshold(*threshold)
+    if threshold:
+        gc.set_threshold(*threshold)
