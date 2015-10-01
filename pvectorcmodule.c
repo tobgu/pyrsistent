@@ -538,9 +538,8 @@ static PyObject * PVector_evolver(PVector *self) {
   if (evolver == NULL) {
     return NULL;
   }
-  
-  PyObject_GC_Track(evolver);
   initializeEvolver(evolver, self, NULL);
+  PyObject_GC_Track(evolver);
   Py_INCREF(self);
   return (PyObject *)evolver;
 }
