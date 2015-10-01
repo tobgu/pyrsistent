@@ -1012,16 +1012,11 @@ static PyObject* PVector_mset(PVector *self, PyObject *args) {
   return vector;
 }
 
-static PyObject* PVector_delete(PVector *self, PyObject *args) {
-  Py_ssize_t index;
-  PyObject *stop_obj = NULL;
+
+static PyObject* internalDelete(PVector *self, Py_ssize_t index, PyObject *stop_obj) {
   Py_ssize_t stop;
   PyObject *list;
   PyObject *result;
-
-  if(!PyArg_ParseTuple(args, "n|O:delete", &index, &stop_obj)) {
-    return NULL;
-  }
 
   if (index < 0) {
     index += self->count;
@@ -1058,6 +1053,17 @@ static PyObject* PVector_delete(PVector *self, PyObject *args) {
   result = PVector_extend(EMPTY_VECTOR, list);
   Py_DECREF(list);
   return result;
+}
+
+static PyObject* PVector_delete(PVector *self, PyObject *args) {
+  Py_ssize_t index;
+  PyObject *stop_obj = NULL;
+
+  if(!PyArg_ParseTuple(args, "n|O:delete", &index, &stop_obj)) {
+    return NULL;
+  }
+
+  return internalDelete(self, index, stop_obj);
 }
 
 
@@ -1241,6 +1247,7 @@ static void PVectorEvolver_dealloc(PVectorEvolver *);
 static PyObject *PVectorEvolver_append(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_extend(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_set(PVectorEvolver *, PyObject *);
+static PyObject *PVectorEvolver_delete(PVectorEvolver *self, PyObject *args);
 static PyObject *PVectorEvolver_subscript(PVectorEvolver *, PyObject *);
 static PyObject *PVectorEvolver_persistent(PVectorEvolver *);
 static Py_ssize_t PVectorEvolver_len(PVectorEvolver *);
@@ -1258,6 +1265,7 @@ static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
 	{"set",         (PyCFunction)PVectorEvolver_set, METH_VARARGS, "Set item"},
+        {"delete",      (PyCFunction)PVectorEvolver_delete, METH_VARARGS, "Delete item"},
         {"persistent",  (PyCFunction)PVectorEvolver_persistent, METH_NOARGS, "Create PVector from evolver"},
         {"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
         {NULL,              NULL}           /* sentinel */
@@ -1462,6 +1470,23 @@ static PyObject *PVectorEvolver_set(PVectorEvolver *self, PyObject *args) {
   return (PyObject*)self;
 }
 
+static PyObject *PVectorEvolver_delete(PVectorEvolver *self, PyObject *args) {
+  PyObject *position = NULL;
+
+  /* The n parses for size, the O parses for a Python object */
+  if(!PyArg_ParseTuple(args, "O", &position)) {
+    return NULL;
+  }
+
+  if(PVectorEvolver_set_item(self, position, NULL) < 0) {
+    return NULL;
+  }
+
+  Py_INCREF(self);
+  return (PyObject*)self;
+}
+
+
 
 static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
   if (PyIndex_Check(item)) {
@@ -1480,12 +1505,25 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
         self->newVector = rawCopyPVector(self->originalVector);
       }
 
-      if(position < TAIL_OFF(self->newVector)) {
-        self->newVector->root = doSetWithDirty(self->newVector->root, self->newVector->shift, position, value);
-      } else {
-        self->newVector->tail = doSetWithDirty(self->newVector->tail, 0, position, value);
+      if(value != NULL) {
+        if(position < TAIL_OFF(self->newVector)) {
+          self->newVector->root = doSetWithDirty(self->newVector->root, self->newVector->shift, position, value);
+        } else {
+          self->newVector->tail = doSetWithDirty(self->newVector->tail, 0, position, value);
+        }
+
+        return 0;
       }
-      
+
+      // value == NULL => Delete element. Should be unusual. Simple but very
+      // expensive operation. Realize the vector, delete on it and
+      // then reset the evolver to work on the new vector.
+      PVector *temp = PVectorEvolver_persistent(self);
+      PVector *temp2 = (PVector*)internalDelete(temp, position, NULL);
+      Py_DECREF(self->originalVector);
+      Py_DECREF(temp);
+      self->originalVector = temp2;
+      self->newVector = self->originalVector;
       return 0;
     } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList)))) {
       int result = PyList_SetItem(self->appendList, position - self->newVector->count, value); 

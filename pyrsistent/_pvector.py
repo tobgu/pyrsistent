@@ -232,8 +232,8 @@ class PythonPVector(object):
 
             return ret
 
-        def delete(self, index, stop=None):
-            del self[_index_or_slice(index, stop)]
+        def delete(self, index):
+            del self[index]
             return self
 
         def __delitem__(self, key):

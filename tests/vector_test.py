@@ -773,8 +773,8 @@ def test_evolver_returns_itself_on_evolving_operations(pvector):
     assert v.evolver().append(3).extend([4, 5]).set(1, 6).persistent() == pvector([1, 6, 3, 4, 5])
 
 
-def test_evolver_delete_by_index():
-    e = python_pvector([1, 2, 3]).evolver()
+def test_evolver_delete_by_index(pvector):
+    e = pvector([1, 2, 3]).evolver()
 
     del e[0]
 
@@ -782,24 +782,32 @@ def test_evolver_delete_by_index():
     assert e.append(4).persistent() == python_pvector([2, 3, 4])
 
 
-def test_evolver_delete_by_slice():
-    e = python_pvector([1, 2, 3, 4, 5]).evolver()
-
-    del e[1:4:2]
-
-    assert e.persistent() == python_pvector([1, 3, 5])
-
-
-def test_evolver_delete_function_by_index():
-    e = python_pvector([1, 2, 3]).evolver()
+def test_evolver_delete_function_by_index(pvector):
+    e = pvector([1, 2, 3]).evolver()
 
     assert e.delete(1).persistent() == python_pvector([1, 3])
 
 
-def test_evolver_delete_function_by_slice():
-    e = python_pvector([1, 2, 3, 4]).evolver()
+def test_evolver_delete_function_by_index_multiple_times(pvector):
+    SIZE = 40
+    e = pvector(range(SIZE)).evolver()
+    for i in range(SIZE):
+        assert e[0] == i
+        assert list(e.persistent()) == list(range(i, SIZE))
+        del e[0]
 
-    assert e.delete(1, 3).persistent() == python_pvector([1, 4])
+    assert e.persistent() == list()
+
+def test_evolver_delete_function_in_append_list(pvector):
+    SIZE = 40
+    e = pvector(range(SIZE/2)).evolver()
+    e.extend(range(SIZE/2, SIZE))
+    for i in range(SIZE):
+        assert e[0] == i
+        assert list(e.persistent()) == list(range(i, SIZE))
+        del e[0]
+
+    assert e.persistent() == list()
 
 
 def test_compare_with_list(pvector):

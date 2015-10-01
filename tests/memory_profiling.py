@@ -15,7 +15,7 @@ except ImportError:
     sys.exit()
 
 
-PROFILING_DURATION = 2.0
+PROFILING_DURATION = 1.0
 
 def run_function(fn):
     stop = time.time() + PROFILING_DURATION
