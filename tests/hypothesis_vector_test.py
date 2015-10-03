@@ -3,13 +3,14 @@ Hypothesis-based tests for pvector.
 """
 
 import gc
+
 from random import randint
 from functools import wraps
 from pyrsistent import PClass, field
 
 from pytest import fixture
 
-from pyrsistent import pvector
+from pyrsistent import pvector, discard
 
 from hypothesis import strategies as st, assume
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
@@ -44,7 +45,7 @@ def test_setup(gc_when_done):
 
 
 # Pairs of a list and corresponding pvector:
-PVectorAndLists = st.lists(st.builds(TestObject), average_size=10).map(
+PVectorAndLists = st.lists(st.builds(TestObject), average_size=5).map(
     lambda l: (l, pvector(l)))
 
 
@@ -77,6 +78,7 @@ def assert_equal(l, pv):
     for i in range(length):
         for j in range(i, length):
             assert l[i:j] == pv[i:j]
+    assert l == list(iter(pv))
 
 
 class PVectorBuilder(RuleBasedStateMachine):
@@ -150,6 +152,33 @@ class PVectorBuilder(RuleBasedStateMachine):
 
     @rule(target=sequences, former=sequences)
     @verify_inputs_unmodified
+    def transform_set(self, former):
+        """
+        Transform the sequence by setting value.
+        """
+        l, pv = former
+        assume(l)
+        l2 = l[:]
+        i = randint(0, len(l) - 1)
+        obj = TestObject()
+        l2[i] = obj
+        return l2, pv.transform([i], obj)
+
+    @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
+    def transform_discard(self, former):
+        """
+        Transform the sequence by discarding a value.
+        """
+        l, pv = former
+        assume(l)
+        l2 = l[:]
+        i = randint(0, len(l) - 1)
+        del l2[i]
+        return l2, pv.transform([i], discard)
+
+    @rule(target=sequences, former=sequences)
+    @verify_inputs_unmodified
     def subset(self, former):
         """
         A subset of the previous sequence.
@@ -173,8 +202,6 @@ class PVectorBuilder(RuleBasedStateMachine):
 
 
 PVectorBuilderTests = PVectorBuilder.TestCase
-# Reduce number of tested examples:
-PVectorBuilderTests.settings.max_examples = 50
 
 
 class EvolverItem(PClass):
@@ -191,7 +218,7 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
     In each step in the state machine we do same operation on a list and
     on a pvector evolver, and then when we're done we compare the two.
     """
-    sequences = Bundle("sequences")
+    sequences = Bundle("evolver_sequences")
 
     @rule(target=sequences, start=PVectorAndLists)
     def initial_value(self, start):
@@ -220,13 +247,8 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         """
         # compare() has O(N**2) behavior, so don't want too-large lists:
         assume(len(start.current_list) + len(end.current_list) < 50)
-
-        # Need to make a copy here since "start" and "end" could
-        # sometimes be the same object. That would mean extending the
-        # list with itself.
-        extension_list = list(end.current_list)
-        start.current_list.extend(extension_list)
-        start.current_evolver.extend(extension_list)
+        start.current_evolver.extend(end.current_list)
+        start.current_list.extend(end.current_list)
 
     @rule(item=sequences)
     def delete(self, item):
@@ -239,9 +261,9 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         del item.current_evolver[i]
 
     @rule(item=sequences)
-    def set(self, item):
+    def setitem(self, item):
         """
-        Overwrite an item in the sequence.
+        Overwrite an item in the sequence using ``__setitem__``.
         """
         assume(item.current_list)
         i = randint(0, len(item.current_list) - 1)
@@ -250,14 +272,29 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         item.current_evolver[i] = obj
 
     @rule(item=sequences)
+    def set(self, item):
+        """
+        Overwrite an item in the sequence using ``set``.
+        """
+        assume(item.current_list)
+        i = randint(0, len(item.current_list) - 1)
+        obj = TestObject()
+        item.current_list[i] = obj
+        item.current_evolver.set(i, obj)
+
+    @rule(item=sequences)
     def compare(self, item):
         """
         The list and pvector evolver must match.
         """
+        item.current_evolver.is_dirty()
         # compare() has O(N**2) behavior, so don't want too-large lists:
         assume(len(item.current_list) < 50)
         # original object unmodified
         assert item.original_list == item.original_pvector
+        # evolver matches:
+        for i in range(len(item.current_evolver)):
+            assert item.current_list[i] == item.current_evolver[i]
         # persistent version matches
         assert_equal(item.current_list, item.current_evolver.persistent())
         # original object still unmodified
@@ -265,5 +302,3 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
 
 
 PVectorEvolverBuilderTests = PVectorEvolverBuilder.TestCase
-# Reduce number of tested examples:
-PVectorEvolverBuilderTests.settings.max_examples = 50
