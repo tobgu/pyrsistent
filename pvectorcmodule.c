@@ -1487,6 +1487,23 @@ static PyObject *PVectorEvolver_delete(PVectorEvolver *self, PyObject *args) {
 }
 
 
+static int internalPVectorDelete(PVectorEvolver *self, Py_ssize_t position) {
+  // Delete element. Should be unusual. Simple but expensive operation
+  // that reuses the delete code for the vector. Realize the vector, delete on it and
+  // then reset the evolver to work on the new vector.
+  PVector *temp = (PVector*)PVectorEvolver_persistent(self);
+  PVector *temp2 = (PVector*)internalDelete(temp, position, NULL);
+  Py_DECREF(temp);
+
+  if(temp2 == NULL) {
+    return -1;
+  }
+
+  Py_DECREF(self->originalVector);
+  self->originalVector = temp2;
+  self->newVector = self->originalVector;
+  return 0;
+}
 
 static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObject* value) {
   if (PyIndex_Check(item)) {
@@ -1515,24 +1532,21 @@ static int PVectorEvolver_set_item(PVectorEvolver *self, PyObject* item, PyObjec
         return 0;
       }
 
-      // value == NULL => Delete element. Should be unusual. Simple but very
-      // expensive operation. Realize the vector, delete on it and
-      // then reset the evolver to work on the new vector.
-      PVector *temp = PVectorEvolver_persistent(self);
-      PVector *temp2 = (PVector*)internalDelete(temp, position, NULL);
-      Py_DECREF(self->originalVector);
-      Py_DECREF(temp);
-      self->originalVector = temp2;
-      self->newVector = self->originalVector;
-      return 0;
+      return internalPVectorDelete(self, position);
     } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList)))) {
-      int result = PyList_SetItem(self->appendList, position - self->newVector->count, value); 
-      if(result == 0) {
-        Py_INCREF(value);
+      if (value != NULL) {
+        int result = PyList_SetItem(self->appendList, position - self->newVector->count, value); 
+        if(result == 0) {
+          Py_INCREF(value);
+        }
+        return result;
       }
-      return result;
-    } else if((0 <= position) && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))) {
-      return PyList_Append(self->appendList, value); 
+
+      return internalPVectorDelete(self, position);
+    } else if((0 <= position)
+              && (position < (self->newVector->count + PyList_GET_SIZE(self->appendList) + 1))
+              && (value != NULL)) {
+        return PyList_Append(self->appendList, value);
     } else {
       PyErr_Format(PyExc_IndexError, "Index out of range: %zd", position);
     }

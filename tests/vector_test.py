@@ -798,16 +798,35 @@ def test_evolver_delete_function_by_index_multiple_times(pvector):
 
     assert e.persistent() == list()
 
-def test_evolver_delete_function_in_append_list(pvector):
-    SIZE = 40
-    e = pvector(range(SIZE/2)).evolver()
-    e.extend(range(SIZE/2, SIZE))
-    for i in range(SIZE):
-        assert e[0] == i
-        assert list(e.persistent()) == list(range(i, SIZE))
+
+def test_evolver_delete_function_invalid_index(pvector):
+    e = pvector([1, 2]).evolver()
+
+    with pytest.raises(TypeError):
+        del e["e"]
+
+
+def test_delete_of_non_existing_element(pvector):
+    e = pvector([1, 2]).evolver()
+
+    with pytest.raises(IndexError):
+        del e[2]
+
+    del e[0]
+    del e[0]
+
+    with pytest.raises(IndexError):
         del e[0]
 
-    assert e.persistent() == list()
+    assert e.persistent() == pvector()
+
+
+def test_append_followed_by_delete(pvector):
+    e = pvector([1, 2]).evolver()
+
+    e.append(3)
+
+    del e[2]
 
 
 def test_compare_with_list(pvector):

@@ -220,8 +220,13 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         """
         # compare() has O(N**2) behavior, so don't want too-large lists:
         assume(len(start.current_list) + len(end.current_list) < 50)
-        start.current_list.extend(end.current_list)
-        start.current_evolver.extend(end.current_list)
+
+        # Need to make a copy here since "start" and "end" could
+        # sometimes be the same object. That would mean extending the
+        # list with itself.
+        extension_list = list(end.current_list)
+        start.current_list.extend(extension_list)
+        start.current_evolver.extend(extension_list)
 
     @rule(item=sequences)
     def delete(self, item):
