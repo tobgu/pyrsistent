@@ -1,5 +1,10 @@
 Revision history
 ----------------
+v0.11.7, 2015-10-03
+ * Fix #52, occasional SEGFAULTs due to misplaced call to PyObject_GC_Track. Thanks @jkbjh for this!
+ * Fix #42, complete support for delete. Now also on the C-implementation of the PVectorEvolver.
+   Thanks @itamarst for contributing a whole bunch of Hypothesis test cases covering the evolver operations!
+
 v0.11.6, 2015-09-30
  * Add +, -, & and | operations to PBag. Thanks @Futrell for this!
 

@@ -601,6 +601,8 @@ Jonathan Lange https://github.com/jml
 
 Richard Futrell https://github.com/Futrell
 
+Jakob Hollenstein https://github.com/jkbjh
+
 Contributing
 ------------
 
