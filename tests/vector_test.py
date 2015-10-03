@@ -829,6 +829,17 @@ def test_append_followed_by_delete(pvector):
     del e[2]
 
 
+def test_evolver_set_followed_by_delete(pvector):
+    evolver = pvector([1, 2]).evolver()
+    evolver[1] = 3
+
+    assert [evolver[i] for i in range(len(evolver))] == [1, 3]
+
+    del evolver[0]
+
+    assert evolver.persistent() == pvector([3])
+
+
 def test_compare_with_list(pvector):
     v = pvector([1, 2, 3])
 

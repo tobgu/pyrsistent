@@ -239,7 +239,7 @@ class PythonPVector(object):
         def __delitem__(self, key):
             if self._orig_pvector:
                 # All structural sharing bets are off, base evolver on _extra_tail only
-                l = self._orig_pvector.tolist()
+                l = PythonPVector(self._count, self._shift, self._root, self._tail).tolist()
                 l.extend(self._extra_tail)
                 self._reset(_EMPTY_PVECTOR)
                 self._extra_tail = l
