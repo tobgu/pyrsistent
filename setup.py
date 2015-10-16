@@ -3,15 +3,16 @@ from setuptools import setup, Extension
 import sys
 import platform
 import warnings
+import codecs
 from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
 from _pyrsistent_version import __version__
 
 
-f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
-readme = f.read()
-f.close()
+readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
+with codecs.open(readme_path, encoding='utf8') as f:
+    readme = f.read()
 
 extensions = []
 if platform.python_implementation() == 'CPython':
