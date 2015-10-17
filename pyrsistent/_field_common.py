@@ -135,6 +135,10 @@ def _restore_seq_field_pickle(checked_class, item_type, data):
     type_ = _seq_field_types[checked_class, item_type]
     return _restore_pickle(type_, data)
 
+def _types_to_names(types):
+    """Convert a tuple of types to a human-readable string."""
+    return "".join(typ.__name__.capitalize() for typ in types)
+
 def _make_seq_field_type(checked_class, item_type):
     """Create a subclass of the given checked class with the given item type."""
     type_ = _seq_field_types.get((checked_class, item_type))
@@ -149,7 +153,7 @@ def _make_seq_field_type(checked_class, item_type):
                     (checked_class, item_type, list(self)))
 
     suffix = SEQ_FIELD_TYPE_SUFFIXES[checked_class]
-    TheType.__name__ = item_type.__name__.capitalize() + suffix
+    TheType.__name__ = _types_to_names(TheType._checked_types) + suffix
     _seq_field_types[checked_class, item_type] = TheType
     return TheType
 
@@ -238,8 +242,9 @@ def _make_pmap_field_type(key_type, value_type):
             return (_restore_pmap_field_pickle,
                     (self.__key_type__, self.__value_type__, dict(self)))
 
-    TheMap.__name__ = (key_type.__name__.capitalize() +
-                       value_type.__name__.capitalize() + "PMap")
+    TheMap.__name__ = "{}To{}PMap".format(
+        _types_to_names(TheMap._checked_key_types),
+        _types_to_names(TheMap._checked_value_types))
     _pmap_field_types[key_type, value_type] = TheMap
     return TheMap
 

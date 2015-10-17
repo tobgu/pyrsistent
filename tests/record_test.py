@@ -358,6 +358,16 @@ def test_pset_field_checked_set():
     with pytest.raises(TypeError):
         record.value.add("hello")
 
+def test_pset_field_checked_vector_multiple_types():
+    """
+    ``pset_field`` results in a vector that enforces its types.
+    """
+    class Record(PRecord):
+        value = pset_field((int, str))
+    record = Record(value=[1, 2, "hello"])
+    with pytest.raises(TypeError):
+        record.value.add(object())
+
 def test_pset_field_type():
     """
     ``pset_field`` enforces its type.
@@ -422,6 +432,19 @@ def test_pset_field_name():
              Record().value2.__class__.__name__) ==
             ("SomethingPSet", "IntPSet"))
 
+def test_pset_multiple_types_field_name():
+    """
+    The created set class name is based on the multiple given types of
+    items in the set.
+    """
+    class Something(object):
+        pass
+
+    class Record(PRecord):
+        value = pset_field((Something, int))
+
+    assert (Record().value.__class__.__name__ ==
+            "SomethingIntPSet")
 
 def test_pvector_field_initial_value():
     """
@@ -457,6 +480,16 @@ def test_pvector_field_checked_vector():
     record = Record(value=[1, 2])
     with pytest.raises(TypeError):
         record.value.append("hello")
+
+def test_pvector_field_checked_vector_multiple_types():
+    """
+    ``pvector_field`` results in a vector that enforces its types.
+    """
+    class Record(PRecord):
+        value = pvector_field((int, str))
+    record = Record(value=[1, 2, "hello"])
+    with pytest.raises(TypeError):
+        record.value.append(object())
 
 def test_pvector_field_type():
     """
@@ -522,6 +555,20 @@ def test_pvector_field_name():
              Record().value2.__class__.__name__) ==
             ("SomethingPVector", "IntPVector"))
 
+def test_pvector_multiple_types_field_name():
+    """
+    The created vector class name is based on the multiple given types of
+    items in the vector.
+    """
+    class Something(object):
+        pass
+
+    class Record(PRecord):
+        value = pvector_field((Something, int))
+
+    assert (Record().value.__class__.__name__ ==
+            "SomethingIntPVector")
+
 def test_pvector_field_create_from_nested_serialized_data():
     class Foo(PRecord):
         foo = field(type=str)
@@ -566,6 +613,26 @@ def test_pmap_field_checked_map_value():
     class Record(PRecord):
         value = pmap_field(int, type(None))
     record = Record(value={1: None})
+    with pytest.raises(TypeError):
+        record.value.set(2, 4)
+
+def test_pmap_field_checked_map_key_multiple_types():
+    """
+    ``pmap_field`` results in a map that enforces its key types.
+    """
+    class Record(PRecord):
+        value = pmap_field((int, str), type(None))
+    record = Record(value={1: None, "hello": None})
+    with pytest.raises(TypeError):
+        record.value.set(object(), None)
+
+def test_pmap_field_checked_map_value_multiple_types():
+    """
+    ``pmap_field`` results in a map that enforces its value types.
+    """
+    class Record(PRecord):
+        value = pmap_field(int, (str, type(None)))
+    record = Record(value={1: None, 3: "hello"})
     with pytest.raises(TypeError):
         record.value.set(2, 4)
 
@@ -626,7 +693,25 @@ def test_pmap_field_name():
         value2 = pmap_field(int, float)
     assert ((Record().value.__class__.__name__,
              Record().value2.__class__.__name__) ==
-            ("SomethingAnotherPMap", "IntFloatPMap"))
+            ("SomethingToAnotherPMap", "IntToFloatPMap"))
+
+def test_pmap_field_name_multiple_types():
+    """
+    The created map class name is based on the types of items in the map,
+    including when there are multiple supported types.
+    """
+    class Something(object):
+        pass
+
+    class Another(object):
+        pass
+
+    class Record(PRecord):
+        value = pmap_field((Something, Another), int)
+        value2 = pmap_field(str, (int, float))
+    assert ((Record().value.__class__.__name__,
+             Record().value2.__class__.__name__) ==
+            ("SomethingAnotherToIntPMap", "StrToIntFloatPMap"))
 
 def test_pmap_field_invariant():
     """
