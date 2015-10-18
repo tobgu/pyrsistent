@@ -242,7 +242,7 @@ def _make_pmap_field_type(key_type, value_type):
             return (_restore_pmap_field_pickle,
                     (self.__key_type__, self.__value_type__, dict(self)))
 
-    TheMap.__name__ = "{}To{}PMap".format(
+    TheMap.__name__ = "{0}To{1}PMap".format(
         _types_to_names(TheMap._checked_key_types),
         _types_to_names(TheMap._checked_value_types))
     _pmap_field_types[key_type, value_type] = TheMap
