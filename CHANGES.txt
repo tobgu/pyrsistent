@@ -1,5 +1,10 @@
 Revision history
 ----------------
+v0.11.8, 2015-10-18
+ * Fix #66, UnicodeDecodeError when doing pip install in environments with ascii encoding as default.
+   Thanks @foolswood!
+ * Implement support for multiple types in pmap_field(), pvector_field() and pset_field(). Thanks @itamarst!
+
 v0.11.7, 2015-10-03
  * Fix #52, occasional SEGFAULTs due to misplaced call to PyObject_GC_Track. Thanks @jkbjh for this!
  * Fix #42, complete support for delete. Now also on the C-implementation of the PVectorEvolver.

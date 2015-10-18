@@ -603,6 +603,8 @@ Richard Futrell https://github.com/Futrell
 
 Jakob Hollenstein https://github.com/jkbjh
 
+David Honour https://github.com/foolswood
+
 Contributing
 ------------
 
