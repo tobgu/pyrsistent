@@ -266,6 +266,23 @@ def test_delete_slice(pvector):
     assert seq.delete(1, -1) == pvector([0, 4])
 
 
+def test_remove(pvector):
+    seq = pvector(range(5))
+    assert seq.remove(3) == pvector([0, 1, 2, 4])
+
+
+def test_remove_first_only(pvector):
+    seq = pvector([1, 2, 3, 2, 1])
+    assert seq.remove(2) == pvector([1, 3, 2, 1])
+
+
+def test_remove_index_out_of_bounds(pvector):
+    seq = pvector(range(5))
+    with pytest.raises(ValueError) as err:
+        seq.remove(5)
+    assert str(err.value) == '5 is not in list'
+
+
 def test_addition(pvector):
     v = pvector([1, 2]) + pvector([3, 4])
 
