@@ -663,7 +663,7 @@ class PVector(object):
     @abstractmethod
     def remove(self, value):
         """
-        Remove the occurrence of a value from the vector.
+        Remove the first occurrence of a value from the vector.
 
         >>> v1 = v(1, 2, 3, 2, 1)
         >>> v2 = v1.remove(1)
