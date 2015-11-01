@@ -4,7 +4,7 @@ Hypothesis-based tests for pvector.
 
 import gc
 
-from random import randint
+from collections import Iterable
 from functools import wraps
 from pyrsistent import PClass, field
 
@@ -59,7 +59,7 @@ def verify_inputs_unmodified(original):
 
     @wraps(original)
     def wrapper(self, **kwargs):
-        inputs = kwargs.values()
+        inputs = [k for k in kwargs.values() if isinstance(k, Iterable)]
         tuple_inputs = to_tuples(inputs)
         try:
             return original(self, **kwargs)
@@ -123,70 +123,70 @@ class PVectorBuilder(RuleBasedStateMachine):
         l3.extend(l2)
         return l3, pv.extend(pv2)
 
-    @rule(target=sequences, former=sequences)
+    @rule(target=sequences, former=sequences, choice=st.choices())
     @verify_inputs_unmodified
-    def remove(self, former):
+    def remove(self, former, choice):
         """
         Remove an item from the sequences.
         """
         l, pv = former
         assume(l)
         l2 = l[:]
-        i = randint(0, len(l) - 1)
+        i = choice(range(len(l)))
         del l2[i]
         return l2, pv.delete(i)
 
-    @rule(target=sequences, former=sequences)
+    @rule(target=sequences, former=sequences, choice=st.choices())
     @verify_inputs_unmodified
-    def set(self, former):
+    def set(self, former, choice):
         """
         Overwrite an item in the sequence.
         """
         l, pv = former
         assume(l)
         l2 = l[:]
-        i = randint(0, len(l) - 1)
+        i = choice(range(len(l)))
         obj = TestObject()
         l2[i] = obj
         return l2, pv.set(i, obj)
 
-    @rule(target=sequences, former=sequences)
+    @rule(target=sequences, former=sequences, choice=st.choices())
     @verify_inputs_unmodified
-    def transform_set(self, former):
+    def transform_set(self, former, choice):
         """
         Transform the sequence by setting value.
         """
         l, pv = former
         assume(l)
         l2 = l[:]
-        i = randint(0, len(l) - 1)
+        i = choice(range(len(l)))
         obj = TestObject()
         l2[i] = obj
         return l2, pv.transform([i], obj)
 
-    @rule(target=sequences, former=sequences)
+    @rule(target=sequences, former=sequences, choice=st.choices())
     @verify_inputs_unmodified
-    def transform_discard(self, former):
+    def transform_discard(self, former, choice):
         """
         Transform the sequence by discarding a value.
         """
         l, pv = former
         assume(l)
         l2 = l[:]
-        i = randint(0, len(l) - 1)
+        i = choice(range(len(l)))
         del l2[i]
         return l2, pv.transform([i], discard)
 
-    @rule(target=sequences, former=sequences)
+    @rule(target=sequences, former=sequences, choice=st.choices())
     @verify_inputs_unmodified
-    def subset(self, former):
+    def subset(self, former, choice):
         """
         A subset of the previous sequence.
         """
         l, pv = former
         assume(l)
-        i = randint(0, len(l) - 1)
-        j = randint(i, len(l) - 1)
+        i = choice(range(len(l)))
+        j = choice(range(len(l)))
         return l[i:j], pv[i:j]
 
     @rule(pair=sequences)
@@ -250,34 +250,34 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         start.current_evolver.extend(end.current_list)
         start.current_list.extend(end.current_list)
 
-    @rule(item=sequences)
-    def delete(self, item):
+    @rule(item=sequences, choice=st.choices())
+    def delete(self, item, choice=st.choices()):
         """
         Remove an item from the sequences.
         """
         assume(item.current_list)
-        i = randint(0, len(item.current_list) - 1)
+        i = choice(range(len(item.current_list)))
         del item.current_list[i]
         del item.current_evolver[i]
 
-    @rule(item=sequences)
-    def setitem(self, item):
+    @rule(item=sequences, choice=st.choices())
+    def setitem(self, item, choice):
         """
         Overwrite an item in the sequence using ``__setitem__``.
         """
         assume(item.current_list)
-        i = randint(0, len(item.current_list) - 1)
+        i = choice(range(len(item.current_list)))
         obj = TestObject()
         item.current_list[i] = obj
         item.current_evolver[i] = obj
 
-    @rule(item=sequences)
-    def set(self, item):
+    @rule(item=sequences, choice=st.choices())
+    def set(self, item, choice):
         """
         Overwrite an item in the sequence using ``set``.
         """
         assume(item.current_list)
-        i = randint(0, len(item.current_list) - 1)
+        i = choice(range(len(item.current_list)))
         obj = TestObject()
         item.current_list[i] = obj
         item.current_evolver.set(i, obj)
