@@ -280,7 +280,7 @@ def test_remove_index_out_of_bounds(pvector):
     seq = pvector(range(5))
     with pytest.raises(ValueError) as err:
         seq.remove(5)
-    assert str(err.value) == '5 is not in list'
+    assert 'not in' in str(err.value)
 
 
 def test_addition(pvector):

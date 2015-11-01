@@ -564,6 +564,8 @@ static PyObject* PVector_extend(PVector *self, PyObject *args);
 
 static PyObject* PVector_delete(PVector *self, PyObject *args);
 
+static PyObject* PVector_remove(PVector *self, PyObject *args);
+
 static PySequenceMethods PVector_sequence_methods = {
     (lenfunc)PVector_len,            /* sq_length */
     (binaryfunc)PVector_extend,      /* sq_concat */
@@ -596,7 +598,8 @@ static PyMethodDef PVector_methods[] = {
         {"evolver",     (PyCFunction)PVector_evolver, METH_NOARGS, "Return new evolver for pvector"},
 	{"mset",        (PyCFunction)PVector_mset, METH_VARARGS, "Inserts multiple elements at the specified positions"},
         {"tolist",      (PyCFunction)PVector_toList, METH_NOARGS, "Convert to list"},
-        {"delete",      (PyCFunction)PVector_delete, METH_VARARGS, "Delete element(s)"},
+        {"delete",      (PyCFunction)PVector_delete, METH_VARARGS, "Delete element(s) by index"},
+        {"remove",      (PyCFunction)PVector_remove, METH_VARARGS, "Remove element(s) by equality"},
 	{NULL}
 };
 
@@ -1066,6 +1069,23 @@ static PyObject* PVector_delete(PVector *self, PyObject *args) {
   return internalDelete(self, index, stop_obj);
 }
 
+static PyObject* PVector_remove(PVector *self, PyObject *args) {
+  Py_ssize_t index;
+  PyObject* py_index = PVector_index(self, args);
+
+  if(py_index != NULL) {
+#if PY_MAJOR_VERSION >= 3
+      index = PyLong_AsSsize_t(py_index);
+#else
+      index = PyInt_AsSsize_t(py_index);
+#endif
+    Py_DECREF(py_index);
+    return internalDelete(self, index, NULL);
+  }
+
+  PyErr_SetString(PyExc_ValueError, "PVector.remove(x): x not in vector");
+  return NULL;
+}
 
 static PyMethodDef PyrsistentMethods[] = {
   {"pvector", pyrsistent_pvec, METH_VARARGS, 

@@ -407,8 +407,9 @@ class PythonPVector(object):
         return _EMPTY_PVECTOR.extend(l)
 
     def remove(self, value):
-        return self.delete(self.index(value))
-
+        l = self.tolist()
+        l.remove(value)
+        return _EMPTY_PVECTOR.extend(l)
 
 @six.add_metaclass(ABCMeta)
 class PVector(object):
