@@ -406,6 +406,9 @@ class PythonPVector(object):
         del l[_index_or_slice(index, stop)]
         return _EMPTY_PVECTOR.extend(l)
 
+    def remove(self, value):
+        return self.delete(self.index(value))
+
 
 @six.add_metaclass(ABCMeta)
 class PVector(object):
@@ -656,6 +659,19 @@ class PVector(object):
         >>> v1.delete(1, 3)
         pvector([1, 4, 5])
         """
+
+    @abstractmethod
+    def remove(self, value):
+        """
+        Remove the first occurrence of a value from the vector.
+
+        >>> v1 = v(1, 2, 3, 2, 1)
+        >>> v2 = v1.remove(1)
+        pvector([2, 3, 2, 1])
+        >>> v2.remove(1)
+        pvector([2, 3, 2])
+        """
+
 
 _EMPTY_PVECTOR = PythonPVector(0, SHIFT, [], [])
 PVector.register(PythonPVector)
