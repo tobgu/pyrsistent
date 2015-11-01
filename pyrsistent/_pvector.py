@@ -668,6 +668,7 @@ class PVector(object):
 
         >>> v1 = v(1, 2, 3, 2, 1)
         >>> v2 = v1.remove(1)
+        >>> v2
         pvector([2, 3, 2, 1])
         >>> v2.remove(1)
         pvector([2, 3, 2])
