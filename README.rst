@@ -335,7 +335,6 @@ to take care of fields that require special treatment.
 
 
 .. _instar: https://github.com/boxed/instar/
-.. _transformations: https://github.com/boxed/instar/
 
 .. _PClass:
 
@@ -408,6 +407,8 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     [{'numbers': set([1, 2, 3]), 'name': 'SuperLotto'}, {'numbers': set([4, 5, 6]), 'name': 'MegaLotto'}]
     >>> lottery_0215.serialize()
     [{'numbers': set([1, 2, 3]), 'name': 'SuperLotto'}, {'numbers': set([4, 5, 6]), 'name': 'MegaLotto'}]
+
+.. _transformations:
 
 Transformations
 ~~~~~~~~~~~~~~~
@@ -604,6 +605,8 @@ Richard Futrell https://github.com/Futrell
 Jakob Hollenstein https://github.com/jkbjh
 
 David Honour https://github.com/foolswood
+
+David R. MacIver https://github.com/DRMacIver
 
 Contributing
 ------------
