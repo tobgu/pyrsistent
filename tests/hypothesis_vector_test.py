@@ -251,7 +251,7 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         start.current_list.extend(end.current_list)
 
     @rule(item=sequences, choice=st.choices())
-    def delete(self, item, choice=st.choices()):
+    def delete(self, item, choice):
         """
         Remove an item from the sequences.
         """
