@@ -1,8 +1,11 @@
 Revision history
 ----------------
-v0.12.0, 2015-12-
- * Implement #75, lazily evaluated invariant messages
- * Initial values can now be evaluated lazily by providing a callable
+v0.11.10, 2015-12-27
+ * Implement #74, attribute access on PClass evolver
+ * Implement #75, lazily evaluated invariant messages by providing a
+   callable with no arguments.
+ * Initial values on fields can now be evaluated on object creation
+   by providing a callable with no arguments.
 
 v0.11.9, 2015-11-01
  * Added PVector.remove(), thanks @radix for initiating this!
