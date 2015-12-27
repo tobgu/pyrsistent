@@ -34,7 +34,7 @@ class InvariantException(Exception):
     """
 
     def __init__(self, error_codes=(), missing_fields=(), *args, **kwargs):
-        self.invariant_errors = error_codes
+        self.invariant_errors = tuple(e() if callable(e) else e for e in error_codes)
         self.missing_fields = missing_fields
         super(InvariantException, self).__init__(*args, **kwargs)
 
@@ -43,7 +43,6 @@ class InvariantException(Exception):
             ", invariant_errors=[{invariant_errors}], missing_fields=[{missing_fields}]".format(
             invariant_errors=', '.join(str(e) for e in self.invariant_errors),
             missing_fields=', '.join(self.missing_fields))
-
 
 def _store_types(dct, bases, destination_name, source_name):
     def to_list(elem):

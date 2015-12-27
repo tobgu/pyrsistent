@@ -313,7 +313,7 @@ def test_type_checks_lazy_initial_value_for_field():
 
 def test_invariant_checks_lazy_initial_value_for_field():
     class MyClass(PClass):
-        a = field(int, invariant=lambda x: (x<5, "Too large"), initial=lambda: 10)
+        a = field(int, invariant=lambda x: (x < 5, "Too large"), initial=lambda: 10)
 
     with pytest.raises(InvariantException):
         MyClass()
@@ -321,7 +321,18 @@ def test_invariant_checks_lazy_initial_value_for_field():
 
 def test_invariant_checks_static_initial_value():
     class MyClass(PClass):
-        a = field(int, invariant=lambda x: (x<5, "Too large"), initial=10)
+        a = field(int, invariant=lambda x: (x < 5, "Too large"), initial=10)
 
     with pytest.raises(InvariantException):
         MyClass()
+
+
+def test_lazy_invariant_message():
+    class MyClass(PClass):
+        a = field(int, invariant=lambda x: (x < 5, lambda: "{x} is too large".format(x=x)))
+
+    try:
+        MyClass(a=5)
+        assert False
+    except InvariantException as e:
+        assert '5 is too large' in e.invariant_errors

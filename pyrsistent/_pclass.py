@@ -1,4 +1,3 @@
-import itertools
 import six
 from pyrsistent._checked_types import (InvariantException, CheckedType, _restore_pickle, store_invariants)
 from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)

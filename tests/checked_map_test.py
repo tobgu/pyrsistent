@@ -43,7 +43,7 @@ def test_breaking_invariant():
          FloatToIntMap({1.5: 2})
          assert False
      except InvariantException as e:
-        assert e.invariant_errors == ['Invalid mapping']
+        assert e.invariant_errors == ('Invalid mapping',)
 
 def test_repr():
     x = FloatToIntMap({1.25: 1})

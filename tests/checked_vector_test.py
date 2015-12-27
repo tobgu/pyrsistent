@@ -65,26 +65,26 @@ def test_breaking_invariant():
         Naturals([1, -1])
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Negative value']
+        assert e.invariant_errors == ('Negative value',)
 
     x = Naturals([1, 2])
     try:
         x.append(-1)
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Negative value']
+        assert e.invariant_errors == ('Negative value',)
 
     try:
         x.extend([-1])
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Negative value']
+        assert e.invariant_errors == ('Negative value',)
 
     try:
         x.set(1, -1)
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Negative value']
+        assert e.invariant_errors == ('Negative value',)
 
 def test_create_base_case():
     x =  Naturals.create([1, 2, 3])
@@ -144,7 +144,7 @@ def test_invariants_are_inherited():
         LimitNaturals([10, -1])
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Too big', 'Negative value']
+        assert e.invariant_errors == ('Too big', 'Negative value')
 
 def test_invariant_must_be_callable():
     with pytest.raises(TypeError):

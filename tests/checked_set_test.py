@@ -31,7 +31,7 @@ def test_breaking_invariant():
         Naturals([1, -1])
         assert False
     except InvariantException as e:
-        assert e.invariant_errors == ['Negative value']
+        assert e.invariant_errors == ('Negative value',)
 
 def test_repr():
     x = Naturals([1, 2])
