@@ -6,8 +6,8 @@ Pyrsistent
 .. image:: https://badge.fury.io/py/pyrsistent.svg
     :target: https://badge.fury.io/py/pyrsistent
 
-.. image:: http://codecov.io/github/tobgu/pyrsistent/coverage.svg?branch=master
-    :target: http://codecov.io/github/tobgu/pyrsistent?branch=master
+.. image:: https://coveralls.io/repos/tobgu/pyrsistent/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/tobgu/pyrsistent?branch=master
 
 
 .. _Pyrthon: https://www.github.com/tobgu/pyrthon/
