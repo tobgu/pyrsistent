@@ -190,18 +190,20 @@ class PClass(CheckedType):
 
 
 class _PClassEvolver(object):
+    __slots__ = ('_pclass_evolver_original', '_pclass_evolver_data', '_pclass_evolver_data_is_dirty')
+
     def __init__(self, original, initial_dict):
-        self.original = original
-        self.data = initial_dict
-        self.is_dirty = False
+        self._pclass_evolver_original = original
+        self._pclass_evolver_data = initial_dict
+        self._pclass_evolver_data_is_dirty = False
 
     def __getitem__(self, item):
-        return self.data[item]
+        return self._pclass_evolver_data[item]
 
     def set(self, key, value):
-        if self.data.get(key, _MISSING_VALUE) is not value:
-            self.data[key] = value
-            self.is_dirty = True
+        if self._pclass_evolver_data.get(key, _MISSING_VALUE) is not value:
+            self._pclass_evolver_data[key] = value
+            self._pclass_evolver_data_is_dirty = True
 
         return self
 
@@ -209,9 +211,9 @@ class _PClassEvolver(object):
         self.set(key, value)
 
     def remove(self, item):
-        if item in self.data:
-            del self.data[item]
-            self.is_dirty = True
+        if item in self._pclass_evolver_data:
+            del self._pclass_evolver_data[item]
+            self._pclass_evolver_data_is_dirty = True
             return self
 
         raise AttributeError(item)
@@ -220,7 +222,16 @@ class _PClassEvolver(object):
         self.remove(item)
 
     def persistent(self):
-        if self.is_dirty:
-            return self.original.__class__(**self.data)
+        if self._pclass_evolver_data_is_dirty:
+            return self._pclass_evolver_original.__class__(**self._pclass_evolver_data)
 
-        return self.original
+        return self._pclass_evolver_original
+
+    def __setattr__(self, key, value):
+        if key not in self.__slots__:
+            self.set(key, value)
+        else:
+            super(_PClassEvolver, self).__setattr__(key, value)
+
+    def __getattr__(self, item):
+        return self[item]

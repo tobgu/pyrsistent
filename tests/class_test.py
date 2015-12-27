@@ -228,6 +228,14 @@ def test_evolver_supports_chained_set_and_remove():
     assert p1.evolver().set('x', 3).remove('y').persistent() == Point(x=3)
 
 
+def test_evolver_supports_dot_notation_for_setting_and_getting_elements():
+    e = Point(x=1, y=2).evolver()
+
+    e.x = 3
+    assert e.x == 3
+    assert e.persistent() == Point(x=3, y=2)
+
+
 class Numbers(CheckedPVector):
     __type__ = int
 
