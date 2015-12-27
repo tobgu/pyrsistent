@@ -1,5 +1,15 @@
-Introduction
-============
+Pyrsistent
+==========
+.. image:: https://travis-ci.org/tobgu/pyrsistent.png?branch=master
+    :target: https://travis-ci.org/tobgu/pyrsistent
+
+.. image:: https://badge.fury.io/py/pyrsistent.svg
+    :target: https://badge.fury.io/py/pyrsistent
+
+.. image:: http://codecov.io/github/tobgu/pyrsistent/coverage.svg?branch=master
+    :target: http://codecov.io/github/tobgu/pyrsistent?branch=master
+
+
 .. _Pyrthon: https://www.github.com/tobgu/pyrthon/
 
 Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in 

@@ -11,3 +11,4 @@ README.html
 .hypothesis
 .cache
 #*
+.coverage
