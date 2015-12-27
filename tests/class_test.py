@@ -294,3 +294,34 @@ def test_supports_weakref_with_multi_level_inheritance():
         a = field()
 
     weakref.ref(PPoint(x=1, y=2))
+
+
+def test_supports_lazy_initial_value_for_field():
+    class MyClass(PClass):
+        a = field(int, initial=lambda: 2)
+
+    assert MyClass() == MyClass(a=2)
+
+
+def test_type_checks_lazy_initial_value_for_field():
+    class MyClass(PClass):
+        a = field(int, initial=lambda: "a")
+
+    with pytest.raises(TypeError):
+        MyClass()
+
+
+def test_invariant_checks_lazy_initial_value_for_field():
+    class MyClass(PClass):
+        a = field(int, invariant=lambda x: (x<5, "Too large"), initial=lambda: 10)
+
+    with pytest.raises(InvariantException):
+        MyClass()
+
+
+def test_invariant_checks_static_initial_value():
+    class MyClass(PClass):
+        a = field(int, invariant=lambda x: (x<5, "Too large"), initial=10)
+
+    with pytest.raises(InvariantException):
+        MyClass()

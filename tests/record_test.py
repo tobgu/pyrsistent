@@ -745,3 +745,10 @@ def test_pmap_field_create_from_nested_serialized_data():
 def test_supports_weakref():
     import weakref
     weakref.ref(ARecord(x=1, y=2))
+
+
+def test_supports_lazy_initial_value_for_field():
+    class MyRecord(PRecord):
+        a = field(int, initial=lambda: 2)
+
+    assert MyRecord() == MyRecord(a=2)

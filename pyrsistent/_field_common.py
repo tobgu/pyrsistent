@@ -91,8 +91,10 @@ def _check_field_parameters(field):
         if not isinstance(t, type) and not isinstance(t, six.string_types):
             raise TypeError('Type parameter expected, not {0}'.format(type(t)))
 
-    if field.initial is not PFIELD_NO_INITIAL and field.type and not any(isinstance(field.initial, t) for t in field.type):
-        raise TypeError('Initial has invalid type {0}'.format(type(t)))
+    if field.initial is not PFIELD_NO_INITIAL and \
+            not callable(field.initial) and \
+            field.type and not any(isinstance(field.initial, t) for t in field.type):
+        raise TypeError('Initial has invalid type {0}'.format(type(field.initial)))
 
     if not callable(field.invariant):
         raise TypeError('Invariant must be callable')

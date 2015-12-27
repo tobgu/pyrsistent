@@ -16,6 +16,7 @@ class _PRecordMeta(type):
         dct['_precord_initial_values'] = \
             dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not PFIELD_NO_INITIAL)
 
+
         dct['__slots__'] = ()
 
         return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
@@ -39,7 +40,8 @@ class PRecord(PMap, CheckedType):
 
         initial_values = kwargs
         if cls._precord_initial_values:
-            initial_values = dict(cls._precord_initial_values)
+            initial_values = dict((k, v() if callable(v) else v)
+                                  for k, v in cls._precord_initial_values.items())
             initial_values.update(kwargs)
 
         e = _PRecordEvolver(cls, pmap())

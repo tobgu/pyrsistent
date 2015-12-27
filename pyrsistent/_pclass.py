@@ -25,6 +25,15 @@ class PClassMeta(type):
 _MISSING_VALUE = object()
 
 
+def _check_and_set_attr(cls, field, name, value, result, invariant_errors):
+    check_type(cls, field, name, value)
+    is_ok, error_code = field.invariant(value)
+    if not is_ok:
+        invariant_errors.append(error_code)
+    else:
+        setattr(result, name, value)
+
+
 @six.add_metaclass(PClassMeta)
 class PClass(CheckedType):
     """
@@ -42,15 +51,12 @@ class PClass(CheckedType):
         for name, field in cls._pclass_fields.items():
             if name in kwargs:
                 value = field.factory(kwargs[name])
-                check_type(cls, field, name, value)
-                is_ok, error_code = field.invariant(value)
-                if not is_ok:
-                    invariant_errors.append(error_code)
-                else:
-                    setattr(result, name, value)
-                    del kwargs[name]
+                _check_and_set_attr(cls, field, name, value, result, invariant_errors)
+                del kwargs[name]
             elif field.initial is not PFIELD_NO_INITIAL:
-                setattr(result, name, field.initial)
+                initial = field.initial() if callable(field.initial) else field.initial
+                _check_and_set_attr(
+                    cls, field, name, initial, result, invariant_errors)
             elif field.mandatory:
                 missing_fields.append('{0}.{1}'.format(cls.__name__, name))
 
