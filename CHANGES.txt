@@ -1,11 +1,18 @@
 Revision history
 ----------------
-v0.11.10, 2015-12-27
+v0.11.10, 2015-12-27, NOTE! This release contains a backwards incompatible change
+                      despite only stepping the patch version number. See below.
  * Implement #74, attribute access on PClass evolver
  * Implement #75, lazily evaluated invariant messages by providing a
    callable with no arguments.
  * Initial values on fields can now be evaluated on object creation
    by providing a callable with no arguments.
+
+   NOTE! If you previously had callables as initial values this change means that those
+         will be called upon object creation which may not be what you want. As
+         a temporary workaround a callable returning a callable can be used. This
+         feature and the concept of initial values will likely change slightly in the future.
+         See #77 and and #76 for more information.
 
 v0.11.9, 2015-11-01
  * Added PVector.remove(), thanks @radix for initiating this!
