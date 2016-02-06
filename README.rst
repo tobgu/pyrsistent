@@ -555,7 +555,7 @@ These functions are great when your cozy immutable world has to interact with th
 Compatibility
 -------------
 
-Pyrsistent is developed and tested on Python 2.6, 2.7, 3.4 and PyPy (Python 2.7 compatible). It will most likely work
+Pyrsistent is developed and tested on Python 2.6, 2.7, 3.4, 3.5 and PyPy (Python 2.7 compatible). It will most likely work
 on all other versions >= 3.4 but no guarantees are given. :)
 
 Compatibility issues

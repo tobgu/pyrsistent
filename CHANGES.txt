@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.11.12, 2016-02-06
+ * Minor modifications of tests to allow testing as requested in #79 and #80.
+ * Also run CI tests under python 3.5
+
 v0.11.11, 2016-01-31
  * #78, include tests in pypi dist.
 
