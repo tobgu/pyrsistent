@@ -10,6 +10,7 @@ env:
   - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py34
+  - TOXENV=py35
   - TOXENV=pypy
   - TOXENV=memorytest27
   - TOXENV=memorytest34
