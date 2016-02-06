@@ -1,5 +1,5 @@
 include *.rst
 include tests/*_test.py
 include tests/memory_profiling.py
-CHANGES.txt
-LICENCE.mit
+include CHANGES.txt
+include LICENCE.mit
