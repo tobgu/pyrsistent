@@ -184,7 +184,7 @@ def test_multiple_optional_types():
 
 
 class NaturalsVectorStr(CheckedPVector):
-    __type__ = 'tests.checked_vector_test.Naturals'
+    __type__ = 'checked_vector_test.Naturals'
 
 
 def test_check_with_string_specification():

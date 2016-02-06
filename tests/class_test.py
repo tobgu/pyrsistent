@@ -241,8 +241,8 @@ class Numbers(CheckedPVector):
 
 
 class LinkedList(PClass):
-    value = field(type='tests.class_test.Numbers')
-    next = field(type=optional('tests.class_test.LinkedList'))
+    value = field(type='class_test.Numbers')
+    next = field(type=optional('class_test.LinkedList'))
 
 
 def test_string_as_type_specifier():
