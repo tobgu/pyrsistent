@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.11.13, 2016-04-03
+ * Fix #84, pvector segfault in CPython 3 when repr of contained object raises Exception.
+ * Update README to cover for issue described in #83.
+
 v0.11.12, 2016-02-06
  * Minor modifications of tests to allow testing as requested in #79 and #80.
  * Also run CI tests under python 3.5
