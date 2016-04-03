@@ -44,6 +44,7 @@ class InvariantException(Exception):
             invariant_errors=', '.join(str(e) for e in self.invariant_errors),
             missing_fields=', '.join(self.missing_fields))
 
+
 def _store_types(dct, bases, destination_name, source_name):
     def to_list(elem):
         if not isinstance(elem, Iterable) or isinstance(elem, six.string_types):

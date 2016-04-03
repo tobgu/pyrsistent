@@ -220,6 +220,11 @@ by providing an iterable of types.
     Traceback (most recent call last):
     PTypeError: Invalid type for field BRecord.x, was float
 
+
+Note that the Enum type introduced in Python 3 is an iterable. This makes it impossible to
+use as a single, standalone, type. This can be worked around by wrapping it in a tuple.
+This is trick is valid for all types that are also iterables. See #83 for more information.
+
 Mandatory fields
 ****************
 Fields are not mandatory by default but can be specified as such. If fields are missing an

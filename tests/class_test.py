@@ -2,6 +2,7 @@ from collections import Hashable
 import math
 import pickle
 import pytest
+import sys
 from pyrsistent import (
     field, InvariantException, PClass, optional, CheckedPVector,
     pmap_field, pset_field, pvector_field)
@@ -336,3 +337,24 @@ def test_lazy_invariant_message():
         assert False
     except InvariantException as e:
         assert '5 is too large' in e.invariant_errors
+
+# Skipping this test for now but it describes a corner case with using Enums in
+# python 3 as types and a workaround to make it work.
+@pytest.mark.skipif(sys.version_info < (3, 4) or True, reason="requires python3.4")
+def test_enum_key_type():
+    import enum
+    class Foo(enum.Enum):
+        Bar = 1
+        Baz = 2
+
+    # This currently fails because the enum is iterable
+    class MyClass1(PClass):
+        f = pmap_field(key_type=Foo, value_type=int)
+
+    MyClass1()
+
+    # This is OK since it's wrapped in a tuple
+    class MyClass2(PClass):
+        f = pmap_field(key_type=(Foo,), value_type=int)
+
+    MyClass2()
