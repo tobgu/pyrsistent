@@ -893,3 +893,13 @@ def test_python_no_c_extension_with_environment_variable():
 def test_supports_weakref(pvector):
     import weakref
     weakref.ref(pvector())
+
+
+def test_failing_repr(pvector):
+    # See https://github.com/tobgu/pyrsistent/issues/84
+    class A(object):
+        def __repr__(self):
+            raise ValueError('oh no!')
+
+    with pytest.raises(ValueError):
+        repr(pvector([A()]))

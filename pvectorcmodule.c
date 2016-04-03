@@ -261,6 +261,11 @@ static PyObject *PVector_repr(PVector *self) {
   PyObject *list_repr = PyObject_Repr(list);
   Py_DECREF(list);
 
+  if(list_repr == NULL) {
+    // Exception raised during call to repr
+    return NULL;
+  }
+  
   // Repr for list implemented differently in python 2 and 3. Need to
   // handle this or core dump will occur.
 #if PY_MAJOR_VERSION >= 3
