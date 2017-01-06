@@ -29,6 +29,8 @@ from pyrsistent._helpers import freeze, thaw, mutant
 
 from pyrsistent._transformations import inc, discard, rex, ny
 
+from pyrsistent._toolz import get_in
+
 
 __all__ = ('pmap', 'm', 'PMap',
            'pvector', 'v', 'PVector',
@@ -41,4 +43,5 @@ __all__ = ('pmap', 'm', 'PMap',
            'PClass', 'PClassMeta',
            'immutable',
            'freeze', 'thaw', 'mutant',
+           'get_in',
            'inc', 'discard', 'rex', 'ny')
