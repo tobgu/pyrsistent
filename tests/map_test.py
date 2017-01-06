@@ -138,6 +138,23 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     assert hash(x) == hash(y)
 
 
+class YouOnlyHashOnce(object):
+
+    hashed = False
+
+    def __hash__(self):
+        if self.hashed:
+            raise ValueError("You already hashed me!")
+        self.hashed = True
+        return 4 # Proven random
+
+
+def test_map_only_hashes_element_once():
+    x = pmap(dict(el=YouOnlyHashOnce()))
+    hash(x)
+    hash(x)
+
+
 def test_update_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.
     x = m(a=1, b=2, c=3)    
