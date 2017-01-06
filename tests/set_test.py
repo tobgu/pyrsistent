@@ -159,3 +159,7 @@ def test_pickling_non_empty_map():
 def test_supports_weakref():
     import weakref
     weakref.ref(s(1))
+
+
+def test_update():
+    assert s(1, 2, 3).update([3, 4, 4, 5]) == s(1, 2, 3, 4, 5)

@@ -73,6 +73,20 @@ class PSet(object):
         """
         return self.evolver().add(element).persistent()
 
+    def update(self, iterable):
+        """
+        Return a new PSet with elements in iterable added
+
+        >>> s1 = s(1, 2)
+        >>> s1.update([3, 4, 4])
+        pset([1, 2, 3, 4])
+        """
+        e = self.evolver()
+        for element in iterable:
+            e.add(element)
+
+        return e.persistent()
+
     def remove(self, element):
         """
         Return a new PSet with element removed. Raises KeyError if element is not present.
