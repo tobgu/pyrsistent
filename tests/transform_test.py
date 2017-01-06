@@ -80,3 +80,7 @@ def test_multiple_transformations():
 def test_no_transformation_returns_the_same_structure():
     v = freeze([{'foo': 1}, {'bar': 2}])
     assert v.transform([ny, ny], lambda x: x) is v
+
+
+def test_discard_multiple_elements_in_pvector():
+    assert freeze([0, 1, 2, 3, 4]).transform([lambda i: i % 2], discard) == freeze([0, 2, 4])

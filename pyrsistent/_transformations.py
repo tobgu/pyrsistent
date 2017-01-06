@@ -81,11 +81,14 @@ def _get_keys_and_values(structure, key_spec):
 
 def _update_structure(structure, kvs, path, command):
     e = structure.evolver()
-    for k, v in kvs:
-        if not path and command is discard:
+    if not path and command is discard:
+        # Do this in reverse to avoid index problems with vectors. See #92.
+        for k, v in reversed(kvs):
             discard(e, k)
-        else:
+    else:
+        for k, v in kvs:
             result = _do_to_path(v, path, command)
             if result is not v:
                 e[k] = result
+
     return e.persistent()
