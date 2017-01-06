@@ -49,6 +49,19 @@ class PBag(object):
         """
         return PBag(_add_to_counters(self._counts, element))
 
+    def update(self, iterable):
+        """
+        Update bag with all elements in iterable.
+
+        >>> s = pbag([1])
+        >>> s.update([1, 2])
+        pbag([1, 1, 2])
+        """
+        if iterable:
+            return PBag(reduce(_add_to_counters, iterable, self._counts))
+
+        return self
+
     def remove(self, element):
         """
         Remove an element from the bag.

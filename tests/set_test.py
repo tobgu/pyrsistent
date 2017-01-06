@@ -163,3 +163,8 @@ def test_supports_weakref():
 
 def test_update():
     assert s(1, 2, 3).update([3, 4, 4, 5]) == s(1, 2, 3, 4, 5)
+
+
+def test_update_no_elements():
+    s1 = s(1, 2)
+    assert s1.update([]) is s1

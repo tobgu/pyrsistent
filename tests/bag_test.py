@@ -131,3 +131,12 @@ def test_pbag_is_unorderable():
 def test_supports_weakref():
     import weakref
     weakref.ref(b(1))
+
+
+def test_update():
+    assert pbag([1, 2, 2]).update([3, 3, 4]) == pbag([1, 2, 2, 3, 3, 4])
+
+
+def test_update_no_elements():
+    b = pbag([1, 2, 2])
+    assert b.update([]) is b
