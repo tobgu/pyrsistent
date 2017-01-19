@@ -138,20 +138,21 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     assert hash(x) == hash(y)
 
 
-class YouOnlyHashOnce(object):
+class HashabilityControlled(object):
 
-    hashed = False
+    hashable = True
 
     def __hash__(self):
-        if self.hashed:
-            raise ValueError("You already hashed me!")
-        self.hashed = True
-        return 4 # Proven random
+        if self.hashable:
+            return 4 # Proven random
+        raise ValueError("I am not currently hashable.")
 
 
-def test_map_only_hashes_element_once():
-    x = pmap(dict(el=YouOnlyHashOnce()))
+def test_map_does_not_hash_values_on_second_hash_invocation():
+    hashable = HashabilityControlled()
+    x = pmap(dict(el=hashable))
     hash(x)
+    hashable.hashable = False
     hash(x)
 
 

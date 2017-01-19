@@ -139,7 +139,6 @@ class PMap(object):
         return self.__repr__()
 
     def __hash__(self):
-        # This hashing algorithm is probably not the speediest
         if not hasattr(self, '_cached_hash'):
             self._cached_hash = hash(frozenset(self.iteritems()))
         return self._cached_hash
