@@ -40,7 +40,7 @@ class PMap(object):
     >>> m3['c']
     3
     """
-    __slots__ = ('_size', '_buckets', '__weakref__')
+    __slots__ = ('_size', '_buckets', '__weakref__', '_cached_hash')
 
     def __new__(cls, size, buckets):
         self = super(PMap, cls).__new__(cls)
@@ -139,8 +139,9 @@ class PMap(object):
         return self.__repr__()
 
     def __hash__(self):
-        # This hashing algorithm is probably not the speediest
-        return hash(frozenset(self.iteritems()))
+        if not hasattr(self, '_cached_hash'):
+            self._cached_hash = hash(frozenset(self.iteritems()))
+        return self._cached_hash
 
     def set(self, key, val):
         """
