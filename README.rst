@@ -623,6 +623,8 @@ David Honour https://github.com/foolswood
 
 David R. MacIver https://github.com/DRMacIver
 
+Marcus Ewert https://github.com/sarum90
+
 Contributing
 ------------
 

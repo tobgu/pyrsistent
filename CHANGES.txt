@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.12.1, 2017-02-26
+ * Fix #97, initialize CheckedPVector from iterator-
+ * Fix #97, cache hash value on PMap. Thanks @sarum90 for this!
+
 v0.12.0, 2017-01-06
  * Fix #87, add function get_in() for access to elements in deeply nested structures.
  * Fix #91, add method update() to pset and pbag.
