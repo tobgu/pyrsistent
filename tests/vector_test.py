@@ -1,3 +1,4 @@
+import os
 import pickle
 import pytest
 
@@ -6,6 +7,9 @@ from pyrsistent._pvector import python_pvector
 
 @pytest.fixture(scope='session', params=['pyrsistent._pvector', 'pvectorc'])
 def pvector(request):
+    if request.param == 'pvectorc' and os.environ.get('PYRSISTENT_NO_C_EXTENSION'):
+        pytest.skip('Configured to not run tests for C extension')
+
     m = pytest.importorskip(request.param)
     if request.param == 'pyrsistent._pvector':
         return m.python_pvector

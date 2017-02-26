@@ -18,4 +18,4 @@ env:
   - TOXENV=memorytest27
   - TOXENV=memorytest34
   - TOXENV=doctest27
-  - TOXENV=coverage-pypy
+  - TOXENV=coverage-py35
