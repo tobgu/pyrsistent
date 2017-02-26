@@ -263,6 +263,7 @@ class CheckedPVector(PythonPVector, CheckedType):
             return super(CheckedPVector.Evolver, self).append(elem)
 
         def extend(self, it):
+            it = list(it)
             self._check(it)
             return super(CheckedPVector.Evolver, self).extend(it)
 

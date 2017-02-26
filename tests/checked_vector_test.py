@@ -202,3 +202,12 @@ def test_create_with_string_specification():
 def test_supports_weakref():
     import weakref
     weakref.ref(Naturals([]))
+
+
+def test_create_with_generator_iterator():
+    # See issue #97
+    class Numbers(CheckedPVector):
+        __type__ = int
+
+    n = Numbers(i for i in [1, 2, 3])
+    assert n == Numbers([1, 2, 3])
