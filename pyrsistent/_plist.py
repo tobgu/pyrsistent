@@ -48,9 +48,13 @@ class _PListBase(object):
         return plist, (list(self),)
 
     def __len__(self):
-        # This is obviously O(n) but with the current implementation
-        # where a list is also a node the overhead of storing the length
-        # in every node would be quite significant.
+        """
+        Return the length of the list, computed by traversing it.
+
+        This is obviously O(n) but with the current implementation
+        where a list is also a node the overhead of storing the length
+        in every node would be quite significant.
+        """
         return sum(1 for _ in self)
 
     def __repr__(self):
@@ -137,6 +141,11 @@ class _PListBase(object):
         return tuple(self) < tuple(other)
 
     def __eq__(self, other):
+        """
+        Traverses the lists, checking equality of elements.
+        
+        This is an O(n) operation, but preserves the standard semantics of list equality.
+        """
         if not isinstance(other, _PListBase):
             return NotImplemented
 
