@@ -283,6 +283,25 @@ def test_multiple_global_invariants():
         assert e.invariant_errors == (('x', 'y'),)
 
 
+def test_inherited_global_invariants():
+    class Distant(object):
+        def __invariant__(self):
+            return [(self.distant, "distant")]
+
+    class Nearby(Distant):
+        def __invariant__(self):
+            return [(self.nearby, "nearby")]
+
+    class MultipleInvariantGlobal(Nearby, PClass):
+        distant = field()
+        nearby = field()
+
+    try:
+        MultipleInvariantGlobal(distant=False, nearby=False)
+    except InvariantException as e:
+        assert e.invariant_errors == (("nearby",), ("distant",),)
+
+
 def test_supports_weakref():
     import weakref
     weakref.ref(Point(x=1, y=2))
