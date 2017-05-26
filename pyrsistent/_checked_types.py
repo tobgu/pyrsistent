@@ -83,13 +83,18 @@ def wrap_invariant(invariant):
     return f
 
 
-def _all_dicts(bases):
+def _all_dicts(bases, seen=None):
     """
     Yield each class in ``bases`` and each of their base classes.
     """
+    if seen is None:
+        seen = set()
     for cls in bases:
+        if cls in seen:
+            continue
+        seen.add(cls)
         yield cls.__dict__
-        for b in _all_dicts(cls.__bases__):
+        for b in _all_dicts(cls.__bases__, seen):
             yield b
 
 
