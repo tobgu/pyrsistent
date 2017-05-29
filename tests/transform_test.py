@@ -3,7 +3,7 @@ from pyrsistent import freeze, inc, discard, rex, ny, field, PClass
 
 def test_callable_command():
     m = freeze({'foo': {'bar': {'baz': 1}}})
-    m.transform(['foo', 'bar', 'baz'], inc) == {'foo': {'bar': {'baz': 2}}}
+    assert m.transform(['foo', 'bar', 'baz'], inc) == {'foo': {'bar': {'baz': 2}}}
 
 
 def test_predicate():
