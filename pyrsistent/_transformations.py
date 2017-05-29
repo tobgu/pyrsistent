@@ -1,5 +1,13 @@
 import re
 import six
+try:
+    from inspect import Parameter, signature
+except ImportError:
+    signature = None
+    try:
+        from inspect import getfullargspec as getargspec
+    except ImportError:
+        from inspect import getargspec
 
 
 def inc(x):
@@ -74,10 +82,39 @@ def _get(structure, key, default):
 def _get_keys_and_values(structure, key_spec):
     from pyrsistent._pmap import pmap
     if callable(key_spec):
-        return [(k, v) for k, v in _items(structure) if key_spec(k)]
+        # Support predicates as callable objects in the path
+        arity = _get_arity(key_spec)
+        if arity == 1:
+            # Unary predicates are called with the "key" of the path
+            # - eg a key in a mapping, an index in a sequence.
+            return [(k, v) for k, v in _items(structure) if key_spec(k)]
+        elif arity == 2:
+            # Binary predicates are called with the key and the corresponding
+            # value.
+            return [(k, v) for k, v in _items(structure) if key_spec(k, v)]
+        else:
+            # Other arities are an error.
+            raise ValueError(
+                "callable in transform path must take 1 or 2 arguments"
+            )
 
+    # Non-callables are used as-is as a key.
     return [(key_spec, _get(structure, key_spec, pmap()))]
 
+
+if signature is None:
+    def _get_arity(f):
+        argspec = getargspec(f)
+        return len(argspec.args) - len(argspec.defaults or ())
+else:
+    def _get_arity(f):
+        return sum(
+            1
+            for p
+            in signature(f).parameters.values()
+            if p.default is Parameter.empty
+            and p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+        )
 
 def _update_structure(structure, kvs, path, command):
     e = structure.evolver()
