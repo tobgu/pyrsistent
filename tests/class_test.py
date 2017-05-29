@@ -298,6 +298,7 @@ def test_inherited_global_invariants():
 
     try:
         MultipleInvariantGlobal(distant=False, nearby=False)
+        assert False
     except InvariantException as e:
         assert e.invariant_errors == (("nearby",), ("distant",),)
 
