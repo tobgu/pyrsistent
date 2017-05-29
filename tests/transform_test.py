@@ -11,6 +11,32 @@ def test_predicate():
     assert m.transform(['foo', lambda x: x.startswith('b'), 'baz'], inc) == {'foo': {'bar': {'baz': 2}, 'qux': {'baz': 1}}}
 
 
+def test_broken_predicate():
+    broken_predicates = [
+        lambda: None,
+        lambda a, b, c: None,
+        lambda a, b, c, d=None: None,
+        lambda *args: None,
+        lambda **kwargs: None,
+    ]
+    for pred in broken_predicates:
+        try:
+            freeze({}).transform([pred], None)
+            assert False
+        except ValueError as e:
+            assert str(e) == "callable in transform path must take 1 or 2 arguments"
+
+
+def test_key_value_predicate():
+    m = freeze({
+        'foo': 1,
+        'bar': 2,
+    })
+    assert m.transform([
+        lambda k, v: (k, v) == ('foo', 1),
+    ], lambda v: v * 3) == {"foo": 3, "bar": 2}
+
+
 def test_remove():
     m = freeze({'foo': {'bar': {'baz': 1}}})
     assert m.transform(['foo', 'bar', 'baz'], discard) == {'foo': {'bar': {}}}
