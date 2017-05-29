@@ -444,6 +444,8 @@ treated as matchers. If the matcher returns True for a specific key it is consid
     pvector([1, 2, 4, 4, 5])
     >>> v1.transform([lambda ix: 0 < ix < 4], 8)
     pvector([1, 8, 8, 8, 5])
+    >>> v1.transform([lambda ix, v: ix == 0 or v == 5], 0)
+    pvector([0, 2, 3, 4, 0])
 
     # The (a)ny matcher can be used to match anything
     >>> v1.transform([ny], 8)
