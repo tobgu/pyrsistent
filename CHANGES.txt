@@ -1,5 +1,9 @@
 Revision history
 ----------------
+v0.12.2, 2017-05-30
+ * Fix #108, now possible to use the values in predicates to transform. Thanks @exarkus for this!
+ * Fix #107, support multiple level of __invariant__ inheritance. Thanks @exarkus for this!
+
 v0.12.1, 2017-02-26
  * Fix #97, initialize CheckedPVector from iterator-
  * Fix #97, cache hash value on PMap. Thanks @sarum90 for this!

@@ -395,9 +395,9 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
     ...     __value_type__ = Lotteries
     ...
     >>> lotteries = LotteriesByDate.create({date(2015, 2, 15): [{'name': 'SuperLotto', 'numbers': {1, 2, 3}},
-    ...                                                          {'name': 'MegaLotto',  'numbers': {4, 5, 6}}],
+    ...                                                         {'name': 'MegaLotto',  'numbers': {4, 5, 6}}],
     ...                                     date(2015, 2, 16): [{'name': 'SuperLotto', 'numbers': {3, 2, 1}},
-    ...                                                          {'name': 'MegaLotto',  'numbers': {6, 5, 4}}]})
+    ...                                                         {'name': 'MegaLotto',  'numbers': {6, 5, 4}}]})
     >>> lotteries
     LotteriesByDate({datetime.date(2015, 2, 15): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')]), datetime.date(2015, 2, 16): Lotteries([Lottery(numbers=Positives([1, 2, 3]), name='SuperLotto'), Lottery(numbers=Positives([4, 5, 6]), name='MegaLotto')])})
 
@@ -626,6 +626,8 @@ David Honour https://github.com/foolswood
 David R. MacIver https://github.com/DRMacIver
 
 Marcus Ewert https://github.com/sarum90
+
+Jean-Paul Calderone https://github.com/exarkun
 
 Contributing
 ------------
