@@ -83,14 +83,35 @@ def wrap_invariant(invariant):
     return f
 
 
+def _all_dicts(bases, seen=None):
+    """
+    Yield each class in ``bases`` and each of their base classes.
+    """
+    if seen is None:
+        seen = set()
+    for cls in bases:
+        if cls in seen:
+            continue
+        seen.add(cls)
+        yield cls.__dict__
+        for b in _all_dicts(cls.__bases__, seen):
+            yield b
+
+
 def store_invariants(dct, bases, destination_name, source_name):
     # Invariants are inherited
-    invariants = [dct[source_name]] if source_name in dct else []
-    invariants += [b.__dict__[source_name] for b in bases if source_name in b.__dict__]
+    invariants = []
+    for ns in [dct] + list(_all_dicts(bases)):
+        try:
+            invariant = ns[source_name]
+        except KeyError:
+            continue
+        invariants.append(invariant)
+
     if not all(callable(invariant) for invariant in invariants):
         raise TypeError('Invariants must be callable')
-
     dct[destination_name] = tuple(wrap_invariant(inv) for inv in invariants)
+
 
 class _CheckedTypeMeta(type):
     def __new__(mcs, name, bases, dct):
