@@ -629,6 +629,8 @@ Marcus Ewert https://github.com/sarum90
 
 Jean-Paul Calderone https://github.com/exarkun
 
+Douglas Treadwell https://github.com/douglas-treadwell
+
 Contributing
 ------------
 
