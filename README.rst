@@ -221,9 +221,9 @@ by providing an iterable of types.
     PTypeError: Invalid type for field BRecord.x, was float
 
 
-Note that the Enum type introduced in Python 3 is an iterable. This makes it impossible to
-use as a single, standalone, type. This can be worked around by wrapping it in a tuple.
-This is trick is valid for all types that are also iterables. See #83 for more information.
+Custom types (classes) that are iterable should be wrapped in a tuple to prevent their
+members being added to the set of valid types.  Although Enums in particular are now 
+supported without wrapping, see #83 for more information.
 
 Mandatory fields
 ****************

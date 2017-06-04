@@ -6,6 +6,20 @@ from pyrsistent._checked_types import (
     _restore_pickle)
 
 
+try:
+    from enum import Enum as _Enum
+except:
+    class _Enum(object): pass
+    # no objects will be instances of this class
+
+
+def isenum(type_):
+    try:
+        return issubclass(type_, _Enum)
+    except TypeError:
+        return False  # type_ is not a class
+
+
 def set_fields(dct, bases, name):
     dct[name] = dict(sum([list(b.__dict__.get(name, {}).items()) for b in bases], []))
 
@@ -76,7 +90,13 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param factory: function called when field is set.
     :param serializer: function that returns a serialized version of the field
     """
-    types = set(type) if isinstance(type, Iterable) and not isinstance(type, six.string_types) else set([type])
+
+    if isinstance(type, Iterable) and not isinstance(type, six.string_types) and not isenum(type):
+        # Enums and strings are iterable types
+        types = set(type)
+    else:
+        types = set([type])
+
     invariant_function = wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
     field = _PField(type=types, invariant=invariant_function, initial=initial,
                     mandatory=mandatory, factory=factory, serializer=serializer)

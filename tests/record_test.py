@@ -150,6 +150,22 @@ def test_initial_value():
     assert a.y == 2
 
 
+def test_enum_field():
+    try:
+        from enum import Enum
+    except ImportError:
+        return  # Enum not supported in this environment
+
+    class TestEnum(Enum):
+        x = 1
+        y = 2
+
+    class RecordContainingEnum(PRecord):
+        enum_field = field(type=TestEnum)
+
+    r = RecordContainingEnum(enum_field=TestEnum.x)
+    assert r.enum_field == TestEnum.x
+
 def test_type_specification_must_be_a_type():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
