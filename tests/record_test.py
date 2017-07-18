@@ -2,6 +2,7 @@ import pickle
 import datetime
 import pytest
 import six
+import uuid
 from pyrsistent import (
     PRecord, field, InvariantException, ny, pset, PSet, CheckedPVector,
     PTypeError, pset_field, pvector_field, pmap_field, pmap, PMap,
@@ -17,6 +18,10 @@ class RecordContainingContainers(PRecord):
     map = pmap_field(str, str)
     vec = pvector_field(str)
     set = pset_field(str)
+
+
+class UniqueThing(PRecord):
+    id = field(type=uuid.UUID, factory=uuid.UUID)
 
 
 def test_create():
@@ -768,3 +773,10 @@ def test_supports_lazy_initial_value_for_field():
         a = field(int, initial=lambda: 2)
 
     assert MyRecord() == MyRecord(a=2)
+
+def test_pickle_with_one_way_factory():
+    """
+    A field factory isn't called when restoring from pickle.
+    """
+    thing = UniqueThing(id='25544626-86da-4bce-b6b6-9186c0804d64')
+    assert thing == pickle.loads(pickle.dumps(thing))

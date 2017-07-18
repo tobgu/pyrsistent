@@ -45,11 +45,15 @@ class PClass(CheckedType):
     """
     def __new__(cls, **kwargs):    # Support *args?
         result = super(PClass, cls).__new__(cls)
+        bypass_factories = kwargs.pop('_bypass_factories', False)
         missing_fields = []
         invariant_errors = []
         for name, field in cls._pclass_fields.items():
             if name in kwargs:
-                value = field.factory(kwargs[name])
+                if not bypass_factories:
+                    value = field.factory(kwargs[name])
+                else:
+                    value = kwargs[name]
                 _check_and_set_attr(cls, field, name, value, result, invariant_errors)
                 del kwargs[name]
             elif field.initial is not PFIELD_NO_INITIAL:
@@ -102,7 +106,7 @@ class PClass(CheckedType):
         return self.__class__(**kwargs)
 
     @classmethod
-    def create(cls, kwargs):
+    def create(cls, kwargs, _bypass_factories=False):
         """
         Factory method. Will create a new PClass of the current type and assign the values
         specified in kwargs.
@@ -110,7 +114,7 @@ class PClass(CheckedType):
         if isinstance(kwargs, cls):
             return kwargs
 
-        return cls(**kwargs)
+        return cls(_bypass_factories=_bypass_factories, **kwargs)
 
     def serialize(self, format=None):
         """
