@@ -12,7 +12,7 @@ class CheckedType(object):
     __slots__ = ()
 
     @classmethod
-    def create(cls, source_data):
+    def create(cls, source_data, _bypass_factories=False):
         raise NotImplementedError()
 
     def serialize(self, format=None):
@@ -20,7 +20,7 @@ class CheckedType(object):
 
 
 def _restore_pickle(cls, data):
-    return cls.create(data)
+    return cls.create(data, _bypass_factories=True)
 
 
 class InvariantException(Exception):
@@ -207,7 +207,7 @@ def optional(*typs):
     return tuple(typs) + (type(None),)
 
 
-def _checked_type_create(cls, source_data):
+def _checked_type_create(cls, source_data, _bypass_factories=False):
         if isinstance(source_data, cls):
             return source_data
 
@@ -447,7 +447,7 @@ class CheckedPMap(PMap, CheckedType):
         return dict(serializer(format, k, v) for k, v in self.items())
 
     @classmethod
-    def create(cls, source_data):
+    def create(cls, source_data, _bypass_factories=False):
         if isinstance(source_data, cls):
             return source_data
 

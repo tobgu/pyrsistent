@@ -3,6 +3,7 @@ import math
 import pickle
 import pytest
 import sys
+import uuid
 from pyrsistent import (
     field, InvariantException, PClass, optional, CheckedPVector,
     pmap_field, pset_field, pvector_field)
@@ -18,6 +19,10 @@ class TypedContainerObj(PClass):
     map = pmap_field(str, str)
     set = pset_field(str)
     vec = pvector_field(str)
+
+
+class UniqueThing(PClass):
+    id = field(type=uuid.UUID, factory=uuid.UUID)
 
 
 def test_evolve_pclass_instance():
@@ -401,3 +406,7 @@ def test_enum_key_type():
         f = pmap_field(key_type=(Foo,), value_type=int)
 
     MyClass2()
+
+def test_pickle_with_one_way_factory():
+    thing = UniqueThing(id='25544626-86da-4bce-b6b6-9186c0804d64')
+    assert pickle.loads(pickle.dumps(thing)) == thing
