@@ -117,13 +117,11 @@ def test_overwrite_existing_element():
     assert map2['a'] == 3
 
 
-def test_supports_hash_and_equals():
+def test_hash():
     x = m(a=1, b=2, c=3)
     y = m(a=1, b=2, c=3)
-    
+
     assert hash(x) == hash(y)
-    assert x == y
-    assert not (x != y)
 
 
 def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
@@ -154,6 +152,61 @@ def test_map_does_not_hash_values_on_second_hash_invocation():
     hash(x)
     hashable.hashable = False
     hash(x)
+
+
+def test_equal():
+    x = m(a=1, b=2, c=3)
+    y = m(a=1, b=2, c=3)
+
+    assert x == y
+    assert not (x != y)
+
+    assert y == x
+    assert not (y != x)
+
+
+def test_equal_to_dict():
+    x = m(a=1, b=2, c=3)
+    y = dict(a=1, b=2, c=3)
+
+    assert x == y
+    assert not (x != y)
+
+    assert y == x
+    assert not (y != x)
+
+
+def test_equal_with_different_bucket_sizes():
+    x = pmap({'a': 1, 'b': 2}, 50)
+    y = pmap({'a': 1, 'b': 2}, 10)
+
+    assert x == y
+    assert not (x != y)
+
+    assert y == x
+    assert not (y != x)
+
+
+def test_not_equal():
+    x = m(a=1, b=2, c=3)
+    y = m(a=1, b=2)
+
+    assert x != y
+    assert not (x == y)
+
+    assert y != x
+    assert not (y == x)
+
+
+def test_not_equal_to_dict():
+    x = m(a=1, b=2, c=3)
+    y = dict(a=1, b=2, d=4)
+
+    assert x != y
+    assert not (x == y)
+
+    assert y != x
+    assert not (y == x)
 
 
 def test_update_with_multiple_arguments():
