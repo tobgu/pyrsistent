@@ -334,7 +334,12 @@ class PDeque(object):
         if index >= 0:
             return self.popleft(index).left
 
-        return  self.pop(index).right
+        shifted = len(self) + index
+        if shifted < 0:
+            raise IndexError(
+                "pdeque index {0} out of range {1}".format(index, len(self)),
+            )
+        return self.popleft(shifted).left
 
     index = Sequence.index
 

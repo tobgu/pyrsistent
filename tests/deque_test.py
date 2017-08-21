@@ -226,7 +226,20 @@ def test_pickling():
 def test_indexing():
     assert pdeque([1, 2, 3])[0] == 1
     assert pdeque([1, 2, 3])[1] == 2
+    assert pdeque([1, 2, 3])[2] == 3
     assert pdeque([1, 2, 3])[-1] == 3
+    assert pdeque([1, 2, 3])[-2] == 2
+    assert pdeque([1, 2, 3])[-3] == 1
+
+
+def test_one_element_indexing():
+    assert pdeque([2])[0] == 2
+    assert pdeque([2])[-1] == 2
+
+
+def test_empty_indexing():
+    with pytest.raises(IndexError):
+        assert pdeque([])[0] == 1
 
 
 def test_indexing_out_of_range():
@@ -235,6 +248,9 @@ def test_indexing_out_of_range():
 
     with pytest.raises(IndexError):
         pdeque([1, 2, 3])[3]
+
+    with pytest.raises(IndexError):
+        pdeque([2])[-2]
 
 
 def test_indexing_invalid_type():
