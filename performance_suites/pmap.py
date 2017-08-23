@@ -204,8 +204,13 @@ def _different_dicts_different_size():
 
 
 def _equal_pmaps_different_bucket_size():
-    pmap1 = pmap(dict((i, i) for i in range(2000)), 50)
-    pmap2 = pmap(dict((i, i) for i in range(2000)), 100)
+    pmap1 = pmap(dict((i, i) for i in range(2000)), 1999)
+    pmap2 = pmap(dict((i, i) for i in range(2000)), 2000)
+
+
+def _equal_pmaps_same_bucket_size_different_insertion_order():
+    pmap1 = pmap([(i, i) for i in range(2000)], 1999)
+    pmap2 = pmap([(i, i) for i in range(1999, -1, -1)], 1999)
 
 
 @Benchmarked(setup=_large_pmap)
@@ -231,6 +236,11 @@ def reference_compare_equal_dicts():
 @Benchmarked(setup=_equal_pmap_and_dict)
 def compare_equal_pmap_and_dict():
     pmap1 == dict1
+
+
+@Benchmarked(setup=_equal_pmaps_same_bucket_size_different_insertion_order)
+def compare_equal_pmaps_different_insertion_order():
+    pmap1 == pmap2
 
 
 @Benchmarked(setup=_equal_pmaps_different_bucket_size)

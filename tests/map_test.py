@@ -187,6 +187,17 @@ def test_equal_with_different_bucket_sizes():
     assert not (y != x)
 
 
+def test_equal_with_different_insertion_order():
+    x = pmap([(i, i) for i in range(50)], 10)
+    y = pmap([(i, i) for i in range(49, -1, -1)], 10)
+
+    assert x == y
+    assert not (x != y)
+
+    assert y == x
+    assert not (y != x)
+
+
 def test_not_equal():
     x = m(a=1, b=2, c=3)
     y = m(a=1, b=2)
