@@ -631,6 +631,10 @@ Jean-Paul Calderone https://github.com/exarkun
 
 Douglas Treadwell https://github.com/douglas-treadwell
 
+Travis Parker https://github.com/teepark
+
+Julian Berman https://github.com/Julian
+
 Contributing
 ------------
 

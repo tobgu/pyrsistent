@@ -1,5 +1,11 @@
 Revision history
 ----------------
+v0.13.0, 2017-09-01
+ * Fix #113, Skip field factories when loading pickled objects. There is a
+   minor backwards incompatibilty in the behaviour because of this. Thanks
+   @teepark for fi this!
+ * Fix #116, negative indexing for pdeques. Thanks @Julian for this!
+
 v0.12.3, 2017-06-04
  * Fix #83, make it possible to use Python 3 enums as field type without having to wrap it in
    a list or tuple. Thanks @douglas-treadwell for this!
