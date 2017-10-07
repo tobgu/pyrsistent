@@ -419,3 +419,11 @@ def test_pmap_unorderable():
 def test_supports_weakref():
     import weakref
     weakref.ref(m(a=1))
+
+
+def test_iterable():
+    """
+    PMaps can be created from iterables even though they can't be len() hinted.
+    """
+
+    assert pmap(iter([("a", "b")])) == pmap([("a", "b")])

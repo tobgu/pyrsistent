@@ -198,3 +198,12 @@ def test_supports_weakref():
     import weakref
     weakref.ref(plist())
     weakref.ref(plist([1, 2]))
+
+
+def test_iterable():
+    """
+    PLists can be created from iterables even though they can't be len()
+    hinted.
+    """
+
+    assert plist(iter("a")) == plist(iter("a"))

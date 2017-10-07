@@ -378,7 +378,16 @@ Hashable.register(PMap)
 
 
 def _turbo_mapping(initial, pre_size):
-    size = pre_size or (2 * len(initial)) or 8
+    if pre_size:
+        size = pre_size
+    else:
+        try:
+            size = 2 * len(initial) or 8
+        except Exception:
+            # Guess we can't figure out the length. Give up on length hinting,
+            # we can always reallocate later.
+            size = 8
+
     buckets = size * [None]
 
     if not isinstance(initial, Mapping):

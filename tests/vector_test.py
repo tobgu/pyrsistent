@@ -907,3 +907,12 @@ def test_failing_repr(pvector):
 
     with pytest.raises(ValueError):
         repr(pvector([A()]))
+
+
+def test_iterable(pvector):
+    """
+    PVectors can be created from iterables even though they can't be len()
+    hinted.
+    """
+
+    assert pvector(iter("a")) == pvector(iter("a"))

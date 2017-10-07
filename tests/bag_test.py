@@ -140,3 +140,11 @@ def test_update():
 def test_update_no_elements():
     b = pbag([1, 2, 2])
     assert b.update([]) is b
+
+
+def test_iterable():
+    """
+    PBags can be created from iterables even though they can't be len() hinted.
+    """
+
+    assert pbag(iter("a")) == pbag(iter("a"))
