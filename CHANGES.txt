@@ -1,5 +1,11 @@
 Revision history
 ----------------
+v0.14.0, 2017-10-08
+ * Fix #117, pmap now accepts iterators as input to constructor. Thanks @Julian for this!
+ * Drop support for Python 2.6. Nothing has been done in this release that will explicitly
+   break pyrsistent for 2.6 but it will not be considered moving forward.  Dropping 2.6
+   support is the reason for stepping the second decimal instead of the third.
+
 v0.13.0, 2017-09-01
  * Fix #113, Skip field factories when loading pickled objects. There is a
    minor backwards incompatibilty in the behaviour because of this. Thanks
