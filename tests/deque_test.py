@@ -282,3 +282,12 @@ def test_literalish():
 def test_supports_weakref():
     import weakref
     weakref.ref(dq(1, 2))
+
+
+def test_iterable():
+    """
+    PDeques can be created from iterables even though they can't be len()
+    hinted.
+    """
+
+    assert pdeque(iter("a")) == pdeque(iter("a"))

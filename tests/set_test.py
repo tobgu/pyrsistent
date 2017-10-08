@@ -168,3 +168,11 @@ def test_update():
 def test_update_no_elements():
     s1 = s(1, 2)
     assert s1.update([]) is s1
+
+
+def test_iterable():
+    """
+    PSets can be created from iterables even though they can't be len() hinted.
+    """
+
+    assert pset(iter("a")) == pset(iter("a"))
