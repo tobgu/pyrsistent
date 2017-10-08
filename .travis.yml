@@ -13,7 +13,7 @@ env:
   - TOXENV=py27
   - TOXENV=py34
   - TOXENV=py36
-  - TOXENV=pypy-5.7.1
+  - TOXENV=pypy
   - TOXENV=memorytest27
   - TOXENV=memorytest36
   - TOXENV=doctest27
