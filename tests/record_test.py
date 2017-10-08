@@ -696,8 +696,8 @@ def test_pmap_field_optional():
     """
     class Record(PRecord):
         value = pmap_field(int, int, optional=True)
-    assert ((Record(value={1: 2}).value, Record(value=None).value) ==
-            pmap({1: 2}), None)
+    assert (Record(value={1: 2}).value, Record(value=None).value) == \
+           (pmap({1: 2}), None)
 
 def test_pmap_field_name():
     """
