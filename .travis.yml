@@ -10,12 +10,12 @@ script:
   - tox
 
 env:
-  - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py34
   - TOXENV=py35
-  - TOXENV=pypy
+  - TOXENV=py36
+  - TOXENV=pypy-5.7.1
   - TOXENV=memorytest27
-  - TOXENV=memorytest34
+  - TOXENV=memorytest36
   - TOXENV=doctest27
-  - TOXENV=coverage-py35
+  - TOXENV=coverage-py36
