@@ -23,6 +23,7 @@ class TypedContainerObj(PClass):
 
 class UniqueThing(PClass):
     id = field(type=uuid.UUID, factory=uuid.UUID)
+    x = field(type=int)
 
 
 def test_evolve_pclass_instance():
@@ -410,3 +411,13 @@ def test_enum_key_type():
 def test_pickle_with_one_way_factory():
     thing = UniqueThing(id='25544626-86da-4bce-b6b6-9186c0804d64')
     assert pickle.loads(pickle.dumps(thing)) == thing
+
+def test_evolver_with_one_way_factory():
+    thing = UniqueThing(id='cc65249a-56fe-4995-8719-ea02e124b234')
+    ev = thing.evolver()
+    ev.x = 5  # necessary to prevent persistent() returning the original
+    assert ev.persistent() == UniqueThing(id=str(thing.id), x=5)
+
+def test_set_doesnt_trigger_other_factories():
+    thing = UniqueThing(id='b413b280-de76-4e28-a8e3-5470ca83ea2c')
+    thing.set(x=5)

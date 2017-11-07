@@ -96,6 +96,10 @@ class PClass(CheckedType):
         """
         if args:
             kwargs[args[0]] = args[1]
+        for key, value in kwargs.items():
+            field = self._pclass_fields.get(key)
+            if field is not None:
+                value = field.factory(value)
 
         for key in self._pclass_fields:
             if key not in kwargs:
@@ -103,7 +107,7 @@ class PClass(CheckedType):
                 if value is not _MISSING_VALUE:
                     kwargs[key] = value
 
-        return self.__class__(**kwargs)
+        return self.__class__(_bypass_factories=True, **kwargs)
 
     @classmethod
     def create(cls, kwargs, _bypass_factories=False):
@@ -211,6 +215,9 @@ class _PClassEvolver(object):
 
     def set(self, key, value):
         if self._pclass_evolver_data.get(key, _MISSING_VALUE) is not value:
+            field = self._pclass_evolver_original._pclass_fields.get(key)
+            if field is not None:
+                value = field.factory(value)
             self._pclass_evolver_data[key] = value
             self._pclass_evolver_data_is_dirty = True
 
@@ -232,7 +239,8 @@ class _PClassEvolver(object):
 
     def persistent(self):
         if self._pclass_evolver_data_is_dirty:
-            return self._pclass_evolver_original.__class__(**self._pclass_evolver_data)
+            return self._pclass_evolver_original.__class__(_bypass_factories=True,
+                                                           **self._pclass_evolver_data)
 
         return self._pclass_evolver_original
 
