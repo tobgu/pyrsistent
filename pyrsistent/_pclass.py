@@ -99,7 +99,7 @@ class PClass(CheckedType):
         for key, value in kwargs.items():
             field = self._pclass_fields.get(key)
             if field is not None:
-                value = field.factory(value)
+                kwargs[key] = field.factory(value)
 
         for key in self._pclass_fields:
             if key not in kwargs:

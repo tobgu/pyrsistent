@@ -421,3 +421,14 @@ def test_evolver_with_one_way_factory():
 def test_set_doesnt_trigger_other_factories():
     thing = UniqueThing(id='b413b280-de76-4e28-a8e3-5470ca83ea2c')
     thing.set(x=5)
+
+def test_set_does_trigger_factories():
+    class SquaredPoint(PClass):
+        x = field(factory=lambda x: x ** 2)
+        y = field()
+
+    sp = SquaredPoint(x=3, y=10)
+    assert (sp.x, sp.y) == (9, 10)
+
+    sp2 = sp.set(x=4)
+    assert (sp2.x, sp2.y) == (16, 10)
