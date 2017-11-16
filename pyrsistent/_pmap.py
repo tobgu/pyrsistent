@@ -138,30 +138,6 @@ class PMap(object):
                 return False
             if self._buckets == other._buckets:
                 return True
-            self_as_set = other_as_set = self_hash = other_hash = None
-            if hasattr(self, '_cached_hash'):
-                self_hash = self._cached_hash
-            else:
-                self_as_set = frozenset(self.iteritems())
-                try:
-                    self._cached_hash = self_hash = hash(self_as_set)
-                except TypeError:
-                    # self contains non-hashable values
-                    pass
-            if self_hash is not None:
-                if hasattr(other, '_cached_hash'):
-                    other_hash = other._cached_hash
-                else:
-                    other_as_set = frozenset(other.iteritems())
-                    try:
-                        other._cached_hash = other_hash = hash(other_as_set)
-                    except TypeError:
-                        # other contains non-hashable values
-                        pass
-                if other_hash is not None and self_hash != other_hash:
-                    return False
-            if self_as_set is not None and other_as_set is not None:
-                return self_as_set == other_as_set
             return dict(self.iteritems()) == dict(other.iteritems())
         elif isinstance(other, dict):
             return dict(self.iteritems()) == other
