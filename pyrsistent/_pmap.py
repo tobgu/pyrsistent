@@ -125,7 +125,24 @@ class PMap(object):
     def __repr__(self):
         return 'pmap({0})'.format(str(dict(self)))
 
-    __eq__ = Mapping.__eq__
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        if len(self) != len(other):
+            return False
+        if isinstance(other, PMap):
+            if (hasattr(self, '_cached_hash') and hasattr(other, '_cached_hash')
+                    and self._cached_hash != other._cached_hash):
+                return False
+            if self._buckets == other._buckets:
+                return True
+            return dict(self.iteritems()) == dict(other.iteritems())
+        elif isinstance(other, dict):
+            return dict(self.iteritems()) == other
+        return dict(self.iteritems()) == dict(six.iteritems(other))
+
     __ne__ = Mapping.__ne__
 
     def __lt__(self, other):

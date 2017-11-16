@@ -365,6 +365,16 @@ static PyObject* PVector_richcompare(PyObject *v, PyObject *w, int op) {
     vlen = vt->count;
     wlen = wt->count;
 
+    if (vlen != wlen) {
+        if (op == Py_EQ) {
+            Py_INCREF(Py_False);
+            return Py_False;
+        } else if (op == Py_NE) {
+            Py_INCREF(Py_True);
+            return Py_True;
+        }
+    }
+
     /* Search for the first index where items are different. */
     PyObject *left = NULL;
     PyObject *right = NULL;

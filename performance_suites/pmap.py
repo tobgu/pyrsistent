@@ -164,3 +164,105 @@ def iteration_large_pmap():
 def reference_iteration_large_dict():
     for k in large_dict:
         pass
+
+
+# #################### Comparison ########################
+
+def _different_pmaps_same_size():
+    pmap1 = pmap(dict((i, i) for i in range(2000)))
+    pmap2 = pmap(dict((i, i + 1) for i in range(2000)))
+
+
+def _different_pmaps_different_size():
+    pmap1 = pmap(dict((i, i) for i in range(2000)))
+    pmap2 = pmap(dict((i, i + 1) for i in range(1500)))
+
+
+def _equal_pmaps():
+    pmap1 = pmap(dict((i, i) for i in range(2000)))
+    pmap2 = pmap(dict((i, i) for i in range(2000)))
+
+
+def _equal_pmap_and_dict():
+    dict1 = dict((i, i) for i in range(2000))
+    pmap1 = pmap(dict((i, i) for i in range(2000)))
+
+
+def _equal_dicts():
+    dict1 = dict((i, i) for i in range(2000))
+    dict2 = dict((i, i) for i in range(2000))
+
+
+def _different_dicts_same_size():
+    dict1 = dict((i, i) for i in range(2000))
+    dict2 = dict((i, i + 1) for i in range(2000))
+
+
+def _different_dicts_different_size():
+    dict1 = dict((i, i) for i in range(2000))
+    dict2 = dict((i, i + 1) for i in range(2000))
+
+
+def _equal_pmaps_different_bucket_size():
+    pmap1 = pmap(dict((i, i) for i in range(2000)), 1999)
+    pmap2 = pmap(dict((i, i) for i in range(2000)), 2000)
+
+
+def _equal_pmaps_same_bucket_size_different_insertion_order():
+    pmap1 = pmap([(i, i) for i in range(2000)], 1999)
+    pmap2 = pmap([(i, i) for i in range(1999, -1, -1)], 1999)
+
+
+@Benchmarked(setup=_large_pmap)
+def compare_same_pmap():
+    large_pmap == large_pmap
+
+
+@Benchmarked(setup=_large_dict)
+def reference_compare_same_dict():
+    large_dict == large_dict
+
+
+@Benchmarked(setup=_equal_pmaps)
+def compare_equal_pmaps():
+    pmap1 == pmap2
+
+
+@Benchmarked(setup=_equal_dicts)
+def reference_compare_equal_dicts():
+    dict1 == dict2
+
+
+@Benchmarked(setup=_equal_pmap_and_dict)
+def compare_equal_pmap_and_dict():
+    pmap1 == dict1
+
+
+@Benchmarked(setup=_equal_pmaps_same_bucket_size_different_insertion_order)
+def compare_equal_pmaps_different_insertion_order():
+    pmap1 == pmap2
+
+
+@Benchmarked(setup=_equal_pmaps_different_bucket_size)
+def compare_equal_pmaps_different_bucket_size():
+    pmap1 == pmap2
+
+
+@Benchmarked(setup=_different_pmaps_same_size)
+def compare_different_pmaps_same_size():
+    pmap1 == pmap2
+
+
+@Benchmarked(setup=_different_dicts_same_size)
+def reference_compare_different_dicts_same_size():
+    dict1 == dict2
+
+
+@Benchmarked(setup=_different_pmaps_different_size)
+def compare_different_pmaps_different_size():
+    pmap1 == pmap2
+
+
+@Benchmarked(setup=_different_dicts_different_size)
+def reference_compare_different_dicts_different_size():
+    dict1 == dict2
