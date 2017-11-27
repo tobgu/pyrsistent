@@ -1,5 +1,10 @@
 Revision history
 ----------------
+v0.14.1, 2017-11-27
+ * Equality check performance improvements for pvectors and pmaps. Thanks @dtomas for this!
+ * Avoid calling factories multiple times for fields that do not change, see PR #120 for for
+   details. Thanks @teepark for this!
+
 v0.14.0, 2017-10-08
  * Fix #117, pmap now accepts iterators as input to constructor. Thanks @Julian for this!
  * Drop support for Python 2.6. Nothing has been done in this release that will explicitly

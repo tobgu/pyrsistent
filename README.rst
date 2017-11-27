@@ -635,6 +635,8 @@ Travis Parker https://github.com/teepark
 
 Julian Berman https://github.com/Julian
 
+Dennis Tomas https://github.com/dtomas
+
 Contributing
 ------------
 
