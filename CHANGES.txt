@@ -1,5 +1,8 @@
 Revision history
 ----------------
+v0.14.2, 2017-12-06
+ * Fix #121, regression in PClass.set() introduced in 0.14.1.
+
 v0.14.1, 2017-11-27
  * Equality check performance improvements for pvectors and pmaps. Thanks @dtomas for this!
  * Avoid calling factories multiple times for fields that do not change, see PR #120 for for
