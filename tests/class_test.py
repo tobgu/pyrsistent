@@ -408,9 +408,11 @@ def test_enum_key_type():
 
     MyClass2()
 
+
 def test_pickle_with_one_way_factory():
     thing = UniqueThing(id='25544626-86da-4bce-b6b6-9186c0804d64')
     assert pickle.loads(pickle.dumps(thing)) == thing
+
 
 def test_evolver_with_one_way_factory():
     thing = UniqueThing(id='cc65249a-56fe-4995-8719-ea02e124b234')
@@ -418,9 +420,11 @@ def test_evolver_with_one_way_factory():
     ev.x = 5  # necessary to prevent persistent() returning the original
     assert ev.persistent() == UniqueThing(id=str(thing.id), x=5)
 
+
 def test_set_doesnt_trigger_other_factories():
     thing = UniqueThing(id='b413b280-de76-4e28-a8e3-5470ca83ea2c')
     thing.set(x=5)
+
 
 def test_set_does_trigger_factories():
     class SquaredPoint(PClass):
@@ -432,3 +436,18 @@ def test_set_does_trigger_factories():
 
     sp2 = sp.set(x=4)
     assert (sp2.x, sp2.y) == (16, 10)
+
+
+def test_value_can_be_overridden_in_subclass_new():
+    class X(PClass):
+        y = pvector_field(int)
+
+        def __new__(cls, **kwargs):
+            items = kwargs.get('y', None)
+            if items is None:
+                kwargs['y'] = ()
+            return super(X, cls).__new__(cls, **kwargs)
+
+    a = X(y=[])
+    b = a.set(y=None)
+    assert a == b

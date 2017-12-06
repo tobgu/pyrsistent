@@ -774,6 +774,7 @@ def test_supports_lazy_initial_value_for_field():
 
     assert MyRecord() == MyRecord(a=2)
 
+
 def test_pickle_with_one_way_factory():
     """
     A field factory isn't called when restoring from pickle.

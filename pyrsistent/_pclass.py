@@ -45,12 +45,12 @@ class PClass(CheckedType):
     """
     def __new__(cls, **kwargs):    # Support *args?
         result = super(PClass, cls).__new__(cls)
-        bypass_factories = kwargs.pop('_bypass_factories', False)
+        factory_fields = kwargs.pop('_factory_fields', None)
         missing_fields = []
         invariant_errors = []
         for name, field in cls._pclass_fields.items():
             if name in kwargs:
-                if not bypass_factories:
+                if factory_fields is None or name in factory_fields:
                     value = field.factory(kwargs[name])
                 else:
                     value = kwargs[name]
@@ -96,10 +96,8 @@ class PClass(CheckedType):
         """
         if args:
             kwargs[args[0]] = args[1]
-        for key, value in kwargs.items():
-            field = self._pclass_fields.get(key)
-            if field is not None:
-                kwargs[key] = field.factory(value)
+
+        factory_fields = set(kwargs)
 
         for key in self._pclass_fields:
             if key not in kwargs:
@@ -107,10 +105,10 @@ class PClass(CheckedType):
                 if value is not _MISSING_VALUE:
                     kwargs[key] = value
 
-        return self.__class__(_bypass_factories=True, **kwargs)
+        return self.__class__(_factory_fields=factory_fields, **kwargs)
 
     @classmethod
-    def create(cls, kwargs, _bypass_factories=False):
+    def create(cls, kwargs, _factory_fields=None):
         """
         Factory method. Will create a new PClass of the current type and assign the values
         specified in kwargs.
@@ -118,7 +116,7 @@ class PClass(CheckedType):
         if isinstance(kwargs, cls):
             return kwargs
 
-        return cls(_bypass_factories=_bypass_factories, **kwargs)
+        return cls(_factory_fields=_factory_fields, **kwargs)
 
     def serialize(self, format=None):
         """
@@ -203,22 +201,21 @@ class PClass(CheckedType):
 
 
 class _PClassEvolver(object):
-    __slots__ = ('_pclass_evolver_original', '_pclass_evolver_data', '_pclass_evolver_data_is_dirty')
+    __slots__ = ('_pclass_evolver_original', '_pclass_evolver_data', '_pclass_evolver_data_is_dirty', '_factory_fields')
 
     def __init__(self, original, initial_dict):
         self._pclass_evolver_original = original
         self._pclass_evolver_data = initial_dict
         self._pclass_evolver_data_is_dirty = False
+        self._factory_fields = set()
 
     def __getitem__(self, item):
         return self._pclass_evolver_data[item]
 
     def set(self, key, value):
         if self._pclass_evolver_data.get(key, _MISSING_VALUE) is not value:
-            field = self._pclass_evolver_original._pclass_fields.get(key)
-            if field is not None:
-                value = field.factory(value)
             self._pclass_evolver_data[key] = value
+            self._factory_fields.add(key)
             self._pclass_evolver_data_is_dirty = True
 
         return self
@@ -229,6 +226,7 @@ class _PClassEvolver(object):
     def remove(self, item):
         if item in self._pclass_evolver_data:
             del self._pclass_evolver_data[item]
+            self._factory_fields.discard(item)
             self._pclass_evolver_data_is_dirty = True
             return self
 
@@ -239,7 +237,7 @@ class _PClassEvolver(object):
 
     def persistent(self):
         if self._pclass_evolver_data_is_dirty:
-            return self._pclass_evolver_original.__class__(_bypass_factories=True,
+            return self._pclass_evolver_original.__class__(_factory_fields=self._factory_fields,
                                                            **self._pclass_evolver_data)
 
         return self._pclass_evolver_original

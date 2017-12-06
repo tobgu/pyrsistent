@@ -38,7 +38,7 @@ class PRecord(PMap, CheckedType):
         if '_precord_size' in kwargs and '_precord_buckets' in kwargs:
             return super(PRecord, cls).__new__(cls, kwargs['_precord_size'], kwargs['_precord_buckets'])
 
-        bypass_factories = kwargs.pop('_bypass_factories', False)
+        factory_fields = kwargs.pop('_factory_fields', None)
 
         initial_values = kwargs
         if cls._precord_initial_values:
@@ -46,7 +46,7 @@ class PRecord(PMap, CheckedType):
                                   for k, v in cls._precord_initial_values.items())
             initial_values.update(kwargs)
 
-        e = _PRecordEvolver(cls, pmap(), _bypass_factories=bypass_factories)
+        e = _PRecordEvolver(cls, pmap(), _factory_fields=factory_fields)
         for k, v in initial_values.items():
             e[k] = v
 
@@ -77,7 +77,7 @@ class PRecord(PMap, CheckedType):
                                  ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self.items()))
 
     @classmethod
-    def create(cls, kwargs, _bypass_factories=False):
+    def create(cls, kwargs, _factory_fields=None):
         """
         Factory method. Will create a new PRecord of the current type and assign the values
         specified in kwargs.
@@ -85,7 +85,7 @@ class PRecord(PMap, CheckedType):
         if isinstance(kwargs, cls):
             return kwargs
 
-        return cls(_bypass_factories=_bypass_factories, **kwargs)
+        return cls(_factory_fields=_factory_fields, **kwargs)
 
     def __reduce__(self):
         # Pickling support
@@ -100,14 +100,14 @@ class PRecord(PMap, CheckedType):
 
 
 class _PRecordEvolver(PMap._Evolver):
-    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields', '_bypass_factories')
+    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields', '_factory_fields')
 
-    def __init__(self, cls, original_pmap, _bypass_factories=False):
+    def __init__(self, cls, original_pmap, _factory_fields=None):
         super(_PRecordEvolver, self).__init__(original_pmap)
         self._destination_cls = cls
         self._invariant_error_codes = []
         self._missing_fields = []
-        self._bypass_factories = _bypass_factories
+        self._factory_fields = _factory_fields
 
     def __setitem__(self, key, original_value):
         self.set(key, original_value)
@@ -115,7 +115,7 @@ class _PRecordEvolver(PMap._Evolver):
     def set(self, key, original_value):
         field = self._destination_cls._precord_fields.get(key)
         if field:
-            if not self._bypass_factories:
+            if self._factory_fields is None or field in self._factory_fields:
                 try:
                     value = field.factory(original_value)
                 except InvariantException as e:
