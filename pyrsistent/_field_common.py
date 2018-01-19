@@ -3,7 +3,7 @@ import six
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
     optional as optional_type, InvariantException, get_type, wrap_invariant,
-    _restore_pickle)
+    _restore_pickle, get_type)
 
 
 try:
@@ -159,7 +159,7 @@ def _restore_seq_field_pickle(checked_class, item_type, data):
 
 def _types_to_names(types):
     """Convert a tuple of types to a human-readable string."""
-    return "".join(typ.__name__.capitalize() for typ in types)
+    return "".join(get_type(typ).__name__.capitalize() for typ in types)
 
 def _make_seq_field_type(checked_class, item_type):
     """Create a subclass of the given checked class with the given item type."""
