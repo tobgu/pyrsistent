@@ -24,6 +24,12 @@ class UniqueThing(PRecord):
     id = field(type=uuid.UUID, factory=uuid.UUID)
 
 
+class Something(object):
+    pass
+
+class Another(object):
+    pass
+
 def test_create():
     r = ARecord(x=1, y='foo')
     assert r.x == 1
@@ -443,9 +449,6 @@ def test_pset_field_name():
     """
     The created set class name is based on the type of items in the set.
     """
-    class Something(object):
-        pass
-
     class Record(PRecord):
         value = pset_field(Something)
         value2 = pset_field(int)
@@ -458,14 +461,30 @@ def test_pset_multiple_types_field_name():
     The created set class name is based on the multiple given types of
     items in the set.
     """
-    class Something(object):
-        pass
-
     class Record(PRecord):
         value = pset_field((Something, int))
 
     assert (Record().value.__class__.__name__ ==
             "SomethingIntPSet")
+
+def test_pset_field_name_string_type():
+    """
+    The created set class name is based on the type of items specified by name
+    """
+    class Record(PRecord):
+        value = pset_field("record_test.Something")
+    assert Record().value.__class__.__name__ == "SomethingPSet"
+
+
+def test_pset_multiple_string_types_field_name():
+    """
+    The created set class name is based on the multiple given types of
+    items in the set specified by name
+    """
+    class Record(PRecord):
+        value = pset_field(("record_test.Something", "record_test.Another"))
+
+    assert Record().value.__class__.__name__ == "SomethingAnotherPSet"
 
 def test_pvector_field_initial_value():
     """
@@ -566,9 +585,6 @@ def test_pvector_field_name():
     """
     The created set class name is based on the type of items in the set.
     """
-    class Something(object):
-        pass
-
     class Record(PRecord):
         value = pvector_field(Something)
         value2 = pvector_field(int)
@@ -581,14 +597,30 @@ def test_pvector_multiple_types_field_name():
     The created vector class name is based on the multiple given types of
     items in the vector.
     """
-    class Something(object):
-        pass
-
     class Record(PRecord):
         value = pvector_field((Something, int))
 
     assert (Record().value.__class__.__name__ ==
             "SomethingIntPVector")
+
+def test_pvector_field_name_string_type():
+    """
+    The created set class name is based on the type of items in the set
+    specified by name.
+    """
+    class Record(PRecord):
+        value = pvector_field("record_test.Something")
+    assert Record().value.__class__.__name__ == "SomethingPVector"
+
+def test_pvector_multiple_string_types_field_name():
+    """
+    The created vector class name is based on the multiple given types of
+    items in the vector.
+    """
+    class Record(PRecord):
+        value = pvector_field(("record_test.Something", "record_test.Another"))
+
+    assert Record().value.__class__.__name__ == "SomethingAnotherPVector"
 
 def test_pvector_field_create_from_nested_serialized_data():
     class Foo(PRecord):
@@ -703,12 +735,6 @@ def test_pmap_field_name():
     """
     The created map class name is based on the types of items in the map.
     """
-    class Something(object):
-        pass
-
-    class Another(object):
-        pass
-
     class Record(PRecord):
         value = pmap_field(Something, Another)
         value2 = pmap_field(int, float)
@@ -721,18 +747,33 @@ def test_pmap_field_name_multiple_types():
     The created map class name is based on the types of items in the map,
     including when there are multiple supported types.
     """
-    class Something(object):
-        pass
-
-    class Another(object):
-        pass
-
     class Record(PRecord):
         value = pmap_field((Something, Another), int)
         value2 = pmap_field(str, (int, float))
     assert ((Record().value.__class__.__name__,
              Record().value2.__class__.__name__) ==
             ("SomethingAnotherToIntPMap", "StrToIntFloatPMap"))
+
+def test_pmap_field_name_string_type():
+    """
+    The created map class name is based on the types of items in the map
+    specified by name.
+    """
+    class Record(PRecord):
+        value = pmap_field("record_test.Something", "record_test.Another")
+    assert Record().value.__class__.__name__ == "SomethingToAnotherPMap"
+
+def test_pmap_field_name_multiple_string_types():
+    """
+    The created map class name is based on the types of items in the map,
+    including when there are multiple supported types.
+    """
+    class Record(PRecord):
+        value = pmap_field(("record_test.Something", "record_test.Another"), int)
+        value2 = pmap_field(str, ("record_test.Something", "record_test.Another"))
+    assert ((Record().value.__class__.__name__,
+             Record().value2.__class__.__name__) ==
+            ("SomethingAnotherToIntPMap", "StrToSomethingAnotherPMap"))
 
 def test_pmap_field_invariant():
     """
