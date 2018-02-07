@@ -91,7 +91,9 @@ class PMap(object):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError("PMap has no attribute '{0}'".format(key))
+            raise AttributeError(
+                "{0} has no attribute '{1}'".format(type(self).__name__, key)
+            )
 
     def iterkeys(self):
         for k, _ in self.iteritems():

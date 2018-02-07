@@ -463,7 +463,10 @@ def test_dot_access_of_non_existing_element_raises_attribute_error():
     with pytest.raises(AttributeError) as error:
         m1.b
 
-    assert "'b'" in str(error.value)
+    error_message = str(error.value)
+
+    assert "'b'" in error_message
+    assert type(m1).__name__ in error_message
 
 
 def test_pmap_unorderable():
