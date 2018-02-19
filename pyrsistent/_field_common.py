@@ -1,21 +1,16 @@
 from collections import Iterable
 import six
+
+from pyrsistent._compat import Enum
 from pyrsistent._checked_types import (
     CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
     optional as optional_type, InvariantException, get_type, wrap_invariant,
     _restore_pickle, get_type)
 
 
-try:
-    from enum import Enum as _Enum
-except:
-    class _Enum(object): pass
-    # no objects will be instances of this class
-
-
 def isenum(type_):
     try:
-        return issubclass(type_, _Enum)
+        return issubclass(type_, Enum)
     except TypeError:
         return False  # type_ is not a class
 

@@ -1,5 +1,7 @@
 from collections import Iterable
 import six
+
+from pyrsistent._compat import Enum, string_types
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PythonPVector, python_pvector
@@ -45,17 +47,49 @@ class InvariantException(Exception):
             missing_fields=', '.join(self.missing_fields))
 
 
-def _store_types(dct, bases, destination_name, source_name):
-    def to_list(elem):
-        if not isinstance(elem, Iterable) or isinstance(elem, six.string_types):
-            return [elem]
-        return list(elem)
+_preserved_iterables = (
+        Enum,
+)
+"""For types that are themselves iterable, we would mistakenly take their
+elements for the type annotation. This set defines types to 'preserve' by not
+iterating over them."""
 
-    dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
-    dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
-    dct[destination_name] = tuple(dct[destination_name])
-    if not all(isinstance(t, type) or isinstance(t, six.string_types) for t in dct[destination_name]):
+
+def maybe_type_to_list(t):
+    """Try to coerce a user-supplied type directive into a list of types."""
+    # TODO FIXME: Move type validation inside this function to consolidate it.
+    # Preserve type annotations that are thmeselves iterable.
+    if isinstance(t, type) and issubclass(t, _preserved_iterables):
+        return [t]
+    # Preserve type annotations given as strings.
+    elif isinstance(t, string_types):
+        return [t]
+    else:
+        if not isinstance(t, Iterable):
+            return [t]
+        else:
+            return list(t)
+
+
+def maybe_types_to_list(ts):
+    res = []
+
+    for t in ts:
+        res.extend(maybe_type_to_list(t))
+
+    return tuple(res)
+
+
+def _store_types(dct, bases, destination_name, source_name):
+    maybe_types = maybe_types_to_list([
+        d[source_name]
+        for d in ([dct] + [b.__dict__ for b in bases]) if source_name in d
+    ])
+
+    if not all(isinstance(t, type) or isinstance(t, string_types) for t in maybe_types):
         raise TypeError('Type specifications must be types or strings')
+
+    dct[destination_name] = maybe_types
 
 
 def _merge_invariant_results(result):
