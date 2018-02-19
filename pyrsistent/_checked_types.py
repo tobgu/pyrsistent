@@ -242,19 +242,19 @@ def optional(*typs):
 
 
 def _checked_type_create(cls, source_data, _factory_fields=None):
-        if isinstance(source_data, cls):
-            return source_data
+    if isinstance(source_data, cls):
+        return source_data
 
-        # Recursively apply create methods of checked types if the types of the supplied data
-        # does not match any of the valid types.
-        types = get_types(cls._checked_types)
-        checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
-        if checked_type:
-            return cls([checked_type.create(data)
-                        if not any(isinstance(data, t) for t in types) else data
-                        for data in source_data])
+    # Recursively apply create methods of checked types if the types of the supplied data
+    # does not match any of the valid types.
+    types = get_types(cls._checked_types)
+    checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
+    if checked_type:
+        return cls([checked_type.create(data)
+                    if not any(isinstance(data, t) for t in types) else data
+                    for data in source_data])
 
-        return cls(source_data)
+    return cls(source_data)
 
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPVector(PythonPVector, CheckedType):
