@@ -1,18 +1,20 @@
 from collections import Iterable
 import six
 
-from pyrsistent._compat import Enum
 from pyrsistent._checked_types import (
-    CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
-    optional as optional_type, InvariantException, get_type, wrap_invariant,
-    _restore_pickle, get_type)
-
-
-def isenum(type_):
-    try:
-        return issubclass(type_, Enum)
-    except TypeError:
-        return False  # type_ is not a class
+    CheckedPMap,
+    CheckedPSet,
+    CheckedPVector,
+    CheckedType,
+    InvariantException,
+    _restore_pickle,
+    get_type,
+    maybe_type_to_list,
+    maybe_types_to_list,
+)
+from pyrsistent._checked_types import optional as optional_type
+from pyrsistent._checked_types import wrap_invariant
+from pyrsistent._compat import Enum
 
 
 def set_fields(dct, bases, name):
@@ -86,11 +88,15 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param serializer: function that returns a serialized version of the field
     """
 
-    if isinstance(type, Iterable) and not isinstance(type, six.string_types) and not isenum(type):
-        # Enums and strings are iterable types
-        types = set(type)
+    # NB: We have to check this predicate separately from the predicates in
+    # `maybe_type_to_list` et al. because this one is related to supporting the
+    # argspec for `field`, while those are related to supporting the valid ways
+    # to specify types.
+    # Multiple types must be passed in a tuple or a list.
+    if isinstance(type, (tuple, list)):
+        types = set(maybe_types_to_list(type))
     else:
-        types = set([type])
+        types = set(maybe_type_to_list(type))
 
     invariant_function = wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
     field = _PField(type=types, invariant=invariant_function, initial=initial,
