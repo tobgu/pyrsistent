@@ -92,8 +92,12 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     # `maybe_type_to_list` et al. because this one is related to supporting the
     # argspec for `field`, while those are related to supporting the valid ways
     # to specify types.
-    # Multiple types must be passed in a tuple or a list.
-    if isinstance(type, (tuple, list)):
+
+    # Multiple types must be passed in one of the following containers. Note
+    # that a type that is a subclass of one of these containers, like a
+    # `collections.namedtuple`, will work as expected, since we check
+    # `isinstance` and not `issubclass`.
+    if isinstance(type, (list, set, tuple)):
         types = set(maybe_types_to_list(type))
     else:
         types = set(maybe_type_to_list(type))
