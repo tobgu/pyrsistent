@@ -9,8 +9,8 @@ from pyrsistent._checked_types import (
     InvariantException,
     _restore_pickle,
     get_type,
-    maybe_type_to_list,
-    maybe_types_to_list,
+    maybe_parse_user_type,
+    maybe_parse_many_user_types,
 )
 from pyrsistent._checked_types import optional as optional_type
 from pyrsistent._checked_types import wrap_invariant
@@ -89,18 +89,18 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     """
 
     # NB: We have to check this predicate separately from the predicates in
-    # `maybe_type_to_list` et al. because this one is related to supporting the
-    # argspec for `field`, while those are related to supporting the valid ways
-    # to specify types.
+    # `maybe_parse_user_type` et al. because this one is related to supporting
+    # the argspec for `field`, while those are related to supporting the valid
+    # ways to specify types.
 
     # Multiple types must be passed in one of the following containers. Note
     # that a type that is a subclass of one of these containers, like a
     # `collections.namedtuple`, will work as expected, since we check
     # `isinstance` and not `issubclass`.
     if isinstance(type, (list, set, tuple)):
-        types = set(maybe_types_to_list(type))
+        types = set(maybe_parse_many_user_types(type))
     else:
-        types = set(maybe_type_to_list(type))
+        types = set(maybe_parse_user_type(type))
 
     invariant_function = wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
     field = _PField(type=types, invariant=invariant_function, initial=initial,

@@ -47,47 +47,59 @@ class InvariantException(Exception):
             missing_fields=', '.join(self.missing_fields))
 
 
-_preserved_iterables = (
+_preserved_iterable_types = (
         Enum,
 )
-"""For types that are themselves iterable, we would mistakenly take their
-elements for the type annotation. This set defines types to 'preserve' by not
-iterating over them."""
+"""Some types are themselves iterable, but we want to use the type itself and
+not its members for the type specification. This defines a set of such types
+that we explicitly preserve.
+
+Note that strings are not such types because the string inputs we pass in are
+values, not types.
+"""
 
 
-def maybe_type_to_list(t):
-    """Try to coerce a user-supplied type directive into a list of types."""
-    # TODO FIXME: Move type validation inside this function to consolidate it.
-    # Preserve type annotations that are thmeselves iterable.
-    if isinstance(t, type) and issubclass(t, _preserved_iterables):
+def maybe_parse_user_type(t):
+    """Try to coerce a user-supplied type directive into a list of types.
+
+    This function should be used in all places where a user specifies a type,
+    for consistency.
+
+    The policy for what defines valid user input should be clear from the implementation.
+    """
+    is_type = isinstance(t, type)
+    is_preserved = isinstance(t, type) and issubclass(t, _preserved_iterable_types)
+    is_string = isinstance(t, string_types)
+    is_iterable = isinstance(t, Iterable)
+
+    if is_preserved:
         return [t]
-    # Preserve type annotations given as strings.
-    elif isinstance(t, string_types):
+    elif is_string:
         return [t]
+    elif is_type and not is_iterable:
+        return [t]
+    elif is_iterable:
+        # Recur to validate contained types as well.
+        ts = t
+        return tuple(e for t in ts for e in maybe_parse_user_type(t))
     else:
-        if not isinstance(t, Iterable):
-            return [t]
-        else:
-            return list(t)
+        # If this raises because `t` cannot be formatted, so be it.
+        raise TypeError(
+            'Type specifications must be types or strings. Input: {}'.format(t)
+        )
 
 
-def maybe_types_to_list(ts):
-    res = []
-
-    for t in ts:
-        res.extend(maybe_type_to_list(t))
-
-    return tuple(res)
+def maybe_parse_many_user_types(ts):
+    # Just a different name to communicate that you're parsing multiple user
+    # inputs. `maybe_parse_user_type` handles the iterable case anyway.
+    return maybe_parse_user_type(ts)
 
 
 def _store_types(dct, bases, destination_name, source_name):
-    maybe_types = maybe_types_to_list([
+    maybe_types = maybe_parse_many_user_types([
         d[source_name]
         for d in ([dct] + [b.__dict__ for b in bases]) if source_name in d
     ])
-
-    if not all(isinstance(t, type) or isinstance(t, string_types) for t in maybe_types):
-        raise TypeError('Type specifications must be types or strings')
 
     dct[destination_name] = maybe_types
 
