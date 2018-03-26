@@ -1,23 +1,20 @@
 from collections import Iterable
 import six
+
 from pyrsistent._checked_types import (
-    CheckedType, CheckedPSet, CheckedPMap, CheckedPVector,
-    optional as optional_type, InvariantException, get_type, wrap_invariant,
-    _restore_pickle, get_type)
-
-
-try:
-    from enum import Enum as _Enum
-except:
-    class _Enum(object): pass
-    # no objects will be instances of this class
-
-
-def isenum(type_):
-    try:
-        return issubclass(type_, _Enum)
-    except TypeError:
-        return False  # type_ is not a class
+    CheckedPMap,
+    CheckedPSet,
+    CheckedPVector,
+    CheckedType,
+    InvariantException,
+    _restore_pickle,
+    get_type,
+    maybe_parse_user_type,
+    maybe_parse_many_user_types,
+)
+from pyrsistent._checked_types import optional as optional_type
+from pyrsistent._checked_types import wrap_invariant
+from pyrsistent._compat import Enum
 
 
 def set_fields(dct, bases, name):
@@ -91,11 +88,19 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
     :param serializer: function that returns a serialized version of the field
     """
 
-    if isinstance(type, Iterable) and not isinstance(type, six.string_types) and not isenum(type):
-        # Enums and strings are iterable types
-        types = set(type)
+    # NB: We have to check this predicate separately from the predicates in
+    # `maybe_parse_user_type` et al. because this one is related to supporting
+    # the argspec for `field`, while those are related to supporting the valid
+    # ways to specify types.
+
+    # Multiple types must be passed in one of the following containers. Note
+    # that a type that is a subclass of one of these containers, like a
+    # `collections.namedtuple`, will work as expected, since we check
+    # `isinstance` and not `issubclass`.
+    if isinstance(type, (list, set, tuple)):
+        types = set(maybe_parse_many_user_types(type))
     else:
-        types = set([type])
+        types = set(maybe_parse_user_type(type))
 
     invariant_function = wrap_invariant(invariant) if invariant != PFIELD_NO_INVARIANT and callable(invariant) else invariant
     field = _PField(type=types, invariant=invariant_function, initial=initial,

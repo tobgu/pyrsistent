@@ -1,5 +1,7 @@
 from collections import Iterable
 import six
+
+from pyrsistent._compat import Enum, string_types
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PythonPVector, python_pvector
@@ -45,17 +47,61 @@ class InvariantException(Exception):
             missing_fields=', '.join(self.missing_fields))
 
 
-def _store_types(dct, bases, destination_name, source_name):
-    def to_list(elem):
-        if not isinstance(elem, Iterable) or isinstance(elem, six.string_types):
-            return [elem]
-        return list(elem)
+_preserved_iterable_types = (
+        Enum,
+)
+"""Some types are themselves iterable, but we want to use the type itself and
+not its members for the type specification. This defines a set of such types
+that we explicitly preserve.
 
-    dct[destination_name] = to_list(dct[source_name]) if source_name in dct else []
-    dct[destination_name] += sum([to_list(b.__dict__[source_name]) for b in bases if source_name in b.__dict__], [])
-    dct[destination_name] = tuple(dct[destination_name])
-    if not all(isinstance(t, type) or isinstance(t, six.string_types) for t in dct[destination_name]):
-        raise TypeError('Type specifications must be types or strings')
+Note that strings are not such types because the string inputs we pass in are
+values, not types.
+"""
+
+
+def maybe_parse_user_type(t):
+    """Try to coerce a user-supplied type directive into a list of types.
+
+    This function should be used in all places where a user specifies a type,
+    for consistency.
+
+    The policy for what defines valid user input should be clear from the implementation.
+    """
+    is_type = isinstance(t, type)
+    is_preserved = isinstance(t, type) and issubclass(t, _preserved_iterable_types)
+    is_string = isinstance(t, string_types)
+    is_iterable = isinstance(t, Iterable)
+
+    if is_preserved:
+        return [t]
+    elif is_string:
+        return [t]
+    elif is_type and not is_iterable:
+        return [t]
+    elif is_iterable:
+        # Recur to validate contained types as well.
+        ts = t
+        return tuple(e for t in ts for e in maybe_parse_user_type(t))
+    else:
+        # If this raises because `t` cannot be formatted, so be it.
+        raise TypeError(
+            'Type specifications must be types or strings. Input: {}'.format(t)
+        )
+
+
+def maybe_parse_many_user_types(ts):
+    # Just a different name to communicate that you're parsing multiple user
+    # inputs. `maybe_parse_user_type` handles the iterable case anyway.
+    return maybe_parse_user_type(ts)
+
+
+def _store_types(dct, bases, destination_name, source_name):
+    maybe_types = maybe_parse_many_user_types([
+        d[source_name]
+        for d in ([dct] + [b.__dict__ for b in bases]) if source_name in d
+    ])
+
+    dct[destination_name] = maybe_types
 
 
 def _merge_invariant_results(result):
@@ -208,19 +254,19 @@ def optional(*typs):
 
 
 def _checked_type_create(cls, source_data, _factory_fields=None):
-        if isinstance(source_data, cls):
-            return source_data
+    if isinstance(source_data, cls):
+        return source_data
 
-        # Recursively apply create methods of checked types if the types of the supplied data
-        # does not match any of the valid types.
-        types = get_types(cls._checked_types)
-        checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
-        if checked_type:
-            return cls([checked_type.create(data)
-                        if not any(isinstance(data, t) for t in types) else data
-                        for data in source_data])
+    # Recursively apply create methods of checked types if the types of the supplied data
+    # does not match any of the valid types.
+    types = get_types(cls._checked_types)
+    checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
+    if checked_type:
+        return cls([checked_type.create(data)
+                    if not any(isinstance(data, t) for t in types) else data
+                    for data in source_data])
 
-        return cls(source_data)
+    return cls(source_data)
 
 @six.add_metaclass(_CheckedTypeMeta)
 class CheckedPVector(PythonPVector, CheckedType):
