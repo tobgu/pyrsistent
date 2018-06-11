@@ -1,5 +1,11 @@
 Revision history
 ----------------
+v0.14.3, 2018-06-11
+ * Fix #123 regression where type names break sequence fields. Thanks @doozr for this!
+ * Fix #124 using the class name to make AttributeError on __getattr__ more informative for PRecords.
+   Thanks @neilvyas for this!
+ * Fix #125 how fields handle type arguments. Thanks @neilvyas for this!
+
 v0.14.2, 2017-12-06
  * Fix #121, regression in PClass.set() introduced in 0.14.1.
 

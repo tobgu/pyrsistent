@@ -637,6 +637,10 @@ Julian Berman https://github.com/Julian
 
 Dennis Tomas https://github.com/dtomas
 
+Neil Vyas https://github.com/neilvyas
+
+doozr https://github.com/doozr
+
 Contributing
 ------------
 
