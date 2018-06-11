@@ -22,7 +22,8 @@ class PMap(object):
     semantics are the same (more or less) the same function names have been used but for some cases it is not possible,
     for example assignments and deletion of values.
 
-    PMap implements the Mapping protocol and is Hashable.
+    PMap implements the Mapping protocol and is Hashable. It also supports dot-notation for
+    element access.
 
     Random access and insert is log32(n) where n is the size of the map.
 
@@ -38,6 +39,8 @@ class PMap(object):
     >>> m3
     pmap({'c': 3, 'b': 3})
     >>> m3['c']
+    3
+    >>> m3.c
     3
     """
     __slots__ = ('_size', '_buckets', '__weakref__', '_cached_hash')
