@@ -9,16 +9,21 @@ matrix:
       env: TOXENV=memorytest36
     - python: 3.6
       env: TOXENV=coverage-py36
+    - python: "pypy3.5"
+      env: TOXENV=pypy3
     - python: 3.4
       env: TOXENV=py34
     - python: 2.7
       env: TOXENV=py27
-    - python: "pypy2.7"
-      env: TOXENV=pypy
     - python: 2.7
       env: TOXENV=doctest27
     - python: 2.7
       env: TOXENV=memorytest27
+
+# PyPy 2.7 seems broken on Travis at the moment,
+# see https://github.com/travis-ci/travis-ci/issues/8103#issuecomment-387327744
+#    - python: "pypy2.7"
+#      env: TOXENV=pypy
 
 install:
   - pip install -r requirements.txt
