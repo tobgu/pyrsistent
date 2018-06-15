@@ -562,8 +562,8 @@ These functions are great when your cozy immutable world has to interact with th
 Compatibility
 -------------
 
-Pyrsistent is developed and tested on Python 2.6, 2.7, 3.4, 3.5 and PyPy (Python 2.7 compatible). It will most likely work
-on all other versions >= 3.4 but no guarantees are given. :)
+Pyrsistent is developed and tested on Python 2.6, 2.7, 3.4, 3.5, 3.6 and PyPy (Python 2 and 3 compatible). It will most
+likely work on all other versions >= 3.4 but no guarantees are given. :)
 
 Compatibility issues
 ~~~~~~~~~~~~~~~~~~~~
@@ -644,4 +644,30 @@ doozr https://github.com/doozr
 Contributing
 ------------
 
-If you experience problems please log them on GitHub. If you want to contribute code, please fork the code and submit a pull request.
+Want to contribute? That's great! If you experience problems please log them on GitHub. If you want to contribute code,
+please fork the repository and submit a pull request.
+
+Run tests
+~~~~~~~~~
+.. _tox: https://tox.readthedocs.io/en/latest/
+
+Tests can be executed using tox_.
+
+Install tox: ``pip install tox``
+
+Run test for Python 2.7: ``tox -epy27``
+
+Project status
+--------------
+Pyrsistent can be considered stable and mature (who knows, there may even be a 1.0 some day :-)). The project is
+maintained, bugs fixed, PRs reviewed and merged and new releases made. I currently do not have time for development
+of new features or functionality which I don't have use for myself. I'm more than happy to take PRs for new
+functionality though!
+
+There are a bunch of issues marked with ``enhancement`` and ``help wanted`` that contain requests for new functionality
+that would be nice to include. The level of difficulty and extend of the issues varies, please reach out to me if you're
+interested in working on any of them.
+
+If you feel that you have a grand master plan for where you would like Pyrsistent to go and have the time to put into
+it please don't hesitate to discuss this with me and submit PRs for it. If all goes well I'd be more than happy to add
+additional maintainers to the project!
