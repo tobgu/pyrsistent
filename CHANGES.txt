@@ -1,5 +1,8 @@
 Revision history
 ----------------
+v0.14.4, 2018-07-08
+ * Fix #133, minor Python 3.7 compatibility issue. Pyrsistent is now officially Python 3.7 compliant!
+
 v0.14.3, 2018-06-11
  * Fix #123 regression where type names break sequence fields. Thanks @doozr for this!
  * Fix #124 using the class name to make AttributeError on __getattr__ more informative for PRecords.
