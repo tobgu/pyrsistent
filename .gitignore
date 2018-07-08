@@ -12,3 +12,4 @@ README.html
 .cache
 #*
 .coverage
+.pytest_cache
