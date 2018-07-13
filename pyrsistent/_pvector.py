@@ -4,6 +4,7 @@ from numbers import Integral
 import operator
 import six
 from pyrsistent._transformations import transform
+from pyrsistent._utils import SubscriptableType
 
 
 def _bitcount(val):
@@ -411,7 +412,12 @@ class PythonPVector(object):
         l.remove(value)
         return _EMPTY_PVECTOR.extend(l)
 
-@six.add_metaclass(ABCMeta)
+
+class _PVectorMeta(SubscriptableType, ABCMeta):
+    pass
+
+
+@six.add_metaclass(_PVectorMeta)
 class PVector(object):
     """
     Persistent vector implementation. Meant as a replacement for the cases where you would normally

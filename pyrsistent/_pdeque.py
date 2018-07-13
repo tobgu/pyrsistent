@@ -1,9 +1,14 @@
 from collections import Sequence, Hashable
 from itertools import islice, chain
 from numbers import Integral
+
+import six
+
 from pyrsistent._plist import plist
+from pyrsistent._utils import SubscriptableType
 
 
+@six.add_metaclass(SubscriptableType)
 class PDeque(object):
     """
     Persistent double ended queue (deque). Allows quick appends and pops in both ends. Implemented
