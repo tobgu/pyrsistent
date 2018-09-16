@@ -24,10 +24,8 @@ class custom_build_ext(build_ext):
 
     warning_message = """
 ********************************************************************************
-WARNING: Could not build the %s. 
-         
+WARNING: Could not build the %s.
          Pyrsistent will still work but performance may be degraded.
-         
          %s
 ********************************************************************************
 """
@@ -79,9 +77,11 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
     test_suite='tests',
+    tests_require=['pytest','hypothesis'],
     scripts=[],
+    setup_requires=['pytest-runner'],
     ext_modules=extensions,
-    cmdclass={"build_ext": custom_build_ext},
+    cmdclass={'build_ext': custom_build_ext},
     install_requires=['six'],
     packages=['pyrsistent']
 )
