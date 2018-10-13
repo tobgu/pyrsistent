@@ -1,4 +1,7 @@
-from collections import Container, Iterable, Sized, Hashable
+try:
+    from collections.abc import Container, Iterable, Sized, Hashable
+except ImportError:
+    from collections import Container, Iterable, Sized, Hashable
 from functools import reduce
 from pyrsistent._pmap import pmap
 

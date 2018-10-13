@@ -1,4 +1,7 @@
-from collections import Set, Hashable
+try:
+    from collections.abc import Set, Hashable
+except ImportError:
+    from collections import Set, Hashable
 import sys
 from pyrsistent._pmap import pmap
 

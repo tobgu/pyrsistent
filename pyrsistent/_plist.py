@@ -1,4 +1,7 @@
-from collections import Sequence, Hashable
+try:
+    from collections.abc import Sequence, Hashable
+except ImportError:
+    from collections import Sequence, Hashable
 from numbers import Integral
 from functools import reduce
 

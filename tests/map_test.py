@@ -1,4 +1,8 @@
-from collections import Mapping, Hashable
+try:
+    from collections.abc import Mapping, Hashable
+except ImportError:
+    from collections import Mapping, Hashable
+import six
 from operator import add
 import pytest
 from pyrsistent import pmap, m, PVector

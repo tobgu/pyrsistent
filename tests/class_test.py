@@ -1,4 +1,7 @@
-from collections import Hashable
+try:
+    from collections.abc import Hashable
+except ImportError:
+    from collections import Hashable
 import math
 import pickle
 import pytest

@@ -1,4 +1,7 @@
-from collections import Mapping, Hashable
+try:
+    from collections.abc import Mapping, Hashable
+except ImportError:
+    from collections import Mapping, Hashable
 from itertools import chain
 import six
 from pyrsistent._pvector import pvector
