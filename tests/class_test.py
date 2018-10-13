@@ -1,7 +1,4 @@
-try:
-    from collections.abc import Hashable
-except ImportError:
-    from collections import Hashable
+from pyrsistent._compat import Hashable
 import math
 import pickle
 import pytest

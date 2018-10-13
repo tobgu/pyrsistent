@@ -1,7 +1,4 @@
-try:
-    from collections.abc import Mapping, Hashable
-except ImportError:
-    from collections import Mapping, Hashable
+from pyrsistent._compat import Mapping, Hashable
 import six
 from operator import add
 import pytest

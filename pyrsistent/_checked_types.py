@@ -1,7 +1,4 @@
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from ._compat import Iterable
 import six
 
 from pyrsistent._compat import Enum, string_types

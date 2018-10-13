@@ -1,8 +1,5 @@
 from abc import abstractmethod, ABCMeta
-try:
-    from collections.abc import Sequence, Hashable
-except ImportError:
-    from collections import Sequence, Hashable
+from ._compat import Sequence, Hashable
 from numbers import Integral
 import operator
 import six

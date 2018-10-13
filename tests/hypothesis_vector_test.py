@@ -4,10 +4,7 @@ Hypothesis-based tests for pvector.
 
 import gc
 
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from pyrsistent._compat import Iterable
 from functools import wraps
 from pyrsistent import PClass, field
 
