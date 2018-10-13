@@ -1,7 +1,3 @@
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
 import six
 
 from pyrsistent._checked_types import (
