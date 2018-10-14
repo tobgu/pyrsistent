@@ -641,6 +641,10 @@ Neil Vyas https://github.com/neilvyas
 
 doozr https://github.com/doozr
 
+Kamil Galuszka https://github.com/galuszkak
+
+Tsuyoshi Hombashi https://github.com/thombashi
+
 Contributing
 ------------
 
