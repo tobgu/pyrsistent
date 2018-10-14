@@ -1,4 +1,3 @@
-from collections import Iterable
 import six
 
 from pyrsistent._checked_types import (

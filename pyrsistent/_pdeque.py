@@ -1,4 +1,4 @@
-from collections import Sequence, Hashable
+from ._compat import Sequence, Hashable
 from itertools import islice, chain
 from numbers import Integral
 from pyrsistent._plist import plist

@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABCMeta
-from collections import Sequence, Hashable
+from ._compat import Sequence, Hashable
 from numbers import Integral
 import operator
 import six

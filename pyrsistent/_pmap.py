@@ -1,4 +1,4 @@
-from collections import Mapping, Hashable
+from ._compat import Mapping, Hashable
 from itertools import chain
 import six
 from pyrsistent._pvector import pvector

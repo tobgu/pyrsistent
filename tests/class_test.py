@@ -1,4 +1,4 @@
-from collections import Hashable
+from pyrsistent._compat import Hashable
 import math
 import pickle
 import pytest

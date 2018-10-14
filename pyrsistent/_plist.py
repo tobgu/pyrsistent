@@ -1,4 +1,4 @@
-from collections import Sequence, Hashable
+from ._compat import Sequence, Hashable
 from numbers import Integral
 from functools import reduce
 
