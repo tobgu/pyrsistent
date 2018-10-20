@@ -108,13 +108,16 @@ class PClass(CheckedType):
         return self.__class__(_factory_fields=factory_fields, **kwargs)
 
     @classmethod
-    def create(cls, kwargs, _factory_fields=None):
+    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):
         """
         Factory method. Will create a new PClass of the current type and assign the values
         specified in kwargs.
         """
         if isinstance(kwargs, cls):
             return kwargs
+
+        if ignore_extra:
+            kwargs = {k: v for k, v in kwargs.items() if k in cls._pclass_fields}
 
         return cls(_factory_fields=_factory_fields, **kwargs)
 

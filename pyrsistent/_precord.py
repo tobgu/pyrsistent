@@ -77,13 +77,16 @@ class PRecord(PMap, CheckedType):
                                  ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self.items()))
 
     @classmethod
-    def create(cls, kwargs, _factory_fields=None):
+    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):
         """
         Factory method. Will create a new PRecord of the current type and assign the values
         specified in kwargs.
         """
         if isinstance(kwargs, cls):
             return kwargs
+
+        if ignore_extra:
+            kwargs = {k: v for k, v in kwargs.items() if k in cls._precord_fields}
 
         return cls(_factory_fields=_factory_fields, **kwargs)
 
