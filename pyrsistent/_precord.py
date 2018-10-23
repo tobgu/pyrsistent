@@ -89,7 +89,7 @@ class PRecord(PMap, CheckedType):
             return kwargs
 
         if ignore_extra:
-            kwargs = {k: v for k, v in kwargs.items() if k in cls._precord_fields}
+            kwargs = {k: kwargs[k] for k in cls._precord_fields if k in kwargs}
 
         return cls(_factory_fields=_factory_fields, **kwargs)
 
