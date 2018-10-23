@@ -112,6 +112,9 @@ class PClass(CheckedType):
         """
         Factory method. Will create a new PClass of the current type and assign the values
         specified in kwargs.
+
+        :param ignore_extra: A boolean which when set to True will ignore any keys which appear in kwargs that are not
+                             in the set of fields on the PClass.
         """
         if isinstance(kwargs, cls):
             return kwargs
