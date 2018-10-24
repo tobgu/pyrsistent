@@ -1,51 +1,64 @@
-import six
+"""Helpers for use with type annotation.
+
+Use the empty classes in this module when annotating the types of Pyrsistent
+objects, instead of using the actual collection class.
+
+For example,
+
+    from pyrsistent import pvector
+    from pyrsistent.typing import PVector
+
+    myvector: PVector[str] = pvector(['a', 'b', 'c'])
+
+"""
+
+from typing import Container
+from typing import Hashable
+from typing import Generic
+from typing import Iterable
+from typing import Mapping
+from typing import Sequence
+from typing import Sized
+from typing import TypeVar
 
 
-class SubscriptableType(type):
-    def __getitem__(self, key):
-        return self
+__all__ = ['CheckedPSet', 'CheckedPVector', 'PBag', 'PDeque', 'PList', 'PMap', 'PSet', 'PVector']
 
 
-@six.add_metaclass(SubscriptableType)
-class CheckedPMap(object):
+T = TypeVar('T')
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+
+
+# PSet.add and PSet.discard have different type signatures than that of Set.
+class CheckedPSet(Generic[T], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class CheckedPSet(object):
+class CheckedPVector(Sequence[T], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class CheckedPVector(object):
+class PBag(Container[T], Iterable[T], Sized, Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class PBag(object):
+class PDeque(Sequence[T], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class PDeque(object):
+class PList(Sequence[T], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class PList(object):
+class PMap(Mapping[KT, VT], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class PMap(object):
+# PSet.add and PSet.discard have different type signatures than that of Set.
+class PSet(Generic[T], Hashable):
     pass
 
 
-@six.add_metaclass(SubscriptableType)
-class PSet(object):
-    pass
-
-
-@six.add_metaclass(SubscriptableType)
-class PVector(object):
+class PVector(Sequence[T], Hashable):
     pass
