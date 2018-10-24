@@ -37,6 +37,18 @@ def test_create():
     assert isinstance(r, ARecord)
 
 
+def test_create_ignore_extra():
+    r = ARecord.create({'x': 1, 'y': 'foo', 'z': None}, ignore_extra=True)
+    assert r.x == 1
+    assert r.y == 'foo'
+    assert isinstance(r, ARecord)
+
+
+def test_create_ignore_extra_false():
+    with pytest.raises(AttributeError):
+        _ = ARecord.create({'x': 1, 'y': 'foo', 'z': None})
+
+
 def test_correct_assignment():
     r = ARecord(x=1, y='foo')
     r2 = r.set('x', 2.0)

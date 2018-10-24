@@ -26,6 +26,19 @@ class UniqueThing(PClass):
     x = field(type=int)
 
 
+def test_create_ignore_extra():
+    p = Point.create({'x': 5, 'y': 10, 'z': 15, 'a': 0}, ignore_extra=True)
+    assert p.x == 5
+    assert p.y == 10
+    assert p.z == 15
+    assert isinstance(p, Point)
+
+
+def test_create_ignore_extra_false():
+    with pytest.raises(AttributeError):
+        _ = Point.create({'x': 5, 'y': 10, 'z': 15, 'a': 0})
+
+
 def test_evolve_pclass_instance():
     p = Point(x=1, y=2)
     p2 = p.set(x=p.x+2)
