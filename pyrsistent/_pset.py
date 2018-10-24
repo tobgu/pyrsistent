@@ -1,15 +1,10 @@
 from collections import Set, Hashable
 import sys
-
-import six
-
 from pyrsistent._pmap import pmap
-from pyrsistent._utils import SubscriptableType
 
 PY2 = sys.version_info[0] < 3
 
 
-@six.add_metaclass(SubscriptableType)
 class PSet(object):
     """
     Persistent set implementation. Built on top of the persistent map. The set supports all operations

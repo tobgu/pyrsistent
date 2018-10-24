@@ -2,10 +2,6 @@ from collections import Sequence, Hashable
 from numbers import Integral
 from functools import reduce
 
-import six
-
-from pyrsistent._utils import SubscriptableType
-
 
 class _PListBuilder(object):
     """
@@ -38,7 +34,6 @@ class _PListBuilder(object):
         return self._head
 
 
-@six.add_metaclass(SubscriptableType)
 class _PListBase(object):
     __slots__ = ('__weakref__',)
 

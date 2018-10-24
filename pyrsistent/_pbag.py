@@ -1,17 +1,12 @@
 from collections import Container, Iterable, Sized, Hashable
 from functools import reduce
-
-import six
-
 from pyrsistent._pmap import pmap
-from pyrsistent._utils import SubscriptableType
 
 
 def _add_to_counters(counters, element):
     return counters.set(element, counters.get(element, 0) + 1)
 
 
-@six.add_metaclass(SubscriptableType)
 class PBag(object):
     """
     A persistent bag/multiset type.

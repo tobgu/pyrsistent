@@ -5,7 +5,6 @@ from pyrsistent._compat import Enum, string_types
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PythonPVector, python_pvector
-from pyrsistent._utils import SubscriptableType
 
 
 class CheckedType(object):
@@ -160,7 +159,7 @@ def store_invariants(dct, bases, destination_name, source_name):
     dct[destination_name] = tuple(wrap_invariant(inv) for inv in invariants)
 
 
-class _CheckedTypeMeta(SubscriptableType):
+class _CheckedTypeMeta(type):
     def __new__(mcs, name, bases, dct):
         _store_types(dct, bases, '_checked_types', '__type__')
         store_invariants(dct, bases, '_checked_invariants', '__invariant__')
@@ -428,7 +427,7 @@ class CheckedPSet(PSet, CheckedType):
             return self._original_pset
 
 
-class _CheckedMapTypeMeta(SubscriptableType):
+class _CheckedMapTypeMeta(type):
     def __new__(mcs, name, bases, dct):
         _store_types(dct, bases, '_checked_key_types', '__key_type__')
         _store_types(dct, bases, '_checked_value_types', '__value_type__')

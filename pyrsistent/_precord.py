@@ -3,10 +3,9 @@ from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantExc
 from pyrsistent._field_common import (
     set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
 from pyrsistent._pmap import PMap, pmap
-from pyrsistent._utils import SubscriptableType
 
 
-class _PRecordMeta(SubscriptableType):
+class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_precord_fields')
         store_invariants(dct, bases, '_precord_invariants', '__invariant__')

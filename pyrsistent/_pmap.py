@@ -3,10 +3,8 @@ from itertools import chain
 import six
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
-from pyrsistent._utils import SubscriptableType
 
 
-@six.add_metaclass(SubscriptableType)
 class PMap(object):
     """
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
