@@ -1,5 +1,10 @@
 Revision history
 ----------------
+0.14.6, 2018-11-17
+ * Fix #135, Type classes for Python 3 type annotations of pyrsistent types. Thanks @nattofriends for this!
+ * Fix #128, Allow PClass and PRecord to ignore input parameters to constructor that are not part of the spec
+   instead of blowing up with a type error. Thanks @agberk for this!
+
 0.14.5, 2018-10-14
  * Fix #137, deprecation warnings in Python 3.7. Thanks @thombashi for this!
  * Fix #129, building via setuptools and setup.py. Thanks @galuszkak for this!

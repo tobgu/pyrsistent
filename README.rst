@@ -645,6 +645,11 @@ Kamil Galuszka https://github.com/galuszkak
 
 Tsuyoshi Hombashi https://github.com/thombashi
 
+nattofriends https://github.com/nattofriends
+
+agberk https://github.com/agberk
+
+
 Contributing
 ------------
 
@@ -660,6 +665,15 @@ Tests can be executed using tox_.
 Install tox: ``pip install tox``
 
 Run test for Python 2.7: ``tox -epy27``
+
+Release
+~~~~~~~
+* Update CHANGES.txt
+* Update README with any new contributors and potential info needed.
+* Update _pyrsistent_version.py
+* python setup.py sdist upload
+* Commit and tag with new version: git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'
+* Push commit and tags: git push && git push --tags
 
 Project status
 --------------
