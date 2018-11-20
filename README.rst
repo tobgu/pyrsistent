@@ -592,6 +592,13 @@ The C extension will be used automatically when possible.
 The pure python implementation is fully PyPy compatible. Running it under PyPy speeds operations up considerably if 
 the structures are used heavily (if JITed), for some cases the performance is almost on par with the built in counterparts.
 
+Type hints
+----------
+
+PEP 561 style type hints for use with mypy and various editors are available for most types and functions in pyrsistent.
+
+Type classes for annotating your own code with pyrsistent types are also available under pyrsistent.typing.
+
 Installation
 ------------
 

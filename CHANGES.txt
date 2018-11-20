@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.14.7, 2018-11-20
+ * Fix #102, add PEP 561 type annotation stubs for most pyrsistent types. Thanks @nattofriends for this!
+
 0.14.6, 2018-11-17
  * Fix #135, Type classes for Python 3 type annotations of pyrsistent types. Thanks @nattofriends for this!
  * Fix #128, Allow PClass and PRecord to ignore input parameters to constructor that are not part of the spec
