@@ -19,15 +19,15 @@ from typing import Type
 from typing import TypeVar
 from typing import overload
 
-from pyrsistent.typing import PBag
-from pyrsistent.typing import PDeque
-from pyrsistent.typing import PList
-from pyrsistent.typing import PMap
-from pyrsistent.typing import PMapEvolver
-from pyrsistent.typing import PSet
-from pyrsistent.typing import PSetEvolver
-from pyrsistent.typing import PVector
-from pyrsistent.typing import PVectorEvolver
+from pyrsistent.typing import PBag as PBag
+from pyrsistent.typing import PDeque as PDeque
+from pyrsistent.typing import PList as PList
+from pyrsistent.typing import PMap as PMap
+from pyrsistent.typing import PMapEvolver as PMapEvolver
+from pyrsistent.typing import PSet as PSet
+from pyrsistent.typing import PSetEvolver as PSetEvolver
+from pyrsistent.typing import PVector as PVector
+from pyrsistent.typing import PVectorEvolver as PVectorEvolver
 
 KT = TypeVar('KT')
 VT = TypeVar('VT')
