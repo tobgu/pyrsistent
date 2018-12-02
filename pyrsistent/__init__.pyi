@@ -5,7 +5,6 @@
 from typing import Any
 from typing import AnyStr
 from typing import Callable
-from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -19,21 +18,21 @@ from typing import Type
 from typing import TypeVar
 from typing import overload
 
-from pyrsistent.typing import PBag
-from pyrsistent.typing import PDeque
-from pyrsistent.typing import PList
-from pyrsistent.typing import PMap
-from pyrsistent.typing import PMapEvolver
-from pyrsistent.typing import PSet
-from pyrsistent.typing import PSetEvolver
-from pyrsistent.typing import PVector
-from pyrsistent.typing import PVectorEvolver
+from pyrsistent.typing import PBag as PBag
+from pyrsistent.typing import PDeque as PDeque
+from pyrsistent.typing import PList as PList
+from pyrsistent.typing import PMap as PMap
+from pyrsistent.typing import PMapEvolver as PMapEvolver
+from pyrsistent.typing import PSet as PSet
+from pyrsistent.typing import PSetEvolver as PSetEvolver
+from pyrsistent.typing import PVector as PVector
+from pyrsistent.typing import PVectorEvolver as PVectorEvolver
 
 KT = TypeVar('KT')
 VT = TypeVar('VT')
 
-def pmap(initial: Dict[KT, VT] = {}, pre_size: int = 0) -> PMap[KT, VT]: ...
-def m(**kwargs: Dict[KT, VT]) -> PMap[KT, VT]: ...
+def pmap(initial: Mapping[KT, VT] = {}, pre_size: int = 0) -> PMap[KT, VT]: ...
+def m(**kwargs: Mapping[KT, VT]) -> PMap[KT, VT]: ...
 
 T = TypeVar('T')
 
@@ -119,7 +118,7 @@ def immutable(
 ) -> Tuple: ...  # actually a namedtuple
 
 @overload
-def freeze(o: Dict[KT, VT]) -> PMap[KT, VT]: ...
+def freeze(o: Mapping[KT, VT]) -> PMap[KT, VT]: ...
 @overload
 def freeze(o: List[T]) -> PVector[T]: ...
 @overload
@@ -128,7 +127,7 @@ def freeze(o: Tuple[T, ...]) -> Tuple[T, ...]: ...
 def freeze(o: Set[T]) -> PSet[T]: ...
 
 @overload
-def thaw(o: PMap[KT, VT]) -> Dict[KT, VT]: ...
+def thaw(o: PMap[KT, VT]) -> Mapping[KT, VT]: ...
 @overload
 def thaw(o: PVector[T]) -> List[T]: ...
 @overload
