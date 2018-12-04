@@ -1,6 +1,11 @@
 #include <Python.h>
 #include <structmember.h>
 
+#ifdef _MSC_VER
+#  include <intrin.h>
+#  define __builtin_popcount __popcnt
+#endif
+
 /*
 Persistent/Immutable/Functional vector and helper types. 
 
@@ -1102,77 +1107,6 @@ static PyObject* PVector_remove(PVector *self, PyObject *args) {
   return NULL;
 }
 
-static PyMethodDef PyrsistentMethods[] = {
-  {"pvector", pyrsistent_pvec, METH_VARARGS, 
-   "pvector([iterable])\n"
-   "Create a new persistent vector containing the elements in iterable.\n\n"
-   ">>> v1 = pvector([1, 2, 3])\n"
-   ">>> v1\n"
-   "pvector([1, 2, 3])"},
-  {NULL, NULL, 0, NULL}
-};
-
-
-#if PY_MAJOR_VERSION >= 3
-  static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "pvectorc",          /* m_name */
-    "Persistent vector", /* m_doc */
-    -1,                  /* m_size */
-    PyrsistentMethods,   /* m_methods */
-    NULL,                /* m_reload */
-    NULL,                /* m_traverse */
-    NULL,                /* m_clear */
-    NULL,                /* m_free */
-  };
-#endif
-
-PyObject* moduleinit(void) {
-  PyObject* m;
-  
-  // Only allow creation/initialization through factory method pvec
-  PVectorType.tp_init = NULL;
-  PVectorType.tp_new = NULL;
-
-  if (PyType_Ready(&PVectorType) < 0) {
-    return NULL;
-  }
-
-
-#if PY_MAJOR_VERSION >= 3
-  m = PyModule_Create(&moduledef);
-#else
-  m = Py_InitModule3("pvectorc", PyrsistentMethods, "Persistent vector");  
-#endif
-
-  if (m == NULL) {
-    return NULL;
-  }
-
-  SHIFT = __builtin_popcount(BIT_MASK);
-  
-  if(EMPTY_VECTOR == NULL) {
-    EMPTY_VECTOR = emptyNewPvec();
-  }
-
-  nodeCache.size = 0;
-
-  Py_INCREF(&PVectorType);
-  PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
-
-  return m;
-}
-
-#if PY_MAJOR_VERSION >= 3
-PyMODINIT_FUNC PyInit_pvectorc(void) {
-  return moduleinit();
-}
-#else
-PyMODINIT_FUNC initpvectorc(void) {
-  moduleinit();
-}
-#endif
-
 
 /*********************** PVector Iterator **************************/
 
@@ -1196,7 +1130,7 @@ static PyMethodDef PVectorIter_methods[] = {
 };
 
 static PyTypeObject PVectorIterType = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    PyVarObject_HEAD_INIT(NULL, 0)
     "pvector_iterator",                         /* tp_name */
     sizeof(PVectorIter),                        /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1307,7 +1241,7 @@ static PyMethodDef PVectorEvolver_methods[] = {
 };
 
 static PyTypeObject PVectorEvolverType = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    PyVarObject_HEAD_INIT(NULL, 0)
     "pvector_evolver",                          /* tp_name */
     sizeof(PVectorEvolver),                     /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1633,3 +1567,82 @@ static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *
   Py_VISIT(self->appendList);
   return 0;
 }
+
+static PyMethodDef PyrsistentMethods[] = {
+  {"pvector", pyrsistent_pvec, METH_VARARGS, 
+   "pvector([iterable])\n"
+   "Create a new persistent vector containing the elements in iterable.\n\n"
+   ">>> v1 = pvector([1, 2, 3])\n"
+   ">>> v1\n"
+   "pvector([1, 2, 3])"},
+  {NULL, NULL, 0, NULL}
+};
+
+
+/********************* Python module initialization ************************/
+
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "pvectorc",          /* m_name */
+    "Persistent vector", /* m_doc */
+    -1,                  /* m_size */
+    PyrsistentMethods,   /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+  };
+#endif
+
+PyObject* moduleinit(void) {
+  PyObject* m;
+  
+  // Only allow creation/initialization through factory method pvec
+  PVectorType.tp_init = NULL;
+  PVectorType.tp_new = NULL;
+
+  if (PyType_Ready(&PVectorType) < 0) {
+    return NULL;
+  }
+  if (PyType_Ready(&PVectorIterType) < 0) {
+    return NULL;
+  }
+  if (PyType_Ready(&PVectorEvolverType) < 0) {
+    return NULL;
+  }
+
+
+#if PY_MAJOR_VERSION >= 3
+  m = PyModule_Create(&moduledef);
+#else
+  m = Py_InitModule3("pvectorc", PyrsistentMethods, "Persistent vector");  
+#endif
+
+  if (m == NULL) {
+    return NULL;
+  }
+
+  SHIFT = __builtin_popcount(BIT_MASK);
+  
+  if(EMPTY_VECTOR == NULL) {
+    EMPTY_VECTOR = emptyNewPvec();
+  }
+
+  nodeCache.size = 0;
+
+  Py_INCREF(&PVectorType);
+  PyModule_AddObject(m, "PVector", (PyObject *)&PVectorType);
+
+  return m;
+}
+
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_pvectorc(void) {
+  return moduleinit();
+}
+#else
+PyMODINIT_FUNC initpvectorc(void) {
+  moduleinit();
+}
+#endif
