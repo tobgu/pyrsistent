@@ -656,6 +656,8 @@ nattofriends https://github.com/nattofriends
 
 agberk https://github.com/agberk
 
+Waleed Khan https://github.com/arxanas
+
 
 Contributing
 ------------

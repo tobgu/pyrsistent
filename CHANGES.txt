@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.14.8, 2018-12-19
+ * Fix #142, Improve type stubs. Thanks @arxanas for this!
+
 0.14.7, 2018-11-20
  * Fix #102, add PEP 561 type annotation stubs for most pyrsistent types. Thanks @nattofriends for this!
 
