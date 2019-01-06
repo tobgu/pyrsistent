@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.14.9, 2019-01-06
+ * Fix #144, Compile pvectormodule.c on windows. Thanks @ganwell for this!
+
 0.14.8, 2018-12-19
  * Fix #142, Improve type stubs. Thanks @arxanas for this!
 

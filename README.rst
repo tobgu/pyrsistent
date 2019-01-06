@@ -658,6 +658,7 @@ agberk https://github.com/agberk
 
 Waleed Khan https://github.com/arxanas
 
+Jean-Louis Fuchs https://github.com/ganwell
 
 Contributing
 ------------
