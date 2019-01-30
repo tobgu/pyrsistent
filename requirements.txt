@@ -6,4 +6,4 @@ psutil==2.1.1
 tox
 six
 pyperform
-hypothesis<=2.0.0
+hypothesis<4.0.0
