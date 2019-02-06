@@ -8,6 +8,8 @@ from pyrsistent._pset import pset, s, PSet
 
 from pyrsistent._pbag import pbag, b, PBag
 
+from pyrsistent._pbimap import bm, pbimap, PBiMap
+
 from pyrsistent._plist import plist, l, PList
 
 from pyrsistent._pdeque import pdeque, dq, PDeque
@@ -36,6 +38,7 @@ __all__ = ('pmap', 'm', 'PMap',
            'pvector', 'v', 'PVector',
            'pset', 's', 'PSet',
            'pbag', 'b', 'PBag',
+           'pbimap', 'bm', 'PbiMap',
            'plist', 'l', 'PList',
            'pdeque', 'dq', 'PDeque',
            'CheckedPMap', 'CheckedPVector', 'CheckedPSet', 'InvariantException', 'CheckedKeyTypeError', 'CheckedValueTypeError', 'CheckedType', 'optional',
