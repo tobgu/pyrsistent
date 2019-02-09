@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.14.10, 2019-02-09
+ * Fix  #148, only require pytest-runner if running tests. Thanks @ccorbacho for this!
+
 0.14.9, 2019-01-06
  * Fix #144, Compile pvectormodule.c on windows. Thanks @ganwell for this!
 

@@ -660,6 +660,8 @@ Waleed Khan https://github.com/arxanas
 
 Jean-Louis Fuchs https://github.com/ganwell
 
+Carlos Corbacho https://github.com/ccorbacho
+
 Contributing
 ------------
 
