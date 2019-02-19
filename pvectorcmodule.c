@@ -1,11 +1,6 @@
 #include <Python.h>
 #include <structmember.h>
 
-#ifdef _MSC_VER
-#  include <intrin.h>
-#  define __builtin_popcount __popcnt
-#endif
-
 /*
 Persistent/Immutable/Functional vector and helper types. 
 
@@ -26,13 +21,12 @@ All other methods are camel cased without prefix. All methods are static, none s
 require to be exposed outside of this module. 
 */
 
-#define BRANCH_FACTOR 32
+#define SHIFT 5
+#define BRANCH_FACTOR (1 << SHIFT)
 #define BIT_MASK (BRANCH_FACTOR - 1)
 
 static PyTypeObject PVectorType;
 static PyTypeObject PVectorEvolverType;
-
-int SHIFT = 0;
 
 typedef struct {
   void *items[BRANCH_FACTOR];
@@ -1623,8 +1617,6 @@ PyObject* moduleinit(void) {
     return NULL;
   }
 
-  SHIFT = __builtin_popcount(BIT_MASK);
-  
   if(EMPTY_VECTOR == NULL) {
     EMPTY_VECTOR = emptyNewPvec();
   }
