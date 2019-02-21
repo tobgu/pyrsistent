@@ -662,6 +662,10 @@ Jean-Louis Fuchs https://github.com/ganwell
 
 Carlos Corbacho https://github.com/ccorbacho
 
+Felix Yan https://github.com/felixonmars
+
+benrg https://github.com/benrg
+
 Contributing
 ------------
 

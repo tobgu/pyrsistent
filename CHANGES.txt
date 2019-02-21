@@ -1,7 +1,12 @@
 Revision history
 ----------------
+0.14.11, 2019-02-21
+ * Fix #152 Don't use __builtin_popcount, this hopefully fixes #147 Error in pvectorc.cp37-win_amd64.pyd file, as well.
+   Thanks @benrg for this!
+ * Fix #151 Fix compatibility for hypothesis 4. Thanks @felixonmars for this!
+
 0.14.10, 2019-02-09
- * Fix  #148, only require pytest-runner if running tests. Thanks @ccorbacho for this!
+ * Fix #148, only require pytest-runner if running tests. Thanks @ccorbacho for this!
 
 0.14.9, 2019-01-06
  * Fix #144, Compile pvectormodule.c on windows. Thanks @ganwell for this!
