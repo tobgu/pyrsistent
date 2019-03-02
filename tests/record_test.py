@@ -192,7 +192,7 @@ def test_enum_field():
 def test_type_specification_must_be_a_type():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
-            x = field(type=1)
+            x = field(type=1)  # type: ignore
 
 
 def test_initial_must_be_of_correct_type():
@@ -204,7 +204,7 @@ def test_initial_must_be_of_correct_type():
 def test_invariant_must_be_callable():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
-            x = field(invariant='foo')
+            x = field(invariant='foo')  # type: ignore
 
 
 def test_global_invariants_are_inherited():
@@ -244,7 +244,7 @@ def test_factory():
 def test_factory_must_be_callable():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
-            x = field(type=int, factory=1)
+            x = field(type=int, factory=1)  # type: ignore
 
 
 def test_nested_record_construction():
@@ -326,7 +326,7 @@ def test_nested_serialize():
 def test_serializer_must_be_callable():
     with pytest.raises(TypeError):
         class CRecord(PRecord):
-            x = field(serializer=1)
+            x = field(serializer=1)  # type: ignore
 
 
 def test_transform_without_update_returns_same_precord():
@@ -395,7 +395,7 @@ def test_pset_field_checked_set():
         value = pset_field(int)
     record = Record(value=[1, 2])
     with pytest.raises(TypeError):
-        record.value.add("hello")
+        record.value.add("hello")  # type: ignore
 
 def test_pset_field_checked_vector_multiple_types():
     """
@@ -531,7 +531,7 @@ def test_pvector_field_checked_vector():
         value = pvector_field(int)
     record = Record(value=[1, 2])
     with pytest.raises(TypeError):
-        record.value.append("hello")
+        record.value.append("hello")  # type: ignore
 
 def test_pvector_field_checked_vector_multiple_types():
     """
@@ -669,7 +669,7 @@ def test_pmap_field_checked_map_key():
         value = pmap_field(int, type(None))
     record = Record(value={1: None})
     with pytest.raises(TypeError):
-        record.value.set("hello", None)
+        record.value.set("hello", None)  # type: ignore
 
 def test_pmap_field_checked_map_value():
     """
@@ -679,7 +679,7 @@ def test_pmap_field_checked_map_value():
         value = pmap_field(int, type(None))
     record = Record(value={1: None})
     with pytest.raises(TypeError):
-        record.value.set(2, 4)
+        record.value.set(2, 4)  # type: ignore
 
 def test_pmap_field_checked_map_key_multiple_types():
     """

@@ -53,5 +53,14 @@ try:
 
     class PVector(Sequence[T], Hashable):
         pass
+
+    class PVectorEvolver(Generic[T]):
+        pass
+
+    class PMapEvolver(Generic[KT, VT]):
+        pass
+
+    class PSetEvolver(Generic[T]):
+        pass
 except ImportError:
     pass
