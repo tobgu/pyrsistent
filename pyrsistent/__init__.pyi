@@ -45,7 +45,7 @@ VT = TypeVar('VT')
 def pmap(initial: Union[Mapping[KT, VT], Iterable[Tuple[KT, VT]]] = {}, pre_size: int = 0) -> PMap[KT, VT]: ...
 def m(**kwargs: VT) -> PMap[str, VT]: ...
 
-def pvector(iterable: Iterable[T] = ()) -> PVector[T]: ...
+def pvector(iterable: Iterable[T] = ...) -> PVector[T]: ...
 def v(*iterable: T) -> PVector[T]: ...
 
 def pset(iterable: Iterable[T] = (), pre_size: int = 8) -> PSet[T]: ...
@@ -54,40 +54,70 @@ def s(*iterable: T) -> PSet[T]: ...
 # see class_test.py for use cases
 Invariant = Tuple[bool, Optional[Union[str, Callable[[], str]]]]
 
-# The actual return value (_PField) is irrelevant after a PRecord has been instantiated,
-# see https://github.com/tobgu/pyrsistent/blob/master/pyrsistent/_precord.py#L10
+@overload
 def field(
-    type: Union[str, Type[T], Sequence[Type[T]]] = (),
+    type: Type[T] = ...,
     invariant: Callable[[Any], Union[Invariant, Iterable[Invariant]]] = lambda _: (True, None),
     initial: Any = object(),
     mandatory: bool = False,
     factory: Callable[[Any], T] = lambda x: x,
     serializer: Callable[[Any, T], Any] = lambda _, value: value,
 ) -> T: ...
+# The actual return value (_PField) is irrelevant after a PRecord has been instantiated,
+# see https://github.com/tobgu/pyrsistent/blob/master/pyrsistent/_precord.py#L10
+@overload
+def field(
+    type: Any = ...,
+    invariant: Callable[[Any], Union[Invariant, Iterable[Invariant]]] = lambda _: (True, None),
+    initial: Any = object(),
+    mandatory: bool = False,
+    factory: Callable[[Any], Any] = lambda x: x,
+    serializer: Callable[[Any, Any], Any] = lambda _, value: value,
+) -> Any: ...
 
-# This is not type safe, probably requires this:
-# https://github.com/python/typing/issues/193
-# TODO: copy paste @overload definitions?
-PFieldLabel = Tuple[Union[Type, str], ...]
-
+# Use precise types for the simplest use cases, but fall back to Any for
+# everything else. See record_test.py for the wide range of possible types for
+# item_type
+@overload
 def pset_field(
-    item_type: Union[Type[T], str, PFieldLabel],
+    item_type: Type[T],
+    optional: bool = False,
+    initial: Iterable[T] = ...,
+) -> PSet[T]: ...
+@overload
+def pset_field(
+    item_type: Any,
     optional: bool = False,
     initial: Any = (),
-) -> PSet[T]: ...
+) -> PSet[Any]: ...
 
+@overload
 def pmap_field(
-    key_type: Union[Type[KT], str, PFieldLabel],
-    value_type: Union[Type[VT], str, PFieldLabel],
+    key_type: Type[KT],
+    value_type: Type[VT],
     optional: bool = False,
     invariant: Callable[[Any], Tuple[bool, Optional[str]]] = lambda _: (True, None),
 ) -> PMap[KT, VT]: ...
+@overload
+def pmap_field(
+    key_type: Any,
+    value_type: Any,
+    optional: bool = False,
+    invariant: Callable[[Any], Tuple[bool, Optional[str]]] = lambda _: (True, None),
+) -> PMap[Any, Any]: ...
 
+@overload
 def pvector_field(
-    item_type: Union[Type[T], str, PFieldLabel],
+    item_type: Type[T],
+    optional: bool = False,
+    initial: Iterable[T] = ...,
+) -> PVector[T]: ...
+@overload
+def pvector_field(
+    item_type: Any,
     optional: bool = False,
     initial: Any = (),
-) -> PVector[T]: ...
+) -> PVector[Any]: ...
 
 def pbag(elements: Iterable[T]) -> PBag[T]: ...
 def b(*elements: T) -> PBag[T]: ...
@@ -139,8 +169,8 @@ def immutable(
     verbose: bool = False,
 ) -> Tuple: ...  # actually a namedtuple
 
-# ignore overload overlap warning. Using Any type and losing type information
-# would be more problematic
+# ignore mypy warning "Overloaded function signatures 1 and 5 overlap with
+# incompatible return types"
 @overload
 def freeze(o: Mapping[KT, VT]) -> PMap[KT, VT]: ... # type: ignore
 @overload
@@ -170,9 +200,9 @@ def mutant(fn: Callable) -> Callable: ...
 
 def inc(x: int) -> int: ...
 @overload
-def discard(evolver: PVectorEvolver[T], key: int) -> None: ...
-@overload
 def discard(evolver: PMapEvolver[KT, VT], key: KT) -> None: ...
+@overload
+def discard(evolver: PVectorEvolver[T], key: int) -> None: ...
 @overload
 def discard(evolver: PSetEvolver[T], key: T) -> None: ...
 def rex(expr: str) -> Callable[[Any], bool]: ...
