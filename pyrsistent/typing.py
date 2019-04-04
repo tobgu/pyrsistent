@@ -22,11 +22,24 @@ try:
     from typing import Sized
     from typing import TypeVar
 
-    __all__ = ['CheckedPSet', 'CheckedPVector', 'PBag', 'PDeque', 'PList', 'PMap', 'PSet', 'PVector']
+    __all__ = [
+        'CheckedPMap',
+        'CheckedPSet',
+        'CheckedPVector',
+        'PBag',
+        'PDeque',
+        'PList',
+        'PMap',
+        'PSet',
+        'PVector',
+    ]
 
     T = TypeVar('T')
     KT = TypeVar('KT')
     VT = TypeVar('VT')
+
+    class CheckedPMap(Mapping[KT, VT], Hashable):
+        pass
 
     # PSet.add and PSet.discard have different type signatures than that of Set.
     class CheckedPSet(Generic[T], Hashable):

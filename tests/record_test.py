@@ -192,7 +192,7 @@ def test_enum_field():
 def test_type_specification_must_be_a_type():
     with pytest.raises(TypeError):
         class BRecord(PRecord):
-            x = field(type=1)  # type: ignore
+            x = field(type=1)
 
 
 def test_initial_must_be_of_correct_type():
