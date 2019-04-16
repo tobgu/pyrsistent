@@ -221,6 +221,8 @@ class PClassEvolver:
 
 
 class CheckedPMap(PMap[KT, VT]):
+    __key_type__: Type[KT]
+    __value_type__: Type[VT]
     def __new__(cls, source: Mapping[KT, VT] = ..., size: int = ...) -> None: ...
     @classmethod
     def create(cls, source_data: Mapping[KT, VT], _factory_fields: Any = ...) -> CheckedPMap[KT, VT]: ...
@@ -228,6 +230,7 @@ class CheckedPMap(PMap[KT, VT]):
 
 
 class CheckedPVector(PVector[T]):
+    __type__: Type[T]
     def __new__(self, initial: Iterable[T] = ...) -> None: ...
     @classmethod
     def create(cls, source_data: Iterable[T], _factory_fields: Any = ...) -> CheckedPVector[T]: ...
@@ -235,6 +238,7 @@ class CheckedPVector(PVector[T]):
 
 
 class CheckedPSet(PSet[T]):
+    __type__: Type[T]
     def __new__(cls, initial: Iterable[T] = ...) -> None: ...
     @classmethod
     def create(cls, source_data: Iterable[T], _factory_fields: Any = ...) -> CheckedPSet[T]: ...
