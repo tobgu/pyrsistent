@@ -32,7 +32,7 @@ def test_repr_elements():
     assert repr(b(1, 2)) in ('pbag([1, 2])', 'pbag([2, 1])')
 
 
-def test_add():
+def test_add_empty():
     assert b().add(1) == b(1)
 
 def test_remove_final():
@@ -105,27 +105,27 @@ def test_sub():
     assert b(1, 2, 3, 3) - b(3, 4) == b(1, 2, 3)
 
 def test_or():
-    assert b(1, 2, 2, 3, 3, 3) | b(1, 2, 3, 4, 4) == b(1, 
-                                                       2, 2, 
+    assert b(1, 2, 2, 3, 3, 3) | b(1, 2, 3, 4, 4) == b(1,
+                                                       2, 2,
                                                        3, 3, 3,
                                                        4, 4)
-    
+
 def test_and():
     assert b(1, 2, 2, 3, 3, 3) & b(2, 3, 3, 4) == b(2, 3, 3)
 
 
 def test_pbag_is_unorderable():
     with pytest.raises(TypeError):
-        _ = b(1) < b(2)
+        _ = b(1) < b(2)  # type: ignore
 
     with pytest.raises(TypeError):
-        _ = b(1) <= b(2)
+        _ = b(1) <= b(2)  # type: ignore
 
     with pytest.raises(TypeError):
-        _ = b(1) > b(2)
+        _ = b(1) > b(2)  # type: ignore
 
     with pytest.raises(TypeError):
-        _ = b(1) >= b(2)
+        _ = b(1) >= b(2)  # type: ignore
 
 
 def test_supports_weakref():

@@ -88,7 +88,7 @@ def test_index_out_of_range():
 
 def test_index_invalid_type():
     with pytest.raises(TypeError) as e:
-        plist([1, 2, 3])['foo']
+        plist([1, 2, 3])['foo']  # type: ignore
 
     assert 'cannot be interpreted' in str(e)
 
