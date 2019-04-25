@@ -666,6 +666,10 @@ Felix Yan https://github.com/felixonmars
 
 benrg https://github.com/benrg
 
+Jere Lahelma https://github.com/je-l
+
+Max Taggart https://github.com/MaxTaggart
+
 Contributing
 ------------
 
