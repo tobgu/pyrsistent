@@ -36,7 +36,7 @@ WARNING: Could not build the %s.
     def run(self):
         try:
             build_ext.run(self)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError):
+        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
             e = sys.exc_info()[1]
             sys.stdout.write('%s\n' % str(e))
             warnings.warn(self.warning_message % ("Extension modules",
@@ -48,7 +48,7 @@ WARNING: Could not build the %s.
         name = ext.name
         try:
             build_ext.build_extension(self, ext)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError):
+        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
             e = sys.exc_info()[1]
             sys.stdout.write('%s\n' % str(e))
             warnings.warn(self.warning_message % ("The %s extension "
