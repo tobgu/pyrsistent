@@ -22,10 +22,6 @@ matrix:
       env: TOXENV=pypy3
       dist: trusty
       sudo: false
-    - python: 3.4
-      env: TOXENV=py34
-      dist: trusty
-      sudo: false
     - python: 2.7
       env: TOXENV=py27
       dist: trusty
