@@ -9,6 +9,11 @@ from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
 from _pyrsistent_version import __version__
 
+try:
+    FileNotFoundError
+except NameError:  # Python 2
+    FileNotFoundError = IOError
+
 
 readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
 with codecs.open(readme_path, encoding='utf8') as f:
