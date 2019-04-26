@@ -670,6 +670,8 @@ Jere Lahelma https://github.com/je-l
 
 Max Taggart https://github.com/MaxTaggart
 
+Vincent Philippon https://github.com/vphilippon
+
 Contributing
 ------------
 

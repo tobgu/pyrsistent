@@ -1,8 +1,12 @@
 Revision history
 ----------------
+0.15.1, 2019-04-26
+ * Fix #163 installation broken on Python 2 because of fix of #161, thanks @vphilippon for this! Sorry for the
+   inconvenience.
+
 0.15.0, 2019-04-25
  * Python 3.4 is no longer officially supported since it is EOL since 2019-03-18.
- * Fix #157, major improvements to type hints. Thanks @je-l for working on this and to @nattofriend for reviewing the PR!
+ * Fix #157, major improvements to type hints. Thanks @je-l for working on this and @nattofriend for reviewing the PR!
  * Fix #161, installation fails on some Windows platforms because fallback to Python pvector does not work.
    Thanks @MaxTaggart for fixing and verifying this!
 
