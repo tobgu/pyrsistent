@@ -187,7 +187,7 @@ def freeze(o: T) -> T: ...
 
 
 @overload
-def thaw(o: PMap[KT, VT]) -> Mapping[KT, VT]: ... # type: ignore
+def thaw(o: PMap[KT, VT]) -> MutableMapping[KT, VT]: ... # type: ignore
 @overload
 def thaw(o: PVector[T]) -> List[T]: ... # type: ignore
 @overload
