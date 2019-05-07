@@ -1,7 +1,8 @@
 import six
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException, store_invariants
 from pyrsistent._field_common import (
-    set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
+    set_fields, check_type, is_type_cls, PFIELD_NO_INITIAL, serialize, check_global_invariants
+)
 from pyrsistent._pmap import PMap, pmap
 
 
@@ -39,6 +40,7 @@ class PRecord(PMap, CheckedType):
             return super(PRecord, cls).__new__(cls, kwargs['_precord_size'], kwargs['_precord_buckets'])
 
         factory_fields = kwargs.pop('_factory_fields', None)
+        ignore_extra = kwargs.pop('_ignore_extra', False)
 
         initial_values = kwargs
         if cls._precord_initial_values:
@@ -46,7 +48,7 @@ class PRecord(PMap, CheckedType):
                                   for k, v in cls._precord_initial_values.items())
             initial_values.update(kwargs)
 
-        e = _PRecordEvolver(cls, pmap(), _factory_fields=factory_fields)
+        e = _PRecordEvolver(cls, pmap(), _factory_fields=factory_fields, _ignore_extra=ignore_extra)
         for k, v in initial_values.items():
             e[k] = v
 
@@ -91,7 +93,7 @@ class PRecord(PMap, CheckedType):
         if ignore_extra:
             kwargs = {k: kwargs[k] for k in cls._precord_fields if k in kwargs}
 
-        return cls(_factory_fields=_factory_fields, **kwargs)
+        return cls(_factory_fields=_factory_fields, _ignore_extra=ignore_extra, **kwargs)
 
     def __reduce__(self):
         # Pickling support
@@ -106,14 +108,15 @@ class PRecord(PMap, CheckedType):
 
 
 class _PRecordEvolver(PMap._Evolver):
-    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields', '_factory_fields')
+    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields', '_factory_fields', '_ignore_extra')
 
-    def __init__(self, cls, original_pmap, _factory_fields=None):
+    def __init__(self, cls, original_pmap, _factory_fields=None, _ignore_extra=False):
         super(_PRecordEvolver, self).__init__(original_pmap)
         self._destination_cls = cls
         self._invariant_error_codes = []
         self._missing_fields = []
         self._factory_fields = _factory_fields
+        self._ignore_extra = _ignore_extra
 
     def __setitem__(self, key, original_value):
         self.set(key, original_value)
@@ -123,7 +126,10 @@ class _PRecordEvolver(PMap._Evolver):
         if field:
             if self._factory_fields is None or field in self._factory_fields:
                 try:
-                    value = field.factory(original_value)
+                    if is_type_cls(PRecord, field.type):
+                        value = field.factory(original_value, ignore_extra=self._ignore_extra)
+                    else:
+                        value = field.factory(original_value)
                 except InvariantException as e:
                     self._invariant_error_codes += e.invariant_errors
                     self._missing_fields += e.missing_fields
@@ -161,4 +167,3 @@ class _PRecordEvolver(PMap._Evolver):
         check_global_invariants(result, cls._precord_invariants)
 
         return result
-

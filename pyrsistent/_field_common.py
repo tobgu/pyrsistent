@@ -46,6 +46,13 @@ def check_type(destination_cls, field, name, value):
         raise PTypeError(destination_cls, name, field.type, actual_type, message)
 
 
+def is_type_cls(type_cls, field_type):
+    types = tuple(field_type)
+    if len(types) == 0:
+        return False
+    return issubclass(get_type(types[0]), type_cls)
+
+
 class _PField(object):
     __slots__ = ('type', 'invariant', 'initial', 'mandatory', '_factory', 'serializer')
 
