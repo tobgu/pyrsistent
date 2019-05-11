@@ -1,4 +1,4 @@
-from pyrsistent import freeze, inc, discard, rex, ny, field, PClass
+from pyrsistent import freeze, inc, discard, rex, ny, field, PClass, pmap
 
 
 def test_callable_command():
@@ -110,3 +110,8 @@ def test_no_transformation_returns_the_same_structure():
 
 def test_discard_multiple_elements_in_pvector():
     assert freeze([0, 1, 2, 3, 4]).transform([lambda i: i % 2], discard) == freeze([0, 2, 4])
+
+
+def test_transform_insert_empty_pmap():
+    m = pmap().transform(['123'], pmap())
+    assert m == pmap({'123': pmap()})

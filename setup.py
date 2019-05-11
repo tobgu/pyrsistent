@@ -84,7 +84,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
     test_suite='tests',
-    tests_require=['pytest','hypothesis<5'],
+    tests_require=['pytest', 'hypothesis<5'],
     scripts=[],
     setup_requires=pytest_runner,
     ext_modules=extensions,

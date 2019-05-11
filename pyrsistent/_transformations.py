@@ -10,6 +10,9 @@ except ImportError:
         from inspect import getargspec
 
 
+_EMPTY_SENTINEL = object()
+
+
 def inc(x):
     """ Add one to the current value """
     return x + 1
@@ -38,6 +41,7 @@ def rex(expr):
 def ny(_):
     """ Matcher that matches any value """
     return True
+
 
 # Support functions
 def _chunks(l, n):
@@ -80,7 +84,6 @@ def _get(structure, key, default):
 
 
 def _get_keys_and_values(structure, key_spec):
-    from pyrsistent._pmap import pmap
     if callable(key_spec):
         # Support predicates as callable objects in the path
         arity = _get_arity(key_spec)
@@ -99,7 +102,7 @@ def _get_keys_and_values(structure, key_spec):
             )
 
     # Non-callables are used as-is as a key.
-    return [(key_spec, _get(structure, key_spec, pmap()))]
+    return [(key_spec, _get(structure, key_spec, _EMPTY_SENTINEL))]
 
 
 if signature is None:
@@ -116,7 +119,9 @@ else:
             and p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
         )
 
+
 def _update_structure(structure, kvs, path, command):
+    from pyrsistent._pmap import pmap
     e = structure.evolver()
     if not path and command is discard:
         # Do this in reverse to avoid index problems with vectors. See #92.
@@ -124,8 +129,15 @@ def _update_structure(structure, kvs, path, command):
             discard(e, k)
     else:
         for k, v in kvs:
+            is_empty = False
+            if v is _EMPTY_SENTINEL:
+                # Allow expansion of structure but make sure to cover the case
+                # when an empty pmap is added as leaf node. See #154.
+                is_empty = True
+                v = pmap()
+
             result = _do_to_path(v, path, command)
-            if result is not v:
+            if result is not v or is_empty:
                 e[k] = result
 
     return e.persistent()
