@@ -1,7 +1,7 @@
 import six
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException, store_invariants
 from pyrsistent._field_common import (
-    set_fields, check_type, is_type_cls, PFIELD_NO_INITIAL, serialize, check_global_invariants
+    set_fields, check_type, is_field_ignore_extra_complaint, PFIELD_NO_INITIAL, serialize, check_global_invariants
 )
 from pyrsistent._pmap import PMap, pmap
 
@@ -126,7 +126,7 @@ class _PRecordEvolver(PMap._Evolver):
         if field:
             if self._factory_fields is None or field in self._factory_fields:
                 try:
-                    if is_type_cls(PRecord, field.type):
+                    if is_field_ignore_extra_complaint(PRecord, field, self._ignore_extra):
                         value = field.factory(original_value, ignore_extra=self._ignore_extra)
                     else:
                         value = field.factory(original_value)

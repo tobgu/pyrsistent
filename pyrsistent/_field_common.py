@@ -13,7 +13,7 @@ from pyrsistent._checked_types import (
 )
 from pyrsistent._checked_types import optional as optional_type
 from pyrsistent._checked_types import wrap_invariant
-from pyrsistent._compat import Enum
+import inspect
 
 
 def set_fields(dct, bases, name):
@@ -51,6 +51,17 @@ def is_type_cls(type_cls, field_type):
     if len(types) == 0:
         return False
     return issubclass(get_type(types[0]), type_cls)
+
+
+def is_field_ignore_extra_complaint(type_cls, field, ignore_extra):
+    # ignore_extra param has default False value, for speed purpose no need to propagate False
+    if not ignore_extra:
+        return False
+
+    if not is_type_cls(type_cls, field.type):
+        return False
+
+    return 'ignore_extra' in inspect.getargspec(field.factory).args
 
 
 class _PField(object):

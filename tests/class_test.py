@@ -43,7 +43,6 @@ def test_create_ignore_extra_false():
         _ = Point.create({'x': 5, 'y': 10, 'z': 15, 'a': 0})
 
 
-@pytest.mark.skip(reason='Fix me. In PClass hierarchy ignore_extra s not propagating.')
 def test_create_ignore_extra_true():
     h = Hierarchy.create(
         {'point': {'x': 5, 'y': 10, 'z': 15, 'extra_field_0': 'extra_data_0'}, 'extra_field_1': 'extra_data_1'},
