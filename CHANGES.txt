@@ -1,5 +1,10 @@
 Revision history
 ----------------
+0.15.2, 2019-05-12
+ * Fix #166, Propagate 'ignore_extra' param in hierarchy. Thanks @ss18 for this!
+ * Fix #167, thaw typing. Thanks @nattofriends for this!
+ * Fix #154, not possible to insert empty pmap as leaf node with transform.
+
 0.15.1, 2019-04-26
  * Fix #163 installation broken on Python 2 because of fix of #161, thanks @vphilippon for this! Sorry for the
    inconvenience.

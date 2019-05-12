@@ -672,6 +672,8 @@ Max Taggart https://github.com/MaxTaggart
 
 Vincent Philippon https://github.com/vphilippon
 
+Semen Zhydenko https://github.com/ss18
+
 Contributing
 ------------
 
