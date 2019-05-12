@@ -1,6 +1,8 @@
 import six
 from pyrsistent._checked_types import (InvariantException, CheckedType, _restore_pickle, store_invariants)
-from pyrsistent._field_common import (set_fields, check_type, PFIELD_NO_INITIAL, serialize, check_global_invariants)
+from pyrsistent._field_common import (
+    set_fields, check_type, is_field_ignore_extra_complaint, PFIELD_NO_INITIAL, serialize, check_global_invariants
+)
 from pyrsistent._transformations import transform
 
 
@@ -46,12 +48,16 @@ class PClass(CheckedType):
     def __new__(cls, **kwargs):    # Support *args?
         result = super(PClass, cls).__new__(cls)
         factory_fields = kwargs.pop('_factory_fields', None)
+        ignore_extra = kwargs.pop('ignore_extra', None)
         missing_fields = []
         invariant_errors = []
         for name, field in cls._pclass_fields.items():
             if name in kwargs:
                 if factory_fields is None or name in factory_fields:
-                    value = field.factory(kwargs[name])
+                    if is_field_ignore_extra_complaint(PClass, field, ignore_extra):
+                        value = field.factory(kwargs[name], ignore_extra=ignore_extra)
+                    else:
+                        value = field.factory(kwargs[name])
                 else:
                     value = kwargs[name]
                 _check_and_set_attr(cls, field, name, value, result, invariant_errors)
@@ -122,7 +128,7 @@ class PClass(CheckedType):
         if ignore_extra:
             kwargs = {k: kwargs[k] for k in cls._pclass_fields if k in kwargs}
 
-        return cls(_factory_fields=_factory_fields, **kwargs)
+        return cls(_factory_fields=_factory_fields, ignore_extra=ignore_extra, **kwargs)
 
     def serialize(self, format=None):
         """

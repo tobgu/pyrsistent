@@ -14,6 +14,11 @@ class ARecord(PRecord):
     y = field()
 
 
+class Hierarchy(PRecord):
+    point1 = field(ARecord)
+    point2 = field(ARecord)
+
+
 class RecordContainingContainers(PRecord):
     map = pmap_field(str, str)
     vec = pvector_field(str)
@@ -29,6 +34,15 @@ class Something(object):
 
 class Another(object):
     pass
+
+def test_create_ignore_extra_true():
+    h = Hierarchy.create(
+        {'point1': {'x': 1, 'y': 'foo', 'extra_field_0': 'extra_data_0'},
+         'point2': {'x': 1, 'y': 'foo', 'extra_field_1': 'extra_data_1'},
+         'extra_field_2': 'extra_data_2',
+         }, ignore_extra=True
+    )
+    assert h
 
 def test_create():
     r = ARecord(x=1, y='foo')

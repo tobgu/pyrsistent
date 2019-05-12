@@ -15,6 +15,10 @@ class Point(PClass):
     z = field(type=int, initial=0)
 
 
+class Hierarchy(PClass):
+    point = field(type=Point)
+
+
 class TypedContainerObj(PClass):
     map = pmap_field(str, str)
     set = pset_field(str)
@@ -37,6 +41,13 @@ def test_create_ignore_extra():
 def test_create_ignore_extra_false():
     with pytest.raises(AttributeError):
         _ = Point.create({'x': 5, 'y': 10, 'z': 15, 'a': 0})
+
+
+def test_create_ignore_extra_true():
+    h = Hierarchy.create(
+        {'point': {'x': 5, 'y': 10, 'z': 15, 'extra_field_0': 'extra_data_0'}, 'extra_field_1': 'extra_data_1'},
+        ignore_extra=True)
+    assert isinstance(h, Hierarchy)
 
 
 def test_evolve_pclass_instance():
