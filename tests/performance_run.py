@@ -299,7 +299,7 @@ def run_multiple_inserts_in_pmap():
     # Using ordinary set
     start = time.time()
     m1 = pmap(elements)
-    print("Done initalizing, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print("Done initializing, time=%s s, count=%s" % (time.time() - start, COUNT))
 
 
     start = time.time()
