@@ -117,7 +117,7 @@ def _merge_invariant_results(result):
 
 def wrap_invariant(invariant):
     # Invariant functions may return the outcome of several tests
-    # In those cases the results have to be merged before beeing passed
+    # In those cases the results have to be merged before being passed
     # back to the client.
     def f(*args, **kwargs):
         result = invariant(*args, **kwargs)
