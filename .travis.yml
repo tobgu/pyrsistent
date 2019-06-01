@@ -1,47 +1,162 @@
-language: python
-
 matrix:
   include:
-    - python: 3.7
-      env: TOXENV=py37
+    - name: linux-py27
+      language: python
+      python: 2.7
       dist: xenial
-      sudo: true
-    - python: 3.6
-      env: TOXENV=py36
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py27
+        - PIP=pip
+        - CIBW_BUILD=cp27-*
+    - name: linux-py35
+      language: python
+      python: 3.5
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py35
+        - PIP=pip3
+        - CIBW_BUILD=cp35-*
+    - name: linux-py36
+      language: python
+      python: 3.6
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py36
+        - PIP=pip3
+        - CIBW_BUILD=cp36-*
+    - name: linux-py37
+      language: python
+      python: 3.7
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py37
+        - PIP=pip3
+        - CIBW_BUILD=cp37-*
+    - name: osx-py27
+      os: osx
+      language: generic
+      env:
+        - PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH"
+        - TOXENV=py27
+        - PIP=pip
+        - CIBW_BUILD=cp27-*
+        - CIBW_TEST_COMMAND="pushd {project}; tox ; popd"
+        - CIBW_BEFORE_BUILD="${PIP} install -U pip; ${PIP} install -r requirements.txt"
+      install:
+        - ${PIP} install cibuildwheel==0.10.2
+      script:
+        - cibuildwheel --output-dir dist
+    - name: osx-py35
+      os: osx
+      language: generic
+      env:
+        - TOXENV=py35
+        - PIP=pip2
+        - CIBW_BUILD=cp35-*
+        - CIBW_TEST_COMMAND="pushd {project}; tox ; popd"
+        - CIBW_BEFORE_BUILD="${PIP} install -U pip; ${PIP} install -r requirements.txt"
+      install:
+        - ${PIP} install cibuildwheel==0.10.2
+      script:
+        - cibuildwheel --output-dir dist
+    - name: osx-py36
+      os: osx
+      language: generic
+      env:
+        - TOXENV=py36
+        - PIP=pip2
+        - CIBW_BUILD=cp36-*
+        - CIBW_TEST_COMMAND="pushd {project}; tox ; popd"
+        - CIBW_BEFORE_BUILD="${PIP} install -U pip; ${PIP} install -r requirements.txt"
+      install:
+        - ${PIP} install cibuildwheel==0.10.2
+      script:
+        - cibuildwheel --output-dir dist
+    - name: osx-py37
+      os: osx
+      language: generic
+      env:
+        - TOXENV=py37
+        - PIP=pip2
+        - CIBW_BUILD=cp37-*
+        - CIBW_TEST_COMMAND="pushd {project}; tox ; popd"
+        - CIBW_BEFORE_BUILD="${PIP} install -U pip; ${PIP} install -r requirements.txt"
+      install:
+        - ${PIP} install cibuildwheel==0.10.2
+      script:
+        - cibuildwheel --output-dir dist
+    - name: pypy3.5
+      language: python
+      python: pypy3.5
       dist: trusty
       sudo: false
-    - python: 3.6
-      env: TOXENV=memorytest36
+      env:
+        - TOXENV=pypy3
+        - PIP=pip
+      install:
+        - ${PIP} install -U pip
+        - ${PIP} install -r requirements.txt
+      script:
+        - tox
+    - name: doctest27
+      language: python
+      python: 2.7
       dist: trusty
       sudo: false
-    - python: 3.6
-      env: TOXENV=coverage-py36
+      env:
+        - TOXENV=doctest27
+        - PIP=pip
+      install:
+        - ${PIP} install -U pip
+        - ${PIP} install -r requirements.txt
+      script:
+        - tox
+    - name: memorytest27
+      language: python
+      python: 2.7
       dist: trusty
       sudo: false
-    - python: "pypy3.5"
-      env: TOXENV=pypy3
-      dist: trusty
-      sudo: false
-    - python: 2.7
-      env: TOXENV=py27
-      dist: trusty
-      sudo: false
-    - python: 2.7
-      env: TOXENV=doctest27
-      dist: trusty
-      sudo: false
-    - python: 2.7
-      env: TOXENV=memorytest27
-      dist: trusty
-      sudo: false
-
-# PyPy 2.7 seems broken on Travis at the moment,
-# see https://github.com/travis-ci/travis-ci/issues/8103#issuecomment-387327744
-#    - python: "pypy2.7"
-#      env: TOXENV=pypy
-
+      env:
+        - TOXENV=memorytest27
+        - PIP=pip
+      install:
+        - ${PIP} install -U pip
+        - ${PIP} install -r requirements.txt
+      script:
+        - tox
 install:
-  - pip install -r requirements.txt
-
+  - ${PIP} install -U pip
+  - ${PIP} install cibuildwheel==0.10.2
+  - ${PIP} install -r requirements.txt
 script:
   - tox
+  - git stash --all # Restore fresh checkout
+  - cibuildwheel --output-dir dist
+# deployment can be added like:
+#
+# deploy:
+#   - provider: pypi
+#     # server: https://test.pypi.org/legacy/
+#     user: user
+#     password:
+#       secure: "youwish"
+#     distributions: "sdist"
+#     skip_existing: true
+#     skip_cleanup: true
+#     on:
+#       branch: master
+#       tags: true
+#
+# or like https://github.com/joerick/cibuildwheel-autopypi-example/blob/master/.travis.yml#L21-L25
