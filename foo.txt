@@ -1,0 +1,83 @@
+running install
+running bdist_egg
+running egg_info
+writing requirements to pyrsistent.egg-info/requires.txt
+writing pyrsistent.egg-info/PKG-INFO
+writing top-level names to pyrsistent.egg-info/top_level.txt
+writing dependency_links to pyrsistent.egg-info/dependency_links.txt
+reading manifest file 'pyrsistent.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'pyrsistent.egg-info/SOURCES.txt'
+installing library code to build/bdist.linux-x86_64/egg
+running install_lib
+running build_py
+running build_ext
+building 'pvectorc' extension
+gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -D_GNU_SOURCE -fPIC -fwrapv -fPIC -I/usr/include/python2.7 -c pvectorcmodule.c -o build/temp.linux-x86_64-2.7/pvectorcmodule.o
+creating build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pclass.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_toolz.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/typing.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/__init__.pyi -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/__init__.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pvector.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/py.typed -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_immutable.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_checked_types.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_plist.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pdeque.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pset.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_transformations.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_precord.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/typing.pyi -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pmap.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_pbag.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_helpers.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_field_common.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/pyrsistent/_compat.py -> build/bdist.linux-x86_64/egg/pyrsistent
+copying build/lib.linux-x86_64-2.7/_pyrsistent_version.py -> build/bdist.linux-x86_64/egg
+copying build/lib.linux-x86_64-2.7/pvectorc.so -> build/bdist.linux-x86_64/egg
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pclass.py to _pclass.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_toolz.py to _toolz.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/typing.py to typing.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/__init__.py to __init__.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pvector.py to _pvector.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_immutable.py to _immutable.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_checked_types.py to _checked_types.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_plist.py to _plist.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pdeque.py to _pdeque.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pset.py to _pset.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_transformations.py to _transformations.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_precord.py to _precord.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pmap.py to _pmap.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_pbag.py to _pbag.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_helpers.py to _helpers.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_field_common.py to _field_common.pyc
+byte-compiling build/bdist.linux-x86_64/egg/pyrsistent/_compat.py to _compat.pyc
+byte-compiling build/bdist.linux-x86_64/egg/_pyrsistent_version.py to _pyrsistent_version.pyc
+creating stub loader for pvectorc.so
+byte-compiling build/bdist.linux-x86_64/egg/pvectorc.py to pvectorc.pyc
+creating build/bdist.linux-x86_64/egg/EGG-INFO
+copying pyrsistent.egg-info/PKG-INFO -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying pyrsistent.egg-info/SOURCES.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying pyrsistent.egg-info/dependency_links.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying pyrsistent.egg-info/requires.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying pyrsistent.egg-info/top_level.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+writing build/bdist.linux-x86_64/egg/EGG-INFO/native_libs.txt
+creating 'dist/pyrsistent-0.15.2-py2.7-linux-x86_64.egg' and adding 'build/bdist.linux-x86_64/egg' to it
+removing 'build/bdist.linux-x86_64/egg' (and everything under it)
+Processing pyrsistent-0.15.2-py2.7-linux-x86_64.egg
+Removing /home/tobias/Development/python/envs/pyrsistent2/lib/python2.7/site-packages/pyrsistent-0.15.2-py2.7-linux-x86_64.egg
+Copying pyrsistent-0.15.2-py2.7-linux-x86_64.egg to /home/tobias/Development/python/envs/pyrsistent2/lib/python2.7/site-packages
+pyrsistent 0.15.2 is already the active version in easy-install.pth
+
+Installed /home/tobias/Development/python/envs/pyrsistent2/lib/python2.7/site-packages/pyrsistent-0.15.2-py2.7-linux-x86_64.egg
+Processing dependencies for pyrsistent==0.15.2
+Searching for six==1.12.0
+Best match: six 1.12.0
+Processing six-1.12.0-py2.7.egg
+six 1.12.0 is already the active version in easy-install.pth
+
+Using /home/tobias/Development/python/envs/pyrsistent2/lib/python2.7/site-packages/six-1.12.0-py2.7.egg
+Finished processing dependencies for pyrsistent==0.15.2

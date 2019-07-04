@@ -9,12 +9,6 @@ from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
 from _pyrsistent_version import __version__
 
-try:
-    FileNotFoundError
-except NameError:  # Python 2
-    FileNotFoundError = IOError
-
-
 readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
 with codecs.open(readme_path, encoding='utf8') as f:
     readme = f.read()
@@ -41,7 +35,7 @@ WARNING: Could not build the %s.
     def run(self):
         try:
             build_ext.run(self)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
+        except Exception:
             e = sys.exc_info()[1]
             sys.stderr.write('%s\n' % str(e))
             sys.stderr.write(self.warning_message % ("extension modules", "There was an issue with your platform configuration - see above."))
@@ -50,7 +44,7 @@ WARNING: Could not build the %s.
         name = ext.name
         try:
             build_ext.build_extension(self, ext)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
+        except Exception:
             e = sys.exc_info()[1]
             sys.stderr.write('%s\n' % str(e))
             sys.stderr.write(self.warning_message % ("%s extension module" % name, "The output above this warning shows how the compilation failed."))
