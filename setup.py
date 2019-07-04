@@ -43,11 +43,8 @@ WARNING: Could not build the %s.
             build_ext.run(self)
         except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
             e = sys.exc_info()[1]
-            sys.stdout.write('%s\n' % str(e))
-            warnings.warn(self.warning_message % ("Extension modules",
-                                                  "There was an issue with "
-                                                  "your platform configuration"
-                                                  " - see above."))
+            sys.stderr.write('%s\n' % str(e))
+            sys.stderr.write(self.warning_message % ("extension modules", "There was an issue with your platform configuration - see above."))
 
     def build_extension(self, ext):
         name = ext.name
@@ -55,13 +52,8 @@ WARNING: Could not build the %s.
             build_ext.build_extension(self, ext)
         except (CCompilerError, DistutilsExecError, DistutilsPlatformError, FileNotFoundError):
             e = sys.exc_info()[1]
-            sys.stdout.write('%s\n' % str(e))
-            warnings.warn(self.warning_message % ("The %s extension "
-                                                  "module" % (name,),
-                                                  "The output above "
-                                                  "this warning shows how "
-                                                  "the compilation "
-                                                  "failed."))
+            sys.stderr.write('%s\n' % str(e))
+            sys.stderr.write(self.warning_message % ("%s extension module" % name, "The output above this warning shows how the compilation failed."))
 
 setup(
     name='pyrsistent',
