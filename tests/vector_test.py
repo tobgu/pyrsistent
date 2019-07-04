@@ -875,6 +875,11 @@ def test_compare_with_list(pvector):
     assert v >= [1, 2]
 
 
+def test_compare_with_non_iterable(pvector):
+    assert pvector([1, 2, 3]) != 5
+    assert not (pvector([1, 2, 3]) == 5)
+
+
 def test_python_no_c_extension_with_environment_variable():
     from six.moves import reload_module
     import pyrsistent._pvector

@@ -76,10 +76,10 @@ class PythonPVector(object):
         return iter(self.tolist())
 
     def __ne__(self, other):
-        return self._count != len(other) or compare_pvector(self, other, operator.ne)
+        return not self.__eq__(other)
 
     def __eq__(self, other):
-        return self is other or self._count == len(other) and compare_pvector(self, other, operator.eq)
+        return self is other or (hasattr(other, '__len__') and self._count == len(other)) and compare_pvector(self, other, operator.eq)
 
     def __gt__(self, other):
         return compare_pvector(self, other, operator.gt)
