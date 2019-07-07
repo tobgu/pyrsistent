@@ -1,5 +1,11 @@
 Revision history
 ----------------
+0.15.3, 2019-07-07
+ * Fix #172, catch all exceptions during extension build to reduce chance of corner cases that prevents installation.
+ * Fix #171, in PVector equality comparison don's assume that other object has a length, check before calling len.
+ * Fix #168, write warning about failing build of C extension directly to stderr to avoid that pip silences it.
+ * Fix #155, update PMapEvolver type stub to better reflect implementation.
+
 0.15.2, 2019-05-12
  * Fix #166, Propagate 'ignore_extra' param in hierarchy. Thanks @ss18 for this!
  * Fix #167, thaw typing. Thanks @nattofriends for this!
