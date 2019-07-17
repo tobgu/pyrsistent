@@ -1557,7 +1557,9 @@ static PyObject* PVectorEvolver_is_dirty(PVectorEvolver *self) {
 
 static int PVectorEvolver_traverse(PVectorEvolver *self, visitproc visit, void *arg) {
   Py_VISIT(self->newVector);
-  Py_VISIT(self->originalVector);
+  if (self->newVector != self->originalVector) {
+      Py_VISIT(self->originalVector);
+  }
   Py_VISIT(self->appendList);
   return 0;
 }
