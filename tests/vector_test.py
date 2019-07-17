@@ -903,6 +903,17 @@ def test_supports_weakref(pvector):
     import weakref
     weakref.ref(pvector())
 
+def test_get_evolver_referents(pvector):
+    """The C implementation of the evolver should expose the original PVector
+    to the gc only once.
+    """
+    if pvector.__module__ == 'pyrsistent._pvector':
+        pytest.skip("This test only applies to pvectorc")
+    import gc
+    v = pvector([1, 2, 3])
+    e = v.evolver()
+    assert len([x for x in gc.get_referents(e) if x is v]) == 1
+
 
 def test_failing_repr(pvector):
     # See https://github.com/tobgu/pyrsistent/issues/84
