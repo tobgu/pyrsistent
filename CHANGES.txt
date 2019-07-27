@@ -1,5 +1,9 @@
 Revision history
 ----------------
+0.15.4, 2019-07-27
+ * Fix #174, fix a GC traversal bug in pvector evolver C extension. Thanks @till-varoquaux for finding and fixing this!
+ * Fix #175, pytest 5 compatibility, this is a quick fix, some more work is needed to get coverage working etc.
+
 0.15.3, 2019-07-07
  * Fix #172, catch all exceptions during extension build to reduce chance of corner cases that prevents installation.
  * Fix #171, in PVector equality comparison don's assume that other object has a length, check before calling len.

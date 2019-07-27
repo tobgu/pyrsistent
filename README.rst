@@ -674,6 +674,8 @@ Vincent Philippon https://github.com/vphilippon
 
 Semen Zhydenko https://github.com/ss18
 
+Till Varoquaux  https://github.com/till-varoquaux
+
 Contributing
 ------------
 
