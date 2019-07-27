@@ -257,7 +257,7 @@ def test_indexing_invalid_type():
     with pytest.raises(TypeError) as e:
         pdeque([1, 2, 3])['foo']
 
-    assert 'cannot be interpreted' in str(e)
+    assert 'cannot be interpreted' in str(e.value)
 
 
 def test_slicing():
