@@ -90,7 +90,7 @@ PFIELD_NO_INVARIANT = lambda _: (True, None)
 PFIELD_NO_FACTORY = lambda x: x
 PFIELD_NO_INITIAL = object()
 PFIELD_NO_SERIALIZER = lambda _, value: value
-PFIELD_NO_SERIALIZER = lambda _, value: value
+
 
 def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_INITIAL,
           mandatory=False, factory=PFIELD_NO_FACTORY, serializer=PFIELD_NO_SERIALIZER):
