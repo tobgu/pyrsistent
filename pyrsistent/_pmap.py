@@ -1,8 +1,7 @@
 from ._compat import Mapping, Hashable
-from itertools import chain
 import six
-from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
+from immutables import Map as _IMap
 
 
 class PMap(object):
@@ -43,52 +42,25 @@ class PMap(object):
     >>> m3.c
     3
     """
-    __slots__ = ('_size', '_buckets', '__weakref__', '_cached_hash')
+    __slots__ = ('_imap', '__weakref__')
 
-    def __new__(cls, size, buckets):
+    # TODO: Fix PRecord
+    def __new__(cls, _imap):
         self = super(PMap, cls).__new__(cls)
-        self._size = size
-        self._buckets = buckets
+        self._imap = _imap
         return self
 
-    @staticmethod
-    def _get_bucket(buckets, key):
-        index = hash(key) % len(buckets)
-        bucket = buckets[index]
-        return index, bucket
-
-    @staticmethod
-    def _getitem(buckets, key):
-        _, bucket = PMap._get_bucket(buckets, key)
-        if bucket:
-            for k, v in bucket:
-                if k == key:
-                    return v
-
-        raise KeyError(key)
-
     def __getitem__(self, key):
-        return PMap._getitem(self._buckets, key)
-
-    @staticmethod
-    def _contains(buckets, key):
-        _, bucket = PMap._get_bucket(buckets, key)
-        if bucket:
-            for k, _ in bucket:
-                if k == key:
-                    return True
-
-            return False
-
-        return False
+        return self._imap[key]
 
     def __contains__(self, key):
-        return self._contains(self._buckets, key)
+        return key in self._imap
 
-    get = Mapping.get
+    def get(self, key, default=None):
+        return self._imap.get(key, default)
 
     def __iter__(self):
-        return self.iterkeys()
+        return iter(self._imap)
 
     def __getattr__(self, key):
         try:
@@ -110,22 +82,19 @@ class PMap(object):
             yield v
 
     def iteritems(self):
-        for bucket in self._buckets:
-            if bucket:
-                for k, v in bucket:
-                    yield k, v
+        return self._imap.items()
 
     def values(self):
-        return pvector(self.itervalues())
+        return self._imap.values()
 
     def keys(self):
-        return pvector(self.iterkeys())
+        return self._imap.keys()
 
     def items(self):
-        return pvector(self.iteritems())
+        return self._imap.items()
 
     def __len__(self):
-        return self._size
+        return len(self._imap)
 
     def __repr__(self):
         return 'pmap({0})'.format(str(dict(self)))
@@ -141,9 +110,7 @@ class PMap(object):
             if (hasattr(self, '_cached_hash') and hasattr(other, '_cached_hash')
                     and self._cached_hash != other._cached_hash):
                 return False
-            if self._buckets == other._buckets:
-                return True
-            return dict(self.iteritems()) == dict(other.iteritems())
+            return self._imap == other._imap
         elif isinstance(other, dict):
             return dict(self.iteritems()) == other
         return dict(self.iteritems()) == dict(six.iteritems(other))
@@ -161,9 +128,7 @@ class PMap(object):
         return self.__repr__()
 
     def __hash__(self):
-        if not hasattr(self, '_cached_hash'):
-            self._cached_hash = hash(frozenset(self.iteritems()))
-        return self._cached_hash
+        return hash(self._imap)
 
     def set(self, key, val):
         """
@@ -179,7 +144,7 @@ class PMap(object):
         >>> m3
         pmap({'a': 1, 'c': 4, 'b': 2})
         """
-        return self.evolver().set(key, val).persistent()
+        return PMap(self._imap.set(key, val))
 
     def remove(self, key):
         """
@@ -190,7 +155,7 @@ class PMap(object):
         >>> m1.remove('a')
         pmap({'b': 2})
         """
-        return self.evolver().remove(key).persistent()
+        return PMap(self._imap.delete(key))
 
     def discard(self, key):
         """
@@ -281,65 +246,29 @@ class PMap(object):
         return self
 
     class _Evolver(object):
-        __slots__ = ('_buckets_evolver', '_size', '_original_pmap')
+        __slots__ = ('_original_pmap', '_mutation', '_is_dirty')
 
         def __init__(self, original_pmap):
             self._original_pmap = original_pmap
-            self._buckets_evolver = original_pmap._buckets.evolver()
-            self._size = original_pmap._size
+            self._mutation = original_pmap._imap.mutate()
+            self._is_dirty = False
 
         def __getitem__(self, key):
-            return PMap._getitem(self._buckets_evolver, key)
+            return self._mutation[key]
 
         def __setitem__(self, key, val):
-            self.set(key, val)
+            self._is_dirty = True
+            self._mutation.set(key, val)
 
         def set(self, key, val):
-            if len(self._buckets_evolver) < 0.67 * self._size:
-                self._reallocate(2 * len(self._buckets_evolver))
-
-            kv = (key, val)
-            index, bucket = PMap._get_bucket(self._buckets_evolver, key)
-            if bucket:
-                for k, v in bucket:
-                    if k == key:
-                        if v is not val:
-                            new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
-                            self._buckets_evolver[index] = new_bucket
-
-                        return self
-
-                new_bucket = [kv]
-                new_bucket.extend(bucket)
-                self._buckets_evolver[index] = new_bucket
-                self._size += 1
-            else:
-                self._buckets_evolver[index] = [kv]
-                self._size += 1
-
-            return self
-
-        def _reallocate(self, new_size):
-            new_list = new_size * [None]
-            buckets = self._buckets_evolver.persistent()
-            for k, v in chain.from_iterable(x for x in buckets if x):
-                index = hash(k) % new_size
-                if new_list[index]:
-                    new_list[index].append((k, v))
-                else:
-                    new_list[index] = [(k, v)]
-
-            # A reallocation should always result in a dirty buckets evolver to avoid
-            # possible loss of elements when doing the reallocation.
-            self._buckets_evolver = pvector().evolver()
-            self._buckets_evolver.extend(new_list)
+            self[key] = val
 
         def is_dirty(self):
-            return self._buckets_evolver.is_dirty()
+            return self._is_dirty
 
         def persistent(self):
-            if self.is_dirty():
-                self._original_pmap = PMap(self._size, self._buckets_evolver.persistent())
+            if self._is_dirty:
+                self._original_pmap = PMap(self._mutation.finish())
 
             return self._original_pmap
 
@@ -347,22 +276,14 @@ class PMap(object):
             return self._size
 
         def __contains__(self, key):
-            return PMap._contains(self._buckets_evolver, key)
+            return key in self._mutation
 
         def __delitem__(self, key):
+            self._is_dirty = True
             self.remove(key)
 
         def remove(self, key):
-            index, bucket = PMap._get_bucket(self._buckets_evolver, key)
-
-            if bucket:
-                new_bucket = [(k, v) for (k, v) in bucket if k != key]
-                if len(bucket) > len(new_bucket):
-                    self._buckets_evolver[index] = new_bucket if new_bucket else None
-                    self._size -= 1
-                    return self
-
-            raise KeyError('{0}'.format(key))
+            del self[key]
 
     def evolver(self):
         """
@@ -398,43 +319,12 @@ class PMap(object):
 Mapping.register(PMap)
 Hashable.register(PMap)
 
-
-def _turbo_mapping(initial, pre_size):
-    if pre_size:
-        size = pre_size
-    else:
-        try:
-            size = 2 * len(initial) or 8
-        except Exception:
-            # Guess we can't figure out the length. Give up on length hinting,
-            # we can always reallocate later.
-            size = 8
-
-    buckets = size * [None]
-
-    if not isinstance(initial, Mapping):
-        # Make a dictionary of the initial data if it isn't already,
-        # that will save us some job further down since we can assume no
-        # key collisions
-        initial = dict(initial)
-
-    for k, v in six.iteritems(initial):
-        h = hash(k)
-        index = h % size
-        bucket = buckets[index]
-
-        if bucket:
-            bucket.append((k, v))
-        else:
-            buckets[index] = [(k, v)]
-
-    return PMap(len(initial), pvector().extend(buckets))
-
-
-_EMPTY_PMAP = _turbo_mapping({}, 0)
+_EMPTY_IMAP = _IMap()
+_EMPTY_PMAP = PMap(_EMPTY_IMAP)
 
 
 def pmap(initial={}, pre_size=0):
+    # TODO: Pre-size not needed anymore?
     """
     Create new persistent map, inserts all elements in initial into the newly created map.
     The optional argument pre_size may be used to specify an initial size of the underlying bucket vector. This
@@ -447,7 +337,9 @@ def pmap(initial={}, pre_size=0):
     if not initial:
         return _EMPTY_PMAP
 
-    return _turbo_mapping(initial, pre_size)
+    m = _EMPTY_IMAP.mutate()
+    m.update(six.iteritems(initial))
+    return PMap(m.finish())
 
 
 def m(**kwargs):

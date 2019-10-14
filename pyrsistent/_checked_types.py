@@ -472,7 +472,7 @@ class CheckedPMap(PMap, CheckedType):
 
     def __new__(cls, initial={}, size=_UNDEFINED_CHECKED_PMAP_SIZE):
         if size is not _UNDEFINED_CHECKED_PMAP_SIZE:
-            return super(CheckedPMap, cls).__new__(cls, size, initial)
+            return super(CheckedPMap, cls).__new__(cls, initial)
 
         evolver = CheckedPMap.Evolver(cls, pmap())
         for k, v in initial.items():
@@ -537,6 +537,8 @@ class CheckedPMap(PMap, CheckedType):
                 raise InvariantException(error_codes=self._invariant_errors)
 
             if self.is_dirty() or type(self._original_pmap) != self._destination_class:
-                return self._destination_class(self._buckets_evolver.persistent(), self._size)
+                pm = super().persistent()
+                # TODO: Fix this private access to _imap
+                return self._destination_class(pm._imap, size=len(pm))
 
             return self._original_pmap

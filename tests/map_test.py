@@ -264,6 +264,8 @@ def test_transform_levels_missing():
     assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
 
 
+import immutables
+
 class HashDummy(object):
     def __hash__(self):
         return 6528039219058920  # Hash of '33'
@@ -271,6 +273,16 @@ class HashDummy(object):
     def __eq__(self, other):
         return self is other
 
+def test_hash_collision_segfault():
+    dummy1 = HashDummy()
+    dummy2 = HashDummy()
+
+    map = immutables.Map({i: i for i in range(30)})
+    map = map.set(dummy1, 56)
+    map = map.set(dummy2, 57)
+    map = map.set(67, 67)
+    map = map.set(68, 68)
+    print([(k, v) for k, v in map.items()])
 
 def test_hash_collision_is_correctly_resolved():
 
