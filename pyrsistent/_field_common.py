@@ -1,4 +1,5 @@
 import six
+import sys
 
 from pyrsistent._checked_types import (
     CheckedPMap,
@@ -14,6 +15,8 @@ from pyrsistent._checked_types import (
 from pyrsistent._checked_types import optional as optional_type
 from pyrsistent._checked_types import wrap_invariant
 import inspect
+
+PY2 = sys.version_info[0] < 3
 
 
 def set_fields(dct, bases, name):
@@ -47,6 +50,8 @@ def check_type(destination_cls, field, name, value):
 
 
 def is_type_cls(type_cls, field_type):
+    if type(field_type) is set:
+        return True
     types = tuple(field_type)
     if len(types) == 0:
         return False
@@ -61,7 +66,11 @@ def is_field_ignore_extra_complaint(type_cls, field, ignore_extra):
     if not is_type_cls(type_cls, field.type):
         return False
 
-    return 'ignore_extra' in inspect.getargspec(field.factory).args
+    if PY2:
+        return 'ignore_extra' in inspect.getargspec(field.factory).args
+    else:
+        return 'ignore_extra' in inspect.signature(field.factory).parameters
+
 
 
 class _PField(object):
