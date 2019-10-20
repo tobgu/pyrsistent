@@ -253,7 +253,7 @@ def optional(*typs):
     return tuple(typs) + (type(None),)
 
 
-def _checked_type_create(cls, source_data, _factory_fields=None):
+def _checked_type_create(cls, source_data, _factory_fields=None, ignore_extra=False):
     if isinstance(source_data, cls):
         return source_data
 
@@ -262,7 +262,7 @@ def _checked_type_create(cls, source_data, _factory_fields=None):
     types = get_types(cls._checked_types)
     checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
     if checked_type:
-        return cls([checked_type.create(data)
+        return cls([checked_type.create(data, ignore_extra=ignore_extra)
                     if not any(isinstance(data, t) for t in types) else data
                     for data in source_data])
 

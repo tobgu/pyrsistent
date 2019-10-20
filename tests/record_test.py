@@ -17,6 +17,7 @@ class ARecord(PRecord):
 class Hierarchy(PRecord):
     point1 = field(ARecord)
     point2 = field(ARecord)
+    points = pvector_field(ARecord)
 
 
 class RecordContainingContainers(PRecord):
@@ -43,6 +44,19 @@ def test_create_ignore_extra_true():
          }, ignore_extra=True
     )
     assert h
+
+
+def test_create_ignore_extra_true_sequence_hierarchy():
+    h = Hierarchy.create(
+        {'point1': {'x': 1, 'y': 'foo', 'extra_field_0': 'extra_data_0'},
+         'point2': {'x': 1, 'y': 'foo', 'extra_field_1': 'extra_data_1'},
+         'points': [{'x': 1, 'y': 'foo', 'extra_field_2': 'extra_data_2'},
+                    {'x': 1, 'y': 'foo', 'extra_field_3': 'extra_data_3'}],
+         'extra_field____': 'extra_data_2',
+         }, ignore_extra=True
+    )
+    assert h
+
 
 def test_create():
     r = ARecord(x=1, y='foo')
