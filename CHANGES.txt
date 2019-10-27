@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.15.5, 2019-10-27
+ * Fix #179 Fixed 'ignore_extra' factory parameter for pvector. Thanks @ss18 for this!
+
 0.15.4, 2019-07-27
  * Fix #174, fix a GC traversal bug in pvector evolver C extension. Thanks @till-varoquaux for finding and fixing this!
  * Fix #175, pytest 5 compatibility, this is a quick fix, some more work is needed to get coverage working etc.
