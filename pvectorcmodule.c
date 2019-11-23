@@ -1591,7 +1591,7 @@ static PyMethodDef PyrsistentMethods[] = {
   };
 #endif
 
-PyObject* moduleinit(void) {
+static PyObject* pyrsistent_pvectorc_moduleinit(void) {
   PyObject* m;
   
   // Only allow creation/initialization through factory method pvec
@@ -1633,10 +1633,10 @@ PyObject* moduleinit(void) {
 
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_pvectorc(void) {
-  return moduleinit();
+  return pyrsistent_pvectorc_moduleinit();
 }
 #else
 PyMODINIT_FUNC initpvectorc(void) {
-  moduleinit();
+  pyrsistent_pvectorc_moduleinit();
 }
 #endif
