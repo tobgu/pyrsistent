@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.15.6, 2019-11-23
+ * Fix #182 moduleinit name clash.
+
 0.15.5, 2019-10-27
  * Fix #179 Fixed 'ignore_extra' factory parameter for pvector. Thanks @ss18 for this!
 
