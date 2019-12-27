@@ -11,7 +11,31 @@ matrix:
         - TOXENV=py27
         - PIP=pip
         - CIBW_BUILD=cp27-*
+    - arch: arm64
+      name: linux-py27
+      language: python
+      python: 2.7
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py27
+        - PIP=pip
+        - CIBW_BUILD=cp27-*
     - name: linux-py35
+      language: python
+      python: 3.5
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py35
+        - PIP=pip3
+        - CIBW_BUILD=cp35-*
+    - arch: arm64
+      name: linux-py35
       language: python
       python: 3.5
       dist: xenial
@@ -33,7 +57,31 @@ matrix:
         - TOXENV=py36
         - PIP=pip3
         - CIBW_BUILD=cp36-*
+    - arch: arm64
+      name: linux-py36
+      language: python
+      python: 3.6
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py36
+        - PIP=pip3
+        - CIBW_BUILD=cp36-*
     - name: linux-py37
+      language: python
+      python: 3.7
+      dist: xenial
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py37
+        - PIP=pip3
+        - CIBW_BUILD=cp37-*
+    - arch: arm64
+      name: linux-py37
       language: python
       python: 3.7
       dist: xenial
@@ -123,7 +171,35 @@ matrix:
         - ${PIP} install -r requirements.txt
       script:
         - tox
+    - arch: arm64
+      name: doctest27
+      language: python
+      python: 2.7
+      dist: trusty
+      sudo: false
+      env:
+        - TOXENV=doctest27
+        - PIP=pip
+      install:
+        - ${PIP} install -U pip
+        - ${PIP} install -r requirements.txt
+      script:
+        - tox
     - name: memorytest27
+      language: python
+      python: 2.7
+      dist: trusty
+      sudo: false
+      env:
+        - TOXENV=memorytest27
+        - PIP=pip
+      install:
+        - ${PIP} install -U pip
+        - ${PIP} install -r requirements.txt
+      script:
+        - tox
+    - arch: arm64
+      name: memorytest27
       language: python
       python: 2.7
       dist: trusty
@@ -142,8 +218,8 @@ install:
   - ${PIP} install -r requirements.txt
 script:
   - tox
-  - git stash --all # Restore fresh checkout
-  - cibuildwheel --output-dir dist
+  #- git stash --all # Restore fresh checkout
+  #- cibuildwheel --output-dir dist
 # deployment can be added like:
 #
 # deploy:
