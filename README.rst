@@ -676,6 +676,12 @@ Semen Zhydenko https://github.com/ss18
 
 Till Varoquaux  https://github.com/till-varoquaux
 
+Michal Kowalik https://github.com/michalvi
+
+ossdev07 https://github.com/ossdev07
+
+Kerry Olesen https://github.com/qhesz
+
 Contributing
 ------------
 

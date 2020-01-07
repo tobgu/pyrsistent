@@ -1,5 +1,11 @@
 Revision history
 ----------------
+0.15.7, 2020-01-07
+ * NOTE! This is the last version of Pyrsistent that officially supports Python 2.X!
+ * Fix #186, type errors with more recent versions of MyPy. Thanks @qhesz for this!
+ * Build and test on ARM during CI. Thanks @ossdev07 for this!
+ * Set absolute imports for python2 compatibility. Thanks @michalvi for this!
+
 0.15.6, 2019-11-23
  * Fix #182 moduleinit name clash.
 
