@@ -58,6 +58,21 @@ def test_create_ignore_extra_true_sequence_hierarchy():
     assert h
 
 
+def test_ignore_extra_for_pvector_field():
+    class HierarchyA(PRecord):
+        points = pvector_field(ARecord, optional=False)
+
+    class HierarchyB(PRecord):
+        points = pvector_field(ARecord, optional=True)
+
+    point_object = {'x': 1, 'y': 'foo', 'extra_field': 69}
+
+    h = HierarchyA.create({'points': [point_object]}, ignore_extra=True)
+    assert h
+    h = HierarchyB.create({'points': [point_object]}, ignore_extra=True)
+    assert h
+
+
 def test_create():
     r = ARecord(x=1, y='foo')
     assert r.x == 1
