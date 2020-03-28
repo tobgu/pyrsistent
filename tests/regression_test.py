@@ -6,7 +6,7 @@ import gc
 
 def test_segfault_issue_52():
     threshold = None
-    if hasattr(gc, 'get_threshold'):
+    if hasattr(gc, "get_threshold"):
         # PyPy is lacking these functions
         threshold = gc.get_threshold()
         gc.set_threshold(1, 1, 1)  # fail fast

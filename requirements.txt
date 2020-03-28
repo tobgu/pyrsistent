@@ -8,3 +8,4 @@ six
 pyperform
 hypothesis<5
 setuptools
+black

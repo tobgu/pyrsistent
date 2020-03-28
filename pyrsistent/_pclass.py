@@ -1,7 +1,17 @@
 import six
-from pyrsistent._checked_types import (InvariantException, CheckedType, _restore_pickle, store_invariants)
+from pyrsistent._checked_types import (
+    InvariantException,
+    CheckedType,
+    _restore_pickle,
+    store_invariants,
+)
 from pyrsistent._field_common import (
-    set_fields, check_type, is_field_ignore_extra_complaint, PFIELD_NO_INITIAL, serialize, check_global_invariants
+    set_fields,
+    check_type,
+    is_field_ignore_extra_complaint,
+    PFIELD_NO_INITIAL,
+    serialize,
+    check_global_invariants,
 )
 from pyrsistent._transformations import transform
 
@@ -12,16 +22,19 @@ def _is_pclass(bases):
 
 class PClassMeta(type):
     def __new__(mcs, name, bases, dct):
-        set_fields(dct, bases, name='_pclass_fields')
-        store_invariants(dct, bases, '_pclass_invariants', '__invariant__')
-        dct['__slots__'] = ('_pclass_frozen',) + tuple(key for key in dct['_pclass_fields'])
+        set_fields(dct, bases, name="_pclass_fields")
+        store_invariants(dct, bases, "_pclass_invariants", "__invariant__")
+        dct["__slots__"] = ("_pclass_frozen",) + tuple(
+            key for key in dct["_pclass_fields"]
+        )
 
         # There must only be one __weakref__ entry in the inheritance hierarchy,
         # lets put it on the top level class.
         if _is_pclass(bases):
-            dct['__slots__'] += ('__weakref__',)
+            dct["__slots__"] += ("__weakref__",)
 
         return super(PClassMeta, mcs).__new__(mcs, name, bases, dct)
+
 
 _MISSING_VALUE = object()
 
@@ -45,10 +58,11 @@ class PClass(CheckedType):
 
     More documentation and examples of PClass usage is available at https://github.com/tobgu/pyrsistent
     """
-    def __new__(cls, **kwargs):    # Support *args?
+
+    def __new__(cls, **kwargs):  # Support *args?
         result = super(PClass, cls).__new__(cls)
-        factory_fields = kwargs.pop('_factory_fields', None)
-        ignore_extra = kwargs.pop('ignore_extra', None)
+        factory_fields = kwargs.pop("_factory_fields", None)
+        ignore_extra = kwargs.pop("ignore_extra", None)
         missing_fields = []
         invariant_errors = []
         for name, field in cls._pclass_fields.items():
@@ -64,17 +78,21 @@ class PClass(CheckedType):
                 del kwargs[name]
             elif field.initial is not PFIELD_NO_INITIAL:
                 initial = field.initial() if callable(field.initial) else field.initial
-                _check_and_set_attr(
-                    cls, field, name, initial, result, invariant_errors)
+                _check_and_set_attr(cls, field, name, initial, result, invariant_errors)
             elif field.mandatory:
-                missing_fields.append('{0}.{1}'.format(cls.__name__, name))
+                missing_fields.append("{0}.{1}".format(cls.__name__, name))
 
         if invariant_errors or missing_fields:
-            raise InvariantException(tuple(invariant_errors), tuple(missing_fields), 'Field invariant failed')
+            raise InvariantException(
+                tuple(invariant_errors), tuple(missing_fields), "Field invariant failed"
+            )
 
         if kwargs:
-            raise AttributeError("'{0}' are not among the specified fields for {1}".format(
-                ', '.join(kwargs), cls.__name__))
+            raise AttributeError(
+                "'{0}' are not among the specified fields for {1}".format(
+                    ", ".join(kwargs), cls.__name__
+                )
+            )
 
         check_global_invariants(result, cls._pclass_invariants)
 
@@ -139,7 +157,9 @@ class PClass(CheckedType):
         for name in self._pclass_fields:
             value = getattr(self, name, _MISSING_VALUE)
             if value is not _MISSING_VALUE:
-                result[name] = serialize(self._pclass_fields[name].serializer, format, value)
+                result[name] = serialize(
+                    self._pclass_fields[name].serializer, format, value
+                )
 
         return result
 
@@ -155,7 +175,9 @@ class PClass(CheckedType):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             for name in self._pclass_fields:
-                if getattr(self, name, _MISSING_VALUE) != getattr(other, name, _MISSING_VALUE):
+                if getattr(self, name, _MISSING_VALUE) != getattr(
+                    other, name, _MISSING_VALUE
+                ):
                     return False
 
             return True
@@ -167,16 +189,24 @@ class PClass(CheckedType):
 
     def __hash__(self):
         # May want to optimize this by caching the hash somehow
-        return hash(tuple((key, getattr(self, key, _MISSING_VALUE)) for key in self._pclass_fields))
+        return hash(
+            tuple(
+                (key, getattr(self, key, _MISSING_VALUE)) for key in self._pclass_fields
+            )
+        )
 
     def __setattr__(self, key, value):
-        if getattr(self, '_pclass_frozen', False):
-            raise AttributeError("Can't set attribute, key={0}, value={1}".format(key, value))
+        if getattr(self, "_pclass_frozen", False):
+            raise AttributeError(
+                "Can't set attribute, key={0}, value={1}".format(key, value)
+            )
 
         super(PClass, self).__setattr__(key, value)
 
     def __delattr__(self, key):
-            raise AttributeError("Can't delete attribute, key={0}, use remove()".format(key))
+        raise AttributeError(
+            "Can't delete attribute, key={0}, use remove()".format(key)
+        )
 
     def _to_dict(self):
         result = {}
@@ -188,12 +218,18 @@ class PClass(CheckedType):
         return result
 
     def __repr__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self._to_dict().items()))
+        return "{0}({1})".format(
+            self.__class__.__name__,
+            ", ".join("{0}={1}".format(k, repr(v)) for k, v in self._to_dict().items()),
+        )
 
     def __reduce__(self):
         # Pickling support
-        data = dict((key, getattr(self, key)) for key in self._pclass_fields if hasattr(self, key))
+        data = dict(
+            (key, getattr(self, key))
+            for key in self._pclass_fields
+            if hasattr(self, key)
+        )
         return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):
@@ -213,7 +249,12 @@ class PClass(CheckedType):
 
 
 class _PClassEvolver(object):
-    __slots__ = ('_pclass_evolver_original', '_pclass_evolver_data', '_pclass_evolver_data_is_dirty', '_factory_fields')
+    __slots__ = (
+        "_pclass_evolver_original",
+        "_pclass_evolver_data",
+        "_pclass_evolver_data_is_dirty",
+        "_factory_fields",
+    )
 
     def __init__(self, original, initial_dict):
         self._pclass_evolver_original = original
@@ -249,8 +290,9 @@ class _PClassEvolver(object):
 
     def persistent(self):
         if self._pclass_evolver_data_is_dirty:
-            return self._pclass_evolver_original.__class__(_factory_fields=self._factory_fields,
-                                                           **self._pclass_evolver_data)
+            return self._pclass_evolver_original.__class__(
+                _factory_fields=self._factory_fields, **self._pclass_evolver_data
+            )
 
         return self._pclass_evolver_original
 

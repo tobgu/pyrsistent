@@ -30,7 +30,7 @@ class PBag(object):
     pbag([1, 2, 3, 4])
     """
 
-    __slots__ = ('_counts', '__weakref__')
+    __slots__ = ("_counts", "__weakref__")
 
     def __init__(self, counts):
         self._counts = counts
@@ -145,7 +145,7 @@ class PBag(object):
         return self._counts == other._counts
 
     def __lt__(self, other):
-        raise TypeError('PBags are not orderable')
+        raise TypeError("PBags are not orderable")
 
     __le__ = __lt__
     __gt__ = __lt__
@@ -184,7 +184,7 @@ class PBag(object):
             elif elem in self:
                 result.remove(elem)
         return PBag(result.persistent())
-        
+
     def __or__(self, other):
         """ 
         Union: Keep elements that are present in either of two PBags.
@@ -200,7 +200,7 @@ class PBag(object):
             newcount = max(count, other_count)
             result[elem] = newcount
         return PBag(result.persistent())
-        
+
     def __and__(self, other):
         """
         Intersection: Only keep elements that are present in both PBags.
@@ -216,7 +216,7 @@ class PBag(object):
             if newcount > 0:
                 result[elem] = newcount
         return PBag(result.persistent())
-    
+
     def __hash__(self):
         """
         Hash based on value of elements.
@@ -264,4 +264,3 @@ def pbag(elements):
 
 
 _EMPTY_PBAG = PBag(pmap())
-

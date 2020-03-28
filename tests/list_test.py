@@ -86,11 +86,12 @@ def test_index_out_of_range():
     with pytest.raises(IndexError):
         plist([1, 2])[-3]
 
+
 def test_index_invalid_type():
     with pytest.raises(TypeError) as e:
-        plist([1, 2, 3])['foo']  # type: ignore
+        plist([1, 2, 3])["foo"]  # type: ignore
 
-    assert 'cannot be interpreted' in str(e.value)
+    assert "cannot be interpreted" in str(e.value)
 
 
 def test_slicing_take():
@@ -196,6 +197,7 @@ def test_mcons():
 
 def test_supports_weakref():
     import weakref
+
     weakref.ref(plist())
     weakref.ref(plist([1, 2]))
 

@@ -75,8 +75,14 @@ def mutant(fn):
     All arguments to the decorated function will be frozen so that they are guaranteed not to change.
     The return value is also frozen.
     """
+
     @wraps(fn)
     def inner_f(*args, **kwargs):
-        return freeze(fn(*[freeze(e) for e in args], **dict(freeze(item) for item in kwargs.items())))
+        return freeze(
+            fn(
+                *[freeze(e) for e in args],
+                **dict(freeze(item) for item in kwargs.items())
+            )
+        )
 
     return inner_f

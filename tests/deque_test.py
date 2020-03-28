@@ -19,7 +19,7 @@ def test_construction_with_maxlen():
 
 def test_construction_with_invalid_maxlen():
     with pytest.raises(TypeError):
-        pdeque([], maxlen='foo')
+        pdeque([], maxlen="foo")
 
     with pytest.raises(ValueError):
         pdeque([], maxlen=-3)
@@ -108,9 +108,9 @@ def test_pop_empty_deque_returns_empty_deque():
 
 
 def test_str():
-    assert str(pdeque([1, 2, 3])) == 'pdeque([1, 2, 3])'
-    assert str(pdeque([])) == 'pdeque([])'
-    assert str(pdeque([1, 2], maxlen=4)) == 'pdeque([1, 2], maxlen=4)'
+    assert str(pdeque([1, 2, 3])) == "pdeque([1, 2, 3])"
+    assert str(pdeque([])) == "pdeque([])"
+    assert str(pdeque([1, 2], maxlen=4)) == "pdeque([1, 2], maxlen=4)"
 
 
 def test_append():
@@ -255,9 +255,9 @@ def test_indexing_out_of_range():
 
 def test_indexing_invalid_type():
     with pytest.raises(TypeError) as e:
-        pdeque([1, 2, 3])['foo']
+        pdeque([1, 2, 3])["foo"]
 
-    assert 'cannot be interpreted' in str(e.value)
+    assert "cannot be interpreted" in str(e.value)
 
 
 def test_slicing():
@@ -281,6 +281,7 @@ def test_literalish():
 
 def test_supports_weakref():
     import weakref
+
     weakref.ref(dq(1, 2))
 
 

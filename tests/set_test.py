@@ -121,6 +121,7 @@ def test_evolver_simple_add():
     assert x2 == s(1, 2, 3, 4)
     assert x == s(1, 2, 3)
 
+
 def test_evolver_simple_remove():
     x = s(1, 2, 3)
     e = x.evolver()
@@ -158,6 +159,7 @@ def test_pickling_non_empty_map():
 
 def test_supports_weakref():
     import weakref
+
     weakref.ref(s(1))
 
 

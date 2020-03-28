@@ -3,6 +3,7 @@ from pyrsistent import pvector, pset
 
 import time
 
+
 def run_big_iterator_initialization():
     """
     The results are comparable to those of doing it with a list since most of the
@@ -86,7 +87,6 @@ def run_create_many_small_vectors():
         vec = pvector(single)
     print("Many small Single element: " + str(time.time() - before))
 
-
     before = time.time()
     double = [2, 3]
     for _ in iterations:
@@ -111,6 +111,7 @@ def run_create_many_small_vectors():
         vec = pvector(x)
     print("Many small 33 elements: " + str(time.time() - before))
 
+
 def run_set_performance():
     """
     == PyPy ==
@@ -132,7 +133,7 @@ def run_set_performance():
     print("Big set from list: " + str(time.time() - before))
 
     before = time.time()
-    s2 = pset(l, pre_size=2*len(l))
+    s2 = pset(l, pre_size=2 * len(l))
     print("Big pset from list: " + str(time.time() - before))
 
     before = time.time()
@@ -142,6 +143,7 @@ def run_set_performance():
     before = time.time()
     random_access(s2)
     print("Random access pset: " + str(time.time() - before))
+
 
 def run_vector_random_access_performance():
     def random_access(o):
@@ -154,7 +156,7 @@ def run_vector_random_access_performance():
 
     testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]
     l = range(1000000)
-    
+
     before = time.time()
     random_access(l)
     print("Random access large list: " + str(time.time() - before))
@@ -166,7 +168,7 @@ def run_vector_random_access_performance():
 
     testdata = [0, 4, 17, -2, 3, 7, 8, 11, 1, 13, 18, 10]
     l = range(20)
-    
+
     before = time.time()
     random_access(l)
     print("Random access small list: " + str(time.time() - before))
@@ -175,7 +177,7 @@ def run_vector_random_access_performance():
     before = time.time()
     random_access(v)
     print("Random access small vector: " + str(time.time() - before))
-    
+
 
 def run_string_from_objects():
     p = pvector(range(1000000))
@@ -187,6 +189,7 @@ def run_string_from_objects():
     before = time.time()
     s2 = str(p)
     print("Str 2: " + str(time.time() - before))
+
 
 def run_to_list():
     p = pvector(range(1000000))
@@ -209,6 +212,7 @@ def run_to_list():
     except:
         print("Totuple not implemented")
 
+
 def run_len():
     # This is quite close to the python function call overhead baseline since the function
     # itself hardly does anything. That is the only reason this test is interesting.
@@ -226,7 +230,11 @@ def run_len():
         pass
     empty_duration = time.time() - before
     print("Empty loop: %s s, per call %s s" % (empty_duration, empty_duration / r))
-    print("Len estimate: %s, per call: %s" % (len_duration - empty_duration, (len_duration - empty_duration) / r))
+    print(
+        "Len estimate: %s, per call: %s"
+        % (len_duration - empty_duration, (len_duration - empty_duration) / r)
+    )
+
 
 def random_access(s):
     testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]
@@ -237,12 +245,13 @@ def random_access(s):
 
     return result
 
+
 def run_multiple_random_inserts():
     from pyrsistent import _pvector as _pvector
 
     indices = [2, 405, 56, 5067, 15063, 7045, 19999, 10022, 6000, 4023]
     for x in range(4):
-        indices.extend([i+318 for i in indices])
+        indices.extend([i + 318 for i in indices])
 
     print("Number of accesses: %s" % len(indices))
     print("Number of elements in vector: %s" % max(indices))
@@ -256,7 +265,10 @@ def run_multiple_random_inserts():
     for r in range(10000):
         for i in indices:
             new = new.set(i, 0)
-    print("Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
+    print(
+        "Done simple, time=%s s, iterations=%s"
+        % (time.time() - start, 10000 * len(indices))
+    )
     assert original == original2
 
     # Using setter view
@@ -266,7 +278,10 @@ def run_multiple_random_inserts():
         for i in indices:
             evolver[i] = 0
     new2 = evolver.persistent()
-    print("Done evolver, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
+    print(
+        "Done evolver, time=%s s, iterations=%s"
+        % (time.time() - start, 10000 * len(indices))
+    )
 
     assert original == original2
 
@@ -281,18 +296,23 @@ def run_multiple_random_inserts():
     args = list(interleave(indices, repeat(0)))
     for _ in range(10000):
         new3 = new3.mset(*args)
-    print("Done mset, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(args)/2))
+    print(
+        "Done mset, time=%s s, iterations=%s"
+        % (time.time() - start, 10000 * len(args) / 2)
+    )
 
     assert list(new) == list(new2)
     assert list(new2) == list(new3)
+
 
 def run_multiple_inserts_in_pmap():
     from pyrsistent import pmap
 
     COUNT = 100000
+
     def test_range():
         prime = 317
-        return range(0, prime*COUNT, prime)
+        return range(0, prime * COUNT, prime)
 
     elements = {x: x for x in test_range()}
 
@@ -300,7 +320,6 @@ def run_multiple_inserts_in_pmap():
     start = time.time()
     m1 = pmap(elements)
     print("Done initializing, time=%s s, count=%s" % (time.time() - start, COUNT))
-
 
     start = time.time()
     m2 = pmap()
