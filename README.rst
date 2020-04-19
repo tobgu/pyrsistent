@@ -1,6 +1,6 @@
 Pyrsistent
 ==========
-.. image:: https://travis-ci.org/tobgu/pyrsistent.png?branch=master
+.. image:: https://travis-ci.org/tobgu/pyrsistent.svg?branch=master
     :target: https://travis-ci.org/tobgu/pyrsistent
 
 .. image:: https://badge.fury.io/py/pyrsistent.svg
