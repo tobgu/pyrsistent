@@ -881,7 +881,7 @@ def test_compare_with_non_iterable(pvector):
 
 
 def test_python_no_c_extension_with_environment_variable():
-    from six.moves import reload_module
+    from importlib import reload as reload_module
     import pyrsistent._pvector
     import pyrsistent
     import os

@@ -1,7 +1,6 @@
 import pickle
 import datetime
 import pytest
-import six
 import uuid
 from pyrsistent import (
     PRecord, field, InvariantException, ny, pset, PSet, CheckedPVector,
@@ -378,8 +377,8 @@ def test_transform_without_update_returns_same_precord():
 
 
 class Application(PRecord):
-    name = field(type=(six.text_type,) + six.string_types)
-    image = field(type=(six.text_type,) + six.string_types)
+    name = field(type=(str, str))
+    image = field(type=(str, str))
 
 
 class ApplicationVector(CheckedPVector):

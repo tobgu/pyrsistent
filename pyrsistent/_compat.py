@@ -1,6 +1,3 @@
-from six import string_types
-
-
 # enum compat
 try:
     from enum import Enum

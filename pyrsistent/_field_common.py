@@ -1,4 +1,3 @@
-import six
 import sys
 
 from pyrsistent._checked_types import (
@@ -139,7 +138,7 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
 
 def _check_field_parameters(field):
     for t in field.type:
-        if not isinstance(t, type) and not isinstance(t, six.string_types):
+        if not isinstance(t, type) and not isinstance(t, str):
             raise TypeError('Type parameter expected, not {0}'.format(type(t)))
 
     if field.initial is not PFIELD_NO_INITIAL and \

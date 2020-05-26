@@ -39,7 +39,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 """
 import operator
-from six.moves import reduce
+from functools import reduce
 
 
 def get_in(keys, coll, default=None, no_default=False):

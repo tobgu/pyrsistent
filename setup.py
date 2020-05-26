@@ -75,7 +75,6 @@ setup(
     setup_requires=pytest_runner,
     ext_modules=extensions,
     cmdclass={'build_ext': custom_build_ext},
-    install_requires=['six'],
     packages=['pyrsistent'],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
 )

@@ -1,5 +1,4 @@
 import re
-import six
 try:
     from inspect import Parameter, signature
 except ImportError:
@@ -35,7 +34,7 @@ def discard(evolver, key):
 def rex(expr):
     """ Regular expression matcher to use together with transform functions """
     r = re.compile(expr)
-    return lambda key: isinstance(key, six.string_types) and r.match(key)
+    return lambda key: isinstance(key, str) and r.match(key)
 
 
 def ny(_):

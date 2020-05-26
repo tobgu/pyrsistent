@@ -1,6 +1,5 @@
 from ._compat import Mapping, Hashable
 from itertools import chain
-import six
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
 
@@ -146,7 +145,7 @@ class PMap(object):
             return dict(self.iteritems()) == dict(other.iteritems())
         elif isinstance(other, dict):
             return dict(self.iteritems()) == other
-        return dict(self.iteritems()) == dict(six.iteritems(other))
+        return dict(self.iteritems()) == dict(other.items())
 
     __ne__ = Mapping.__ne__
 
@@ -418,7 +417,7 @@ def _turbo_mapping(initial, pre_size):
         # key collisions
         initial = dict(initial)
 
-    for k, v in six.iteritems(initial):
+    for k, v in initial.items():
         h = hash(k)
         index = h % size
         bucket = buckets[index]
