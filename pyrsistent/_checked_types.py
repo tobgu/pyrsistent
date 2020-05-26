@@ -1,6 +1,7 @@
-from ._compat import Iterable
+from enum import Enum
 
-from pyrsistent._compat import Enum
+from collections.abc import Iterable
+
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PythonPVector, python_pvector
@@ -47,7 +48,7 @@ class InvariantException(Exception):
 
 
 _preserved_iterable_types = (
-        Enum,
+    Enum,
 )
 """Some types are themselves iterable, but we want to use the type itself and
 not its members for the type specification. This defines a set of such types

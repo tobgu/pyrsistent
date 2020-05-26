@@ -1,5 +1,4 @@
-from pyrsistent._compat import Mapping, Hashable
-import six
+from collections.abc import Mapping, Hashable
 from operator import add
 import pytest
 from pyrsistent import pmap, m, PVector
@@ -29,9 +28,9 @@ def test_initialization_with_one_element():
     assert the_map['a'] == 2
     assert the_map.a == 2
     assert 'a' in the_map
-    
+
     assert the_map is the_map.discard('b')
-    
+
     empty_map = the_map.remove('a')
     assert len(empty_map) == 0
     assert 'a' not in empty_map
@@ -87,12 +86,12 @@ def test_initialization_with_many_elements():
     assert the_map['16'] == 16
     assert the_map['1699'] == 1699
     assert the_map.set('256', 256) is the_map
- 
+
     new_map = the_map.remove('1600')
     assert len(new_map) == 1699
     assert '1600' not in new_map
     assert new_map['1601'] == 1601
-    
+
     # Some NOP properties
     assert new_map.discard('18888') is new_map
     assert '19999' not in new_map
@@ -103,12 +102,12 @@ def test_initialization_with_many_elements():
 def test_access_non_existing_element():
     map1 = pmap()
     assert len(map1) == 0
-    
+
     map2 = map1.set('1', 1)
     assert '1' not in map1
     assert map2['1'] == 1
     assert '2' not in map2
-    
+
 
 def test_overwrite_existing_element():
     map1 = pmap({'a': 2})
@@ -223,7 +222,7 @@ def test_not_equal_to_dict():
 
 def test_update_with_multiple_arguments():
     # If same value is present in multiple sources, the rightmost is used.
-    x = m(a=1, b=2, c=3)    
+    x = m(a=1, b=2, c=3)
     y = x.update(m(b=4, c=5), {'c': 6})
 
     assert y == m(a=1, b=4, c=6)
@@ -248,19 +247,19 @@ def test_addition():
 def test_transform_base_case():
     # Works as set when called with only one key
     x = m(a=1, b=2)
-    
+
     assert x.transform(['a'], 3) == m(a=3, b=2)
 
 
 def test_transform_nested_maps():
     x = m(a=1, b=m(c=3, d=m(e=6, f=7)))
-    
+
     assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999, f=7)))
 
 
 def test_transform_levels_missing():
     x = m(a=1, b=m(c=3))
-    
+
     assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
 
 
@@ -284,7 +283,7 @@ def test_hash_collision_is_correctly_resolved():
     assert map[dummy2] == 2
     assert map[dummy3] == 3
     assert dummy4 not in map
-    
+
     keys = set()
     values = set()
     for k, v in map.iteritems():
@@ -296,40 +295,40 @@ def test_hash_collision_is_correctly_resolved():
 
     map2 = map.set(dummy1, 11)
     assert map2[dummy1] == 11
-    
+
     # Re-use existing structure when inserted element is the same
     assert map2.set(dummy1, 11) is map2
-    
+
     map3 = map.set('a', 22)
     assert map3['a'] == 22
     assert map3[dummy3] == 3
-    
+
     # Remove elements
     map4 = map.discard(dummy2)
     assert len(map4) == 2
     assert map4[dummy1] == 1
     assert dummy2 not in map4
     assert map4[dummy3] == 3
-    
+
     assert map.discard(dummy4) is map
-    
+
     # Empty map handling
     empty_map = map4.remove(dummy1).remove(dummy3)
     assert len(empty_map) == 0
     assert empty_map.discard(dummy1) is empty_map
-    
+
 
 def test_bitmap_indexed_iteration():
     map = pmap({'a': 2, 'b': 1})
     keys = set()
     values = set()
-    
+
     count = 0
     for k, v in map.iteritems():
         count += 1
         keys.add(k)
         values.add(v)
-    
+
     assert count == 2
     assert keys == set(['a', 'b'])
     assert values == set([2, 1])
@@ -339,10 +338,10 @@ def test_iteration_with_many_elements():
     values = list(range(0, 2000))
     keys = [str(x) for x in values]
     init_dict = dict(zip(keys, values))
-    
+
     hash_dummy1 = HashDummy()
     hash_dummy2 = HashDummy()
-    
+
     # Throw in a couple of hash collision nodes to tests
     # those properly as well
     init_dict[hash_dummy1] = 12345
@@ -351,11 +350,11 @@ def test_iteration_with_many_elements():
 
     actual_values = set()
     actual_keys = set()
-    
+
     for k, v in map.iteritems():
         actual_values.add(v)
         actual_keys.add(k)
-        
+
     assert actual_keys == set(keys + [hash_dummy1, hash_dummy2])
     assert actual_values == set(values + [12345, 54321])
 

@@ -1,4 +1,4 @@
-from ._compat import Container, Iterable, Sized, Hashable
+from collections.abc import Container, Iterable, Sized, Hashable
 from functools import reduce
 from pyrsistent._pmap import pmap
 
@@ -154,7 +154,7 @@ class PBag(object):
     # Multiset-style operations similar to collections.Counter
 
     def __add__(self, other):
-        """ 
+        """
         Combine elements from two PBags.
 
         >>> pbag([1, 2, 2]) + pbag([2, 3, 3])
@@ -168,7 +168,7 @@ class PBag(object):
         return PBag(result.persistent())
 
     def __sub__(self, other):
-        """ 
+        """
         Remove elements from one PBag that are present in another.
 
         >>> pbag([1, 2, 2, 2, 3]) - pbag([2, 3, 3, 4])
@@ -184,9 +184,9 @@ class PBag(object):
             elif elem in self:
                 result.remove(elem)
         return PBag(result.persistent())
-        
+
     def __or__(self, other):
-        """ 
+        """
         Union: Keep elements that are present in either of two PBags.
 
         >>> pbag([1, 2, 2, 2]) | pbag([2, 3, 3])
@@ -200,11 +200,11 @@ class PBag(object):
             newcount = max(count, other_count)
             result[elem] = newcount
         return PBag(result.persistent())
-        
+
     def __and__(self, other):
         """
         Intersection: Only keep elements that are present in both PBags.
-        
+
         >>> pbag([1, 2, 2, 2]) & pbag([2, 3, 3])
         pbag([2])
         """
@@ -216,7 +216,7 @@ class PBag(object):
             if newcount > 0:
                 result[elem] = newcount
         return PBag(result.persistent())
-    
+
     def __hash__(self):
         """
         Hash based on value of elements.

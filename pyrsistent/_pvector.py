@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABCMeta
-from ._compat import Sequence, Hashable
+from collections.abc import Sequence, Hashable
 from numbers import Integral
 import operator
 from pyrsistent._transformations import transform
