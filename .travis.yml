@@ -138,7 +138,7 @@ matrix:
       name: doctest36
       language: python
       python: 3.6
-      dist: trusty
+      dist: xenial
       sudo: false
       env:
         - TOXENV=doctest36
@@ -165,7 +165,7 @@ matrix:
       name: memorytest36
       language: python
       python: 3.6
-      dist: trusty
+      dist: xenial
       sudo: false
       env:
         - TOXENV=memorytest36
