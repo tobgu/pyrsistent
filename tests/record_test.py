@@ -377,8 +377,8 @@ def test_transform_without_update_returns_same_precord():
 
 
 class Application(PRecord):
-    name = field(type=(str, str))
-    image = field(type=(str, str))
+    name = field(type=str)
+    image = field(type=str)
 
 
 class ApplicationVector(CheckedPVector):
