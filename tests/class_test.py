@@ -1,8 +1,7 @@
-from pyrsistent._compat import Hashable
+from collections.abc import Hashable
 import math
 import pickle
 import pytest
-import sys
 import uuid
 from pyrsistent import (
     field, InvariantException, PClass, optional, CheckedPVector,
@@ -411,9 +410,7 @@ def test_lazy_invariant_message():
     except InvariantException as e:
         assert '5 is too large' in e.invariant_errors
 
-# Skipping this test for now but it describes a corner case with using Enums in
-# python 3 as types and a workaround to make it work.
-@pytest.mark.skipif(sys.version_info < (3, 4) or True, reason="requires python3.4")
+
 def test_enum_key_type():
     import enum
     class Foo(enum.Enum):

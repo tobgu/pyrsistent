@@ -1,8 +1,6 @@
-from ._compat import Set, Hashable
+from collections.abc import Set, Hashable
 import sys
 from pyrsistent._pmap import pmap
-
-PY2 = sys.version_info[0] < 3
 
 
 class PSet(object):
@@ -44,7 +42,7 @@ class PSet(object):
         return len(self._map)
 
     def __repr__(self):
-        if PY2 or not self:
+        if not self:
             return 'p' + str(set(self))
 
         return 'pset([{0}])'.format(str(set(self))[1:-1])

@@ -1,7 +1,5 @@
 import sys
 
-import six
-
 
 def immutable(members='', name='Immutable', verbose=False):
     """
@@ -48,7 +46,7 @@ def immutable(members='', name='Immutable', verbose=False):
     AttributeError: Cannot set frozen members id_
     """
 
-    if isinstance(members, six.string_types):
+    if isinstance(members, str):
         members = members.replace(',', ' ').split()
 
     def frozen_member_test():
@@ -98,7 +96,7 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}]{verbose_string
     from collections import namedtuple
     namespace = dict(namedtuple=namedtuple, __name__='pyrsistent_immutable')
     try:
-        six.exec_(template, namespace)
+        exec(template, namespace)
     except SyntaxError as e:
         raise SyntaxError(e.message + ':\n' + template)
 

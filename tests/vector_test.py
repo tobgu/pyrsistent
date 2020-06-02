@@ -1,3 +1,4 @@
+from collections.abc import Hashable, Sequence
 import os
 import pickle
 import pytest
@@ -321,7 +322,6 @@ def test_index_error_negative(pvector):
 
 
 def test_is_sequence(pvector):
-    from pyrsistent._compat import Sequence
     assert isinstance(pvector(), Sequence)
 
 
@@ -350,7 +350,7 @@ def test_repr_when_contained_object_contains_reference_to_self(pvector):
 
 
 def test_is_hashable(pvector):
-    from pyrsistent._compat import Hashable
+
     v = pvector([1, 2, 3])
     v2 = pvector([1, 2, 3])
 
@@ -881,7 +881,7 @@ def test_compare_with_non_iterable(pvector):
 
 
 def test_python_no_c_extension_with_environment_variable():
-    from six.moves import reload_module
+    from importlib import reload as reload_module
     import pyrsistent._pvector
     import pyrsistent
     import os

@@ -1,5 +1,4 @@
 from functools import wraps
-import six
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PVector, pvector
@@ -29,7 +28,7 @@ def freeze(o):
     """
     typ = type(o)
     if typ is dict:
-        return pmap(dict((k, freeze(v)) for k, v in six.iteritems(o)))
+        return pmap(dict((k, freeze(v)) for k, v in o.items()))
     if typ is list:
         return pvector(map(freeze, o))
     if typ is tuple:

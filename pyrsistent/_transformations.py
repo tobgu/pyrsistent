@@ -1,13 +1,9 @@
 import re
-import six
 try:
     from inspect import Parameter, signature
 except ImportError:
     signature = None
-    try:
-        from inspect import getfullargspec as getargspec
-    except ImportError:
-        from inspect import getargspec
+    from inspect import getfullargspec
 
 
 _EMPTY_SENTINEL = object()
@@ -35,7 +31,7 @@ def discard(evolver, key):
 def rex(expr):
     """ Regular expression matcher to use together with transform functions """
     r = re.compile(expr)
-    return lambda key: isinstance(key, six.string_types) and r.match(key)
+    return lambda key: isinstance(key, str) and r.match(key)
 
 
 def ny(_):
@@ -107,7 +103,7 @@ def _get_keys_and_values(structure, key_spec):
 
 if signature is None:
     def _get_arity(f):
-        argspec = getargspec(f)
+        argspec = getfullargspec(f)
         return len(argspec.args) - len(argspec.defaults or ())
 else:
     def _get_arity(f):

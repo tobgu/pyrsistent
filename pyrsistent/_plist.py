@@ -1,4 +1,4 @@
-from ._compat import Sequence, Hashable
+from collections.abc import Sequence, Hashable
 from numbers import Integral
 from functools import reduce
 
@@ -143,7 +143,7 @@ class _PListBase(object):
     def __eq__(self, other):
         """
         Traverses the lists, checking equality of elements.
-        
+
         This is an O(n) operation, but preserves the standard semantics of list equality.
         """
         if not isinstance(other, _PListBase):

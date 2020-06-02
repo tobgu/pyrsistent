@@ -1,12 +1,8 @@
-from pyrsistent._compat import Enum
+from enum import Enum
 
 from pyrsistent import field, pvector_field
 
 
-# NB: This derives from the internal `pyrsistent._compat.Enum` in order to
-# simplify coverage across python versions. Since we use
-# `pyrsistent._compat.Enum` in `pyrsistent`'s implementation, it's useful to
-# use it in the test coverage as well, for consistency.
 class TestEnum(Enum):
     x = 1
     y = 2

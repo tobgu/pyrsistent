@@ -1,7 +1,7 @@
-from ._compat import Iterable
-import six
+from enum import Enum
 
-from pyrsistent._compat import Enum, string_types
+from collections.abc import Iterable
+
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PythonPVector, python_pvector
@@ -48,7 +48,7 @@ class InvariantException(Exception):
 
 
 _preserved_iterable_types = (
-        Enum,
+    Enum,
 )
 """Some types are themselves iterable, but we want to use the type itself and
 not its members for the type specification. This defines a set of such types
@@ -69,7 +69,7 @@ def maybe_parse_user_type(t):
     """
     is_type = isinstance(t, type)
     is_preserved = isinstance(t, type) and issubclass(t, _preserved_iterable_types)
-    is_string = isinstance(t, string_types)
+    is_string = isinstance(t, str)
     is_iterable = isinstance(t, Iterable)
 
     if is_preserved:
@@ -268,8 +268,7 @@ def _checked_type_create(cls, source_data, _factory_fields=None, ignore_extra=Fa
 
     return cls(source_data)
 
-@six.add_metaclass(_CheckedTypeMeta)
-class CheckedPVector(PythonPVector, CheckedType):
+class CheckedPVector(PythonPVector, CheckedType, metaclass=_CheckedTypeMeta):
     """
     A CheckedPVector is a PVector which allows specifying type and invariant checks.
 
@@ -355,8 +354,7 @@ class CheckedPVector(PythonPVector, CheckedType):
         return CheckedPVector.Evolver(self.__class__, self)
 
 
-@six.add_metaclass(_CheckedTypeMeta)
-class CheckedPSet(PSet, CheckedType):
+class CheckedPSet(PSet, CheckedType, metaclass=_CheckedTypeMeta):
     """
     A CheckedPSet is a PSet which allows specifying type and invariant checks.
 
@@ -454,8 +452,7 @@ class _CheckedMapTypeMeta(type):
 _UNDEFINED_CHECKED_PMAP_SIZE = object()
 
 
-@six.add_metaclass(_CheckedMapTypeMeta)
-class CheckedPMap(PMap, CheckedType):
+class CheckedPMap(PMap, CheckedType, metaclass=_CheckedMapTypeMeta):
     """
     A CheckedPMap is a PMap which allows specifying type and invariant checks.
 

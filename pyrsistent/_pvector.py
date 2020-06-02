@@ -1,8 +1,7 @@
 from abc import abstractmethod, ABCMeta
-from ._compat import Sequence, Hashable
+from collections.abc import Sequence, Hashable
 from numbers import Integral
 import operator
-import six
 from pyrsistent._transformations import transform
 
 
@@ -411,8 +410,7 @@ class PythonPVector(object):
         l.remove(value)
         return _EMPTY_PVECTOR.extend(l)
 
-@six.add_metaclass(ABCMeta)
-class PVector(object):
+class PVector(metaclass=ABCMeta):
     """
     Persistent vector implementation. Meant as a replacement for the cases where you would normally
     use a Python list.
