@@ -179,8 +179,8 @@ class _PListBase(object):
 
         try:
             return self._drop(index).first
-        except AttributeError:
-            raise IndexError("PList index out of range")
+        except AttributeError as e:
+            raise IndexError("PList index out of range") from e
 
     def _drop(self, count):
         if count < 0:
