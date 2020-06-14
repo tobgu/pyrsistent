@@ -98,6 +98,6 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}]{verbose_string
     try:
         exec(template, namespace)
     except SyntaxError as e:
-        raise SyntaxError(e.message + ':\n' + template)
+        raise SyntaxError(e.message + ':\n' + template) from e
 
     return namespace[name]

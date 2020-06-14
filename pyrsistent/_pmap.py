@@ -92,10 +92,10 @@ class PMap(object):
     def __getattr__(self, key):
         try:
             return self[key]
-        except KeyError:
+        except KeyError as e:
             raise AttributeError(
                 "{0} has no attribute '{1}'".format(type(self).__name__, key)
-            )
+            ) from e
 
     def iterkeys(self):
         for k, _ in self.iteritems():
