@@ -97,14 +97,14 @@ def pmap_field(
     key_type: Type[KT],
     value_type: Type[VT],
     optional: bool = False,
-    invariant: Callable[[Any], Tuple[bool, Optional[str]]] = lambda _: (True, None),
+    invariant: Callable[[KT, VT], Tuple[bool, Optional[str]]] = lambda _1, _2: (True, None),
 ) -> PMap[KT, VT]: ...
 @overload
 def pmap_field(
     key_type: Any,
     value_type: Any,
     optional: bool = False,
-    invariant: Callable[[Any], Tuple[bool, Optional[str]]] = lambda _: (True, None),
+    invariant: Callable[[Any, Any], Tuple[bool, Optional[str]]] = lambda _1, _2: (True, None),
 ) -> PMap[Any, Any]: ...
 
 @overload
