@@ -3,7 +3,6 @@ matrix:
     - name: linux-py35
       language: python
       python: 3.5
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -15,7 +14,6 @@ matrix:
       name: linux-py35
       language: python
       python: 3.5
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -23,10 +21,10 @@ matrix:
         - TOXENV=py35
         - PIP=pip3
         - CIBW_BUILD=cp35-*
+
     - name: linux-py36
       language: python
       python: 3.6
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -38,7 +36,6 @@ matrix:
       name: linux-py36
       language: python
       python: 3.6
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -46,10 +43,10 @@ matrix:
         - TOXENV=py36
         - PIP=pip3
         - CIBW_BUILD=cp36-*
+
     - name: linux-py37
       language: python
       python: 3.7
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -61,7 +58,6 @@ matrix:
       name: linux-py37
       language: python
       python: 3.7
-      dist: xenial
       sudo: required
       services:
         - docker
@@ -69,6 +65,29 @@ matrix:
         - TOXENV=py37
         - PIP=pip3
         - CIBW_BUILD=cp37-*
+
+    - name: linux-py38
+      language: python
+      python: 3.8
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py38
+        - PIP=pip3
+        - CIBW_BUILD=cp3!-*
+    - arch: arm64
+      name: linux-py38
+      language: python
+      python: 3.8
+      sudo: required
+      services:
+        - docker
+      env:
+        - TOXENV=py38
+        - PIP=pip3
+        - CIBW_BUILD=cp38-*
+
     - name: osx-py35
       os: osx
       language: generic
@@ -82,6 +101,7 @@ matrix:
         - ${PIP} install cibuildwheel==0.10.2
       script:
         - cibuildwheel --output-dir dist
+
     - name: osx-py36
       os: osx
       language: generic
@@ -95,6 +115,7 @@ matrix:
         - ${PIP} install cibuildwheel==0.10.2
       script:
         - cibuildwheel --output-dir dist
+
     - name: osx-py37
       os: osx
       language: generic
@@ -108,6 +129,21 @@ matrix:
         - ${PIP} install cibuildwheel==0.10.2
       script:
         - cibuildwheel --output-dir dist
+
+    - name: osx-py38
+      os: osx
+      language: generic
+      env:
+        - TOXENV=py38
+        - PIP=pip2
+        - CIBW_BUILD=cp38-*
+        - CIBW_TEST_COMMAND="pushd {project}; tox ; popd"
+        - CIBW_BEFORE_BUILD="${PIP} install -U pip; ${PIP} install -r requirements.txt"
+      install:
+        - ${PIP} install cibuildwheel==0.10.2
+      script:
+        - cibuildwheel --output-dir dist
+
     - name: pypy3.5
       language: python
       python: pypy3.5
@@ -121,13 +157,13 @@ matrix:
         - ${PIP} install -r requirements.txt
       script:
         - tox
-    - name: doctest36
+
+    - name: doctest37
       language: python
-      python: 3.6
-      dist: trusty
+      python: 3.7
       sudo: false
       env:
-        - TOXENV=doctest36
+        - TOXENV=doctest37
         - PIP=pip
       install:
         - ${PIP} install -U pip
@@ -135,26 +171,25 @@ matrix:
       script:
         - tox
     - arch: arm64
-      name: doctest36
+      name: doctest37
       language: python
-      python: 3.6
-      dist: xenial
+      python: 3.7
       sudo: false
       env:
-        - TOXENV=doctest36
+        - TOXENV=doctest37
         - PIP=pip
       install:
         - ${PIP} install -U pip
         - ${PIP} install -r requirements.txt
       script:
         - tox
-    - name: memorytest36
+
+    - name: memorytest37
       language: python
-      python: 3.6
-      dist: trusty
+      python: 3.7
       sudo: false
       env:
-        - TOXENV=memorytest36
+        - TOXENV=memorytest37
         - PIP=pip
       install:
         - ${PIP} install -U pip
@@ -162,19 +197,19 @@ matrix:
       script:
         - tox
     - arch: arm64
-      name: memorytest36
+      name: memorytest37
       language: python
-      python: 3.6
-      dist: xenial
+      python: 3.7
       sudo: false
       env:
-        - TOXENV=memorytest36
+        - TOXENV=memorytest37
         - PIP=pip
       install:
         - ${PIP} install -U pip
         - ${PIP} install -r requirements.txt
       script:
         - tox
+
 install:
   - ${PIP} install -U pip
   - ${PIP} install cibuildwheel==0.10.2
