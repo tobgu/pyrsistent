@@ -12,7 +12,7 @@ Pyrsistent
 
 .. _Pyrthon: https://www.github.com/tobgu/pyrthon/
 
-Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in 
+Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in
 the sense that they are immutable.
 
 All methods on a data structure that would normally mutate it instead return a new copy of the structure containing the
@@ -222,7 +222,7 @@ by providing an iterable of types.
 
 
 Custom types (classes) that are iterable should be wrapped in a tuple to prevent their
-members being added to the set of valid types.  Although Enums in particular are now 
+members being added to the set of valid types.  Although Enums in particular are now
 supported without wrapping, see #83 for more information.
 
 Mandatory fields
@@ -329,7 +329,7 @@ It is also possible to have fields with ``pyrsistent`` collections.
    ...     map_int_to_str = pmap_field(int, str)
    ...     vector_of_strs = pvector_field(str)
    ...
-	
+
 Serialization
 *************
 PRecords support serialization back to dicts. Default serialization will take keys and values
@@ -567,15 +567,15 @@ Pyrsistent is developed and tested on Python 3.5, 3.6, 3.7, 3.8 and PyPy3.
 Performance
 -----------
 
-Pyrsistent is developed with performance in mind. Still, while some operations are nearly on par with their built in, 
+Pyrsistent is developed with performance in mind. Still, while some operations are nearly on par with their built in,
 mutable, counterparts in terms of speed, other operations are slower. In the cases where attempts at
 optimizations have been done, speed has generally been valued over space.
 
-Pyrsistent comes with two API compatible flavors of PVector (on which PMap and PSet are based), one pure Python 
+Pyrsistent comes with two API compatible flavors of PVector (on which PMap and PSet are based), one pure Python
 implementation and one implemented as a C extension. The latter generally being 2 - 20 times faster than the former.
 The C extension will be used automatically when possible.
 
-The pure python implementation is fully PyPy compatible. Running it under PyPy speeds operations up considerably if 
+The pure python implementation is fully PyPy compatible. Running it under PyPy speeds operations up considerably if
 the structures are used heavily (if JITed), for some cases the performance is almost on par with the built in counterparts.
 
 Type hints
@@ -686,7 +686,7 @@ Tests can be executed using tox_.
 
 Install tox: ``pip install tox``
 
-Run test for Python 3.7: ``tox -epy37``
+Run test for Python 3.8: ``tox -e py38``
 
 Release
 ~~~~~~~

@@ -1,8 +1,8 @@
-hypothesis<5
+hypothesis
 memory-profiler==0.57.0
 psutil==5.7.0
 pyperform
-pytest<5
+pytest
 setuptools
 Sphinx
 sphinx-rtd-theme==0.1.5
