@@ -672,6 +672,8 @@ johnthagen https://github.com/johnthagen
 
 Bastien Vallet https://github.com/djailla
 
+Ram Rachum  https://github.com/cool-RR
+
 Contributing
 ------------
 

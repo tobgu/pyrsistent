@@ -1,7 +1,10 @@
 Revision history
 ----------------
 0.17.0, 2020-09-08
- * Remove Python 2 support.
+ * Remove Python 2 support code. This includes dropping some compatibility code and the dependency on
+   six. Thanks @djailla for this.
+ * Fix #200, python 3 exception chaining. This is a minor backwards incompatibility, hence stepping
+   to 0.17.0. Thanks @cool-RR for this!
 
 0.16.0, 2020-03-24
  * No major updates but Python 2 support no longer guaranteed.
