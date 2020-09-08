@@ -78,4 +78,5 @@ setup(
     cmdclass={'build_ext': custom_build_ext},
     packages=['pyrsistent'],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
+    python_requires='>=3.5',
 )
