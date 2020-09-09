@@ -674,6 +674,8 @@ Bastien Vallet https://github.com/djailla
 
 Ram Rachum  https://github.com/cool-RR
 
+Vincent Philippon https://github.com/vphilippon
+
 Contributing
 ------------
 

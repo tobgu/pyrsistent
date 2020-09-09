@@ -1,6 +1,10 @@
 Revision history
 ----------------
-0.17.0, 2020-09-08
+0.17.1, 2020-09-09
+ * Restrict package to Python >= 3.5 to not break unpinned Python 2 dependencies. Thanks @vphilippon
+   for this!
+
+0.17.0 (yanked for Python 2 compatibility), 2020-09-08
  * Remove Python 2 support code. This includes dropping some compatibility code and the dependency on
    six. Thanks @djailla for this.
  * Fix #200, python 3 exception chaining. This is a minor backwards incompatibility, hence stepping
