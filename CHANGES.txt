@@ -1,6 +1,9 @@
 Revision history
 ----------------
-0.17.1, 2020-09-09
+0.17.2, 2020-09-09
+ * Same as 0.17.1 released with more recent version of setuptools to get proper meta data for in place.
+
+0.17.1 (yanked for proper meta data), 2020-09-09
  * Restrict package to Python >= 3.5 to not break unpinned Python 2 dependencies. Thanks @vphilippon
    for this!
 
