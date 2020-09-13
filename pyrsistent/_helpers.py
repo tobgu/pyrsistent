@@ -3,8 +3,12 @@ from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PVector, pvector
 
+# get PVector and PMap types for freeze - PVector type is different if C
+# extension has loaded
+pmap_type = type(pmap())
+pvector_type = type(pvector())
 
-def freeze(o):
+def freeze(o, nonstrict=False):
     """
     Recursively convert simple Python containers into pyrsistent versions
     of those containers.
@@ -13,6 +17,11 @@ def freeze(o):
     - dict is converted to pmap, recursively on values (but not keys)
     - set is converted to pset, but not recursively
     - tuple is converted to tuple, recursively.
+
+    If nonstrict == False:
+
+    - freeze is called on elements of pvectors
+    - freeze is called on values of pmaps
 
     Sets and dict keys are not recursively frozen because they do not contain
     mutable data by convention. The main exception to this rule is that
@@ -27,12 +36,12 @@ def freeze(o):
     (1, pvector([]))
     """
     typ = type(o)
-    if typ is dict:
-        return pmap(dict((k, freeze(v)) for k, v in o.items()))
-    if typ is list:
-        return pvector(map(freeze, o))
+    if typ is dict or (not nonstrict and typ is pmap_type):
+        return pmap(dict((k, freeze(v, nonstrict)) for k, v in o.items()))
+    if typ is list or (not nonstrict and typ is pvector_type):
+        return pvector(map(lambda x: freeze(x, nonstrict), o))
     if typ is tuple:
-        return tuple(map(freeze, o))
+        return tuple(map(lambda x: freeze(x, nonstrict), o))
     if typ is set:
         return pset(o)
     return o
