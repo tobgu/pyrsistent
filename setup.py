@@ -78,4 +78,5 @@ setup(
     install_requires=['six'],
     packages=['pyrsistent'],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
+    python_requires='>=2.7',
 )
