@@ -3,7 +3,7 @@
 from pyrsistent import v, m, s, freeze, thaw, PRecord, field, mutant
 
 
-## Freeze
+## Freeze (standard)
 
 def test_freeze_basic():
     assert freeze(1) == 1
@@ -27,10 +27,26 @@ def test_freeze_recurse_in_dictionary_values():
     assert result == m(a=v(1))
     assert type(result['a']) is type(v())
 
+def test_freeze_recurse_in_pmap_values():
+    input = {'a': m(b={'c': 1})}
+    result = freeze(input)
+    # PMap and PVector are == to their mutable equivalents
+    assert result == input
+    assert type(result) is type(m())
+    assert type(result['a']['b']) is type(m())
+
 def test_freeze_recurse_in_lists():
     result = freeze(['a', {'b': 3}])
     assert result == v('a', m(b=3))
     assert type(result[1]) is type(m())
+
+def test_freeze_recurse_in_pvectors():
+    input = [1, v(2, [3])]
+    result = freeze(input)
+    # PMap and PVector are == to their mutable equivalents
+    assert result == input
+    assert type(result) is type(v())
+    assert type(result[1][1]) is type(v())
 
 def test_freeze_recurse_in_tuples():
     """Values in tuples are recursively frozen."""
@@ -38,6 +54,24 @@ def test_freeze_recurse_in_tuples():
     assert result == ('a', m())
     assert type(result[1]) is type(m())
 
+
+## Freeze (weak)
+
+def test_freeze_nonstrict_no_recurse_in_pmap_values():
+    input = {'a': m(b={'c': 1})}
+    result = freeze(input, nonstrict=True)
+    # PMap and PVector are == to their mutable equivalents
+    assert result == input
+    assert type(result) is type(m())
+    assert type(result['a']['b']) is dict
+
+def test_freeze_nonstrict_no_recurse_in_pvectors():
+    input = [1, v(2, [3])]
+    result = freeze(input, nonstrict=True)
+    # PMap and PVector are == to their mutable equivalents
+    assert result == input
+    assert type(result) is type(v())
+    assert type(result[1][1]) is list
 
 
 ## Thaw
