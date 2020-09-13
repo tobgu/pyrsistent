@@ -559,6 +559,20 @@ These functions are great when your cozy immutable world has to interact with th
     >>> thaw(v(1, m(a=3)))
     [1, {'a': 3}]
 
+By default, freeze will also recursively convert values inside PVectors and PMaps. This behaviour can be changed by providing freeze with the flag nonstrict=True.
+
+.. code:: python
+
+    >>> from pyrsistent import freeze, v, m
+    >>> freeze(v(1, v(2, [3])))
+    pvector([1, pvector([2, pvector([3])])])
+    >>> freeze(v(1, v(2, [3])), nonstrict=True)
+    pvector([1, pvector([2, [3]])])
+    >>> freeze(m(a=m(b={'c': 1})))
+    pmap({'a': pmap({'b': pmap({'c': 1})})})
+    >>> freeze(m(a=m(b={'c': 1})), nonstrict=True)
+    pmap({'a': pmap({'b': {'c': 1}})})
+
 Compatibility
 -------------
 
