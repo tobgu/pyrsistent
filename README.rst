@@ -694,12 +694,15 @@ Run test for Python 3.8: ``tox -e py38``
 
 Release
 ~~~~~~~
+* `pip install -r requirements.txt`
 * Update CHANGES.txt
 * Update README with any new contributors and potential info needed.
 * Update _pyrsistent_version.py
-* python setup.py sdist upload
-* Commit and tag with new version: git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'
-* Push commit and tags: git push && git push --tags
+* `rm -rf dist/* && python setup.py sdist`
+* (`twine upload -r testpypi dist/*`), if testing the distribution on testpypi
+* `twine upload dist/*`
+* Commit and tag with new version: `git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'`
+* Push commit and tags: `git push && git push --tags`
 
 Project status
 --------------

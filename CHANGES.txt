@@ -1,6 +1,10 @@
 Revision history
 ----------------
-0.17.2, 2020-09-09
+0.16.1, 2020-09-13
+ * Add "python_requires >= 2.7" to setup.py in preparation for Python 2.7 incompatible updates
+   in 0.17.
+
+0.17.2 (yanked awaiting proper fix for Python 3 req), 2020-09-09
  * Same as 0.17.1 released with more recent version of setuptools to get proper meta data for in place.
 
 0.17.1 (yanked for proper meta data), 2020-09-09

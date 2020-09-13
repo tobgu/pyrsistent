@@ -1,9 +1,12 @@
+# Requirements for developing, testing and releasing pyrsistent
 hypothesis
 memory-profiler==0.57.0
 psutil==5.7.0
 pyperform
 pytest
-setuptools
 Sphinx
 sphinx-rtd-theme==0.1.5
 tox
+setuptools>=0.16.1
+twine>=3.2
+pip>=20.2.3
