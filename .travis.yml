@@ -110,9 +110,7 @@ matrix:
 
     - name: pypy3.6
       language: python
-      python: pypy3.6
-      dist: trusty
-      sudo: false
+      python: pypy3
       env:
         - TOXENV=pypy3
         - PIP=pip
@@ -125,7 +123,6 @@ matrix:
     - name: doctest38
       language: python
       python: 3.8
-      sudo: false
       env:
         - TOXENV=doctest38
         - PIP=pip
@@ -138,7 +135,6 @@ matrix:
       name: doctest38
       language: python
       python: 3.8
-      sudo: false
       env:
         - TOXENV=doctest38
         - PIP=pip
@@ -151,7 +147,6 @@ matrix:
     - name: memorytest38
       language: python
       python: 3.8
-      sudo: false
       env:
         - TOXENV=memorytest38
         - PIP=pip
@@ -164,7 +159,6 @@ matrix:
       name: memorytest38
       language: python
       python: 3.8
-      sudo: false
       env:
         - TOXENV=memorytest38
         - PIP=pip
