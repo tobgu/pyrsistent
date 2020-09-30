@@ -318,6 +318,31 @@ def test_hash_collision_is_correctly_resolved():
     assert empty_map.discard(dummy1) is empty_map
 
 
+class ObjectHashButAlwaysEqual(object):
+    def __hash__(self):
+        return object.__hash__(self)
+
+    def __eq__(self, other):
+        return True
+
+
+def test_object_hash_but_always_equal():
+    keys = []
+    py_dict = {}
+    for i in range(10000):
+        key = ObjectHashButAlwaysEqual()
+        keys.append(key)
+        py_dict[key] = i
+
+    p_map = pmap(py_dict)
+    assert len(py_dict) == len(p_map)
+    assert set(py_dict.keys()) == set(p_map.keys())
+
+    for i, key in enumerate(keys):
+        assert py_dict[key] == i
+        assert p_map[key] == i
+
+
 def test_bitmap_indexed_iteration():
     map = pmap({'a': 2, 'b': 1})
     keys = set()

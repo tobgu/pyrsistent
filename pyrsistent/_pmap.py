@@ -61,7 +61,7 @@ class PMap(object):
         _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
             for k, v in bucket:
-                if k == key:
+                if k == key and hash(k) == hash(key):
                     return v
 
         raise KeyError(key)
@@ -74,7 +74,7 @@ class PMap(object):
         _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
             for k, _ in bucket:
-                if k == key:
+                if k == key and hash(k) == hash(key):
                     return True
 
             return False
@@ -301,7 +301,7 @@ class PMap(object):
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
             if bucket:
                 for k, v in bucket:
-                    if k == key:
+                    if k == key and hash(k) == hash(key):
                         if v is not val:
                             new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
                             self._buckets_evolver[index] = new_bucket
