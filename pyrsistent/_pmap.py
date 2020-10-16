@@ -244,6 +244,8 @@ class PMap(object):
     def __add__(self, other):
         return self.update(other)
 
+    __or__ = __add__
+
     def __reduce__(self):
         # Pickling support
         return pmap, (dict(self),)
