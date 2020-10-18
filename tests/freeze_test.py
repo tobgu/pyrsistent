@@ -59,7 +59,7 @@ def test_freeze_recurse_in_tuples():
 
 def test_freeze_nonstrict_no_recurse_in_pmap_values():
     input = {'a': m(b={'c': 1})}
-    result = freeze(input, nonstrict=True)
+    result = freeze(input, strict=False)
     # PMap and PVector are == to their mutable equivalents
     assert result == input
     assert type(result) is type(m())
@@ -67,7 +67,7 @@ def test_freeze_nonstrict_no_recurse_in_pmap_values():
 
 def test_freeze_nonstrict_no_recurse_in_pvectors():
     input = [1, v(2, [3])]
-    result = freeze(input, nonstrict=True)
+    result = freeze(input, strict=False)
     # PMap and PVector are == to their mutable equivalents
     assert result == input
     assert type(result) is type(v())

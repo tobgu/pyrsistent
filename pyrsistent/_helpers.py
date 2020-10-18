@@ -8,7 +8,7 @@ from pyrsistent._pvector import PVector, pvector
 pmap_type = type(pmap())
 pvector_type = type(pvector())
 
-def freeze(o, nonstrict=False):
+def freeze(o, strict=True):
     """
     Recursively convert simple Python containers into pyrsistent versions
     of those containers.
@@ -18,7 +18,7 @@ def freeze(o, nonstrict=False):
     - set is converted to pset, but not recursively
     - tuple is converted to tuple, recursively.
 
-    If nonstrict == False:
+    If strict == True (default):
 
     - freeze is called on elements of pvectors
     - freeze is called on values of pmaps
@@ -36,12 +36,12 @@ def freeze(o, nonstrict=False):
     (1, pvector([]))
     """
     typ = type(o)
-    if typ is dict or (not nonstrict and typ is pmap_type):
-        return pmap(dict((k, freeze(v, nonstrict)) for k, v in o.items()))
-    if typ is list or (not nonstrict and typ is pvector_type):
-        return pvector(map(lambda x: freeze(x, nonstrict), o))
+    if typ is dict or (strict and typ is pmap_type):
+        return pmap(dict((k, freeze(v, strict)) for k, v in o.items()))
+    if typ is list or (strict and typ is pvector_type):
+        return pvector(map(lambda x: freeze(x, strict), o))
     if typ is tuple:
-        return tuple(map(lambda x: freeze(x, nonstrict), o))
+        return tuple(map(lambda x: freeze(x, strict), o))
     if typ is set:
         return pset(o)
     return o

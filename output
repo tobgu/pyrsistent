@@ -1,0 +1,29 @@
+
+>>> from pyrsistent import freeze, v, m
+>>>
+>>>
+>>>
+>>> freeze(v(1, v(2, [3])))
+pvector([1, pvector([2, pvector([3])])])
+>>>
+>>>
+>>>
+>>> freeze(v(1, v(2, [3])), nonstrict=True)
+pvector([1, pvector([2, [3]])])
+>>>
+>>>
+>>>
+>>> freeze(m(a=m(b={'c': 1})))
+pmap({'a': pmap({'b': pmap({'c': 1})})})
+>>>
+>>>
+>>>
+>>> freeze(m(a=m(b={'c': 1})), nonstrict=True)
+pmap({'a': pmap({'b': {'c': 1}})})
+>>>
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+    ^
+SyntaxError: invalid syntax
+>>> >>>

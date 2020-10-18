@@ -566,11 +566,11 @@ By default, freeze will also recursively convert values inside PVectors and PMap
     >>> from pyrsistent import freeze, v, m
     >>> freeze(v(1, v(2, [3])))
     pvector([1, pvector([2, pvector([3])])])
-    >>> freeze(v(1, v(2, [3])), nonstrict=True)
+    >>> freeze(v(1, v(2, [3])), strict=False)
     pvector([1, pvector([2, [3]])])
     >>> freeze(m(a=m(b={'c': 1})))
     pmap({'a': pmap({'b': pmap({'c': 1})})})
-    >>> freeze(m(a=m(b={'c': 1})), nonstrict=True)
+    >>> freeze(m(a=m(b={'c': 1})), strict=False)
     pmap({'a': pmap({'b': {'c': 1}})})
 
 Compatibility
