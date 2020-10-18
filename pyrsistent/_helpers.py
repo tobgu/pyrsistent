@@ -34,9 +34,11 @@ def freeze(o, strict=True):
     if typ is dict or (strict and isinstance(o, PMap)):
         return pmap({k: freeze(v, strict) for k, v in o.items()})
     if typ is list or (strict and isinstance(o, PVector)):
-        return pvector(map(lambda x: freeze(x, strict), o))
+        curried_freeze = lambda x: freeze(x, strict)
+        return pvector(map(curried_freeze, o))
     if typ is tuple:
-        return tuple(map(lambda x: freeze(x, strict), o))
+        curried_freeze = lambda x: freeze(x, strict)
+        return tuple(map(curried_freeze, o))
     if typ is set:
         # impossible to have anything that needs freezing inside a set or pset
         return pset(o)
@@ -67,11 +69,13 @@ def thaw(o, strict=True):
     """
     typ = type(o)
     if isinstance(o, PVector) or (strict and typ is list):
-        return list(map(lambda x: thaw(x, strict), o))
+        curried_thaw = lambda x: thaw(x, strict)
+        return list(map(curried_thaw, o))
     if isinstance(o, PMap) or (strict and typ is dict):
         return {k: thaw(v, strict) for k, v in o.items()}
     if typ is tuple:
-        return tuple(map(lambda x: thaw(x, strict), o))
+        curried_thaw = lambda x: thaw(x, strict)
+        return tuple(map(curried_thaw, o))
     if isinstance(o, PSet):
         # impossible to thaw inside psets or sets
         return set(o)
