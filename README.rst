@@ -559,7 +559,7 @@ These functions are great when your cozy immutable world has to interact with th
     >>> thaw(v(1, m(a=3)))
     [1, {'a': 3}]
 
-By default, freeze will also recursively convert values inside PVectors and PMaps. This behaviour can be changed by providing freeze with the flag nonstrict=True.
+By default, freeze will also recursively convert values inside PVectors and PMaps. This behaviour can be changed by providing freeze with the flag strict=False.
 
 .. code:: python
 
@@ -572,6 +572,9 @@ By default, freeze will also recursively convert values inside PVectors and PMap
     pmap({'a': pmap({'b': pmap({'c': 1})})})
     >>> freeze(m(a=m(b={'c': 1})), strict=False)
     pmap({'a': pmap({'b': {'c': 1}})})
+
+In this regard, thaw operates as the inverse of freeze so will thaw values inside native data structures unless passed the strict=False flag.
+
 
 Compatibility
 -------------
