@@ -100,10 +100,22 @@ def test_thaw_recurse_in_mapping_values():
     assert result == {'a': [1]}
     assert type(result['a']) is list
 
+def test_thaw_recurse_in_dict_values():
+    result = thaw({'a': v(1, m(b=2))})
+    assert result == {'a': [1, {'b': 2}]}
+    assert type(result['a']) is list
+    assert type(result['a'][1]) is dict
+
 def test_thaw_recurse_in_vectors():
     result = thaw(v('a', m(b=3)))
     assert result == ['a', {'b': 3}]
     assert type(result[1]) is dict
+
+def test_thaw_recurse_in_lists():
+    result = thaw(v(['a', m(b=1), v(2)]))
+    assert result == [['a', {'b': 1}, [2]]]
+    assert type(result[0]) is list
+    assert type(result[0][1]) is dict
 
 def test_thaw_recurse_in_tuples():
     result = thaw(('a', m()))
@@ -118,6 +130,19 @@ def test_thaw_can_handle_subclasses_of_persistent_base_types():
     assert result == {'x': 1}
     assert type(result) is dict
 
+
+## Thaw (weak)
+
+def test_thaw_non_strict_no_recurse_in_dict_values():
+    result = thaw({'a': v(1, m(b=2))}, strict=False)
+    assert result == {'a': [1, {'b': 2}]}
+    assert type(result['a']) is type(v())
+    assert type(result['a'][1]) is type(m())
+
+def test_thaw_non_strict_no_recurse_in_lists():
+    result = thaw(v(['a', m(b=1), v(2)]), strict=False)
+    assert result == [['a', {'b': 1}, [2]]]
+    assert type(result[0][1]) is type(m())
 
 def test_mutant_decorator():
     @mutant
