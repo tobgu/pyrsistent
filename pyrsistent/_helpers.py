@@ -74,7 +74,7 @@ def thaw(o, strict=True):
         return tuple(map(lambda x: thaw(x, strict), o))
     if isinstance(o, PSet):
         # impossible to thaw inside psets or sets
-        return set([x for x in o])
+        return set(o)
     return o
 
 
