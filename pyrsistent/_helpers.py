@@ -3,11 +3,6 @@ from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PVector, pvector
 
-# get PVector and PMap types for freeze - PVector type is different if C
-# extension has loaded
-pmap_type = type(pmap())
-pvector_type = type(pvector())
-
 def freeze(o, strict=True):
     """
     Recursively convert simple Python containers into pyrsistent versions
@@ -36,18 +31,19 @@ def freeze(o, strict=True):
     (1, pvector([]))
     """
     typ = type(o)
-    if typ is dict or (strict and typ is pmap_type):
-        return pmap(dict((k, freeze(v, strict)) for k, v in o.items()))
-    if typ is list or (strict and typ is pvector_type):
+    if typ is dict or (strict and isinstance(o, PMap)):
+        return pmap({k: freeze(v, strict) for k, v in o.items()})
+    if typ is list or (strict and isinstance(o, PVector)):
         return pvector(map(lambda x: freeze(x, strict), o))
     if typ is tuple:
         return tuple(map(lambda x: freeze(x, strict), o))
     if typ is set:
+        # impossible to have anything that needs freezing inside a set or pset
         return pset(o)
     return o
 
 
-def thaw(o):
+def thaw(o, strict=True):
     """
     Recursively convert pyrsistent containers into simple Python containers.
 
@@ -55,6 +51,11 @@ def thaw(o):
     - pmap is converted to dict, recursively on values (but not keys)
     - pset is converted to set, but not recursively
     - tuple is converted to tuple, recursively.
+
+    If strict == True (the default):
+
+    - thaw is called on elements of lists
+    - thaw is called on values in dicts
 
     >>> from pyrsistent import s, m, v
     >>> thaw(s(1, 2))
@@ -64,14 +65,16 @@ def thaw(o):
     >>> thaw((1, v()))
     (1, [])
     """
-    if isinstance(o, PVector):
-        return list(map(thaw, o))
-    if isinstance(o, PMap):
-        return dict((k, thaw(v)) for k, v in o.iteritems())
+    typ = type(o)
+    if isinstance(o, PVector) or (strict and typ is list):
+        return list(map(lambda x: thaw(x, strict), o))
+    if isinstance(o, PMap) or (strict and typ is dict):
+        return {k: thaw(v, strict) for k, v in o.items()}
+    if typ is tuple:
+        return tuple(map(lambda x: thaw(x, strict), o))
     if isinstance(o, PSet):
-        return set(o)
-    if type(o) is tuple:
-        return tuple(map(thaw, o))
+        # impossible to thaw inside psets or sets
+        return set([x for x in o])
     return o
 
 
