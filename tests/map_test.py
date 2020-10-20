@@ -243,6 +243,8 @@ def test_update_no_arguments():
 def test_addition():
     assert m(x=1, y=2) + m(y=3, z=4) == m(x=1, y=3, z=4)
 
+def test_union_operator():
+    assert m(x=1, y=2) | m(y=3, z=4) == m(x=1, y=3, z=4)
 
 def test_transform_base_case():
     # Works as set when called with only one key
