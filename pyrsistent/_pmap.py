@@ -445,7 +445,7 @@ def pmap(initial={}, pre_size=0):
     >>> pmap({'a': 13, 'b': 14})
     pmap({'b': 14, 'a': 13})
     """
-    if not initial:
+    if not initial and pre_size == 0:
         return _EMPTY_PMAP
 
     return _turbo_mapping(initial, pre_size)
