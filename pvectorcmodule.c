@@ -853,7 +853,7 @@ static PyObject *PVector_subscript(PVector* self, PyObject* item) {
    These are some optimizations that could be done to this function,
    these are not considered important enough yet though.
    - Use the PySequence_Fast ops if the iterable is a list or a tuple (which it
-     whould probably often be)
+     would probably often be)
    - Only copy the original tail if it is not full
    - No need to try to increment ref count in tail for the whole tail
 */
