@@ -58,7 +58,7 @@ setup(
     author_email='tobias.l.gustafsson@gmail.com',
     url='http://github.com/tobgu/pyrsistent/',
     license='MIT',
-    license_files=['LICENCE.mit'],
+    license_files=['LICENSE.mit'],
     py_modules=['_pyrsistent_version'],
     classifiers=[
         'Intended Audience :: Developers',
