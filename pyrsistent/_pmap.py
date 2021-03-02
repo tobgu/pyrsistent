@@ -453,7 +453,7 @@ def pmap(initial={}, pre_size=0):
 
 def m(**kwargs):
     """
-    Creates a new persitent map. Inserts all key value arguments into the newly created map.
+    Creates a new persistent map. Inserts all key value arguments into the newly created map.
 
     >>> m(a=13, b=14)
     pmap({'b': 14, 'a': 13})
