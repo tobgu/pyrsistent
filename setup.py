@@ -7,7 +7,6 @@ import codecs
 from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError
 from distutils.errors import DistutilsPlatformError, DistutilsExecError
-from _pyrsistent_version import __version__
 
 readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
 with codecs.open(readme_path, encoding='utf8') as f:
@@ -51,7 +50,6 @@ WARNING: Could not build the %s.
 
 setup(
     name='pyrsistent',
-    version=__version__,
     description='Persistent/Functional/Immutable data structures',
     long_description=readme,
     author='Tobias Gustafsson',
