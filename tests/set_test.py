@@ -2,6 +2,9 @@ from pyrsistent import pset, s
 import pytest
 import pickle
 
+def test_key_is_tuple():
+    with pytest.raises(KeyError):
+        pset().remove((1,1))
 
 def test_literalish_works():
     assert s() is pset()
