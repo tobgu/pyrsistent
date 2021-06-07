@@ -1,0 +1,63 @@
+name: Build Wheels
+
+on:
+  push:
+  release:
+    types: [created]
+
+jobs:
+  build_wheels:
+    name: Build Wheels on ${{ matrix.os }}-${{ matrix.platform_id }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Ensure the wheels build even one fails.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python: [35, 36, 37, 38, 39]
+        bitness: [32, 64]
+        include:
+          # Run 32 and 64 bit version in parallel for Linux and Windows
+          - os: windows-latest
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            bitness: 32
+            platform_id: win32
+          - os: ubuntu-latest
+            bitness: 64
+            platform_id: manylinux_x86_64
+          - os: ubuntu-latest
+            bitness: 32
+            platform_id: manylinux_i686
+          - os: macos-latest
+            bitness: 64
+            platform_id: macosx_x86_64
+        exclude:
+          - os: macos-latest
+            bitness: 32
+    env:
+      CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+      CIBW_TEST_REQUIRES: pytest==4.* hypothesis==4.*
+      CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
+      CIBW_MANYLINUX_I686_IMAGE: manylinux1
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v1.11.1.post1
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          name: wheels-${{ runner.os }}-${{ matrix.platform_id }}-${{ matrix.python }}
+
+      - name: Publish (Release)
+        if: github.event_name == 'release'
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install twine
+          twine upload wheelhouse/*.whl
