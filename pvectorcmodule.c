@@ -280,7 +280,7 @@ static PyObject *PVector_repr(PVector *self) {
 }
 
 
-static long PVector_hash(PVector *self) {
+static Py_hash_t PVector_hash(PVector *self) {
   // Follows the pattern of the tuple hash
   long x, y;
   Py_ssize_t i;

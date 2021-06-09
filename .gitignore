@@ -1,6 +1,7 @@
 *.pyc
 *#
 *.so
+*.pyd
 *~
 build/
 pyrsistent.egg-info/
