@@ -2,15 +2,17 @@ import os
 from setuptools import setup, Extension
 import sys
 import platform
-import warnings
 import codecs
 from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError
-from distutils.errors import DistutilsPlatformError, DistutilsExecError
 
-readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
-with codecs.open(readme_path, encoding='utf8') as f:
-    readme = f.read()
+if platform.system() != "Windows":
+    readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
+    with codecs.open(readme_path, encoding='utf8') as f:
+        readme = f.read()
+else:
+    # The format is messed up with extra line breaks when building wheels on windows.
+    # Skip readme in this case.
+    readme = "Persistent collections, see https://github.com/tobgu/pyrsistent/ for details."
 
 extensions = []
 if platform.python_implementation() == 'CPython':
@@ -52,6 +54,7 @@ setup(
     name='pyrsistent',
     description='Persistent/Functional/Immutable data structures',
     long_description=readme,
+    long_description_content_type='text/x-rst',
     author='Tobias Gustafsson',
     author_email='tobias.l.gustafsson@gmail.com',
     url='http://github.com/tobgu/pyrsistent/',
@@ -62,10 +65,10 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
     test_suite='tests',
@@ -76,5 +79,5 @@ setup(
     cmdclass={'build_ext': custom_build_ext},
     packages=['pyrsistent'],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
 )

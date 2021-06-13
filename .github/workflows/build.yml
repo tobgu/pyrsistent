@@ -1,9 +1,17 @@
-name: Build Wheels
+name: Build and release
+
+#on:
+#  push:
+#  release:
+#    types: [created]
 
 on:
-  push:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Release target'
+        required: true
+        default: 'test'
 
 jobs:
   build_wheels:
@@ -14,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [35, 36, 37, 38, 39]
+        python: [36, 37, 38, 39]
         bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
@@ -51,13 +59,61 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
-          name: wheels-${{ runner.os }}-${{ matrix.platform_id }}-${{ matrix.python }}
 
-      - name: Publish (Release)
-        if: github.event_name == 'release'
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          pip install twine
-          twine upload wheelhouse/*.whl
+#      - name: Publish (Release)
+#        if: github.event_name == 'release'
+#        env:
+#          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+#          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+#        run: |
+#          pip install twine
+#          twine upload wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Build sdist
+        run: python setup.py sdist
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
+
+  publish_pypi:
+    needs: [ build_wheels, build_sdist ]
+    runs-on: ubuntu-latest
+    # TODO: Migrate to automated release once verified?
+    # upload to PyPI on every tag starting with 'v'
+    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    # alternatively, to publish when a GitHub Release is created, use the following rule:
+    # if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+
+      - name: Publish test release
+        if: github.event.inputs.target == 'test'
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          verbose: true
+
+      - name: Publish release
+        if: github.event.inputs.target != 'test'
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+         user: __token__
+         password: ${{ secrets.PYPI_API_TOKEN }}
