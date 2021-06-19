@@ -1,6 +1,6 @@
 Pyrsistent
 ==========
-.. image:: https://github.com/github/docs/actions/workflows/tests.yml/badge.svg
+.. image:: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml/badge.svg
     :target: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml
 
 
