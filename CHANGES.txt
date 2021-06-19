@@ -1,5 +1,9 @@
 Revision history
 ----------------
+0.17.4, 2021-06-DD
+ * Release wheels...
+ * ...
+
 0.17.3, 2020-09-13
  * Fix #208, release v0.17.3 with proper meta data requiring Python >= 3.5.
 
