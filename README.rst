@@ -1,13 +1,7 @@
 Pyrsistent
 ==========
-.. image:: https://travis-ci.org/tobgu/pyrsistent.svg?branch=master
-    :target: https://travis-ci.org/tobgu/pyrsistent
-
-.. image:: https://badge.fury.io/py/pyrsistent.svg
-    :target: https://badge.fury.io/py/pyrsistent
-
-.. image:: https://coveralls.io/repos/tobgu/pyrsistent/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/tobgu/pyrsistent?branch=master
+.. image:: https://github.com/github/docs/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml
 
 
 .. _Pyrthon: https://www.github.com/tobgu/pyrthon/
