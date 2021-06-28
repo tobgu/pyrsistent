@@ -1,8 +1,18 @@
 Revision history
 ----------------
-0.17.4, 2021-06-DD
- * Release wheels...
- * ...
+0.18.0, 2021-06-28
+ * Fix #209 Update freeze recurse into pyrsistent data structures and thaw to recurse into lists and dicts,
+   Thanks @phil-arh for this!
+   NB! This is a backwards incompatible change! To keep the old behaviour pass `strict=False` to freeze and thaw.
+ * Fix #226, stop using deprecated exception.message. Thanks @hexagonrecursion for this!
+ * Fix #211, add union operator to persistent maps. Thanks @bowbahdoe for this!
+ * Fix #194, declare build dependencies through pyproject.toml. Thanks @jaraco for this!
+ * Officially drop Python 3.5 support.
+ * Fix #223, release wheels for all major platforms. Thanks @johnthagen for helping out with this!
+ * Fix #221, KeyError obscured by TypeError if key is a tuple. Thanks @ganwell for this!
+ * Fix LICENSE file name spelling. Thanks @ndowens and @barentsen for this!
+ * Fix #216, add abstractmethod decorator for CheckedType and ABCMeta for _CheckedTypeMeta. Thanks @ss18 for this!
+ * Fix #228, rename example classes in tests to avoid name clashes with pytest.
 
 0.17.3, 2020-09-13
  * Fix #208, release v0.17.3 with proper meta data requiring Python >= 3.5.

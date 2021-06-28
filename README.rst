@@ -687,6 +687,18 @@ Ram Rachum  https://github.com/cool-RR
 
 Vincent Philippon https://github.com/vphilippon
 
+Andrey Bienkowski https://github.com/hexagonrecursion
+
+Ethan McCue https://github.com/bowbahdoe
+
+Jason R. Coombs https://github.com/jaraco
+
+Nathan https://github.com/ndowens
+
+Geert Barentsen https://github.com/barentsen
+
+phil-arh https://github.com/phil-arh
+
 Contributing
 ------------
 
@@ -707,13 +719,11 @@ Release
 ~~~~~~~
 * `pip install -r requirements.txt`
 * Update CHANGES.txt
-* Update README with any new contributors and potential info needed.
+* Update README.rst with any new contributors and potential info needed.
 * Update _pyrsistent_version.py
-* `rm -rf dist/* && python setup.py sdist`
-* (`twine upload -r testpypi dist/*`), if testing the distribution on testpypi
-* `twine upload dist/*`
 * Commit and tag with new version: `git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'`
 * Push commit and tags: `git push && git push --tags`
+* Build new release using Github actions
 
 Project status
 --------------
