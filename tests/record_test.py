@@ -221,15 +221,15 @@ def test_enum_field():
     except ImportError:
         return  # Enum not supported in this environment
 
-    class TestEnum(Enum):
+    class ExampleEnum(Enum):
         x = 1
         y = 2
 
     class RecordContainingEnum(PRecord):
-        enum_field = field(type=TestEnum)
+        enum_field = field(type=ExampleEnum)
 
-    r = RecordContainingEnum(enum_field=TestEnum.x)
-    assert r.enum_field == TestEnum.x
+    r = RecordContainingEnum(enum_field=ExampleEnum.x)
+    assert r.enum_field == ExampleEnum.x
 
 def test_type_specification_must_be_a_type():
     with pytest.raises(TypeError):

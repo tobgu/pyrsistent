@@ -16,7 +16,7 @@ from hypothesis import strategies as st, assume
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 
 
-class TestObject(object):
+class RefCountTracker:
     """
     An object that might catch reference count errors sometimes.
     """
@@ -45,7 +45,7 @@ def test_setup(gc_when_done):
 
 
 # Pairs of a list and corresponding pvector:
-PVectorAndLists = st.lists(st.builds(TestObject)).map(
+PVectorAndLists = st.lists(st.builds(RefCountTracker)).map(
     lambda l: (l, pvector(l)))
 
 
@@ -104,7 +104,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         Append an item to the pair of sequences.
         """
         l, pv = former
-        obj = TestObject()
+        obj = RefCountTracker()
         l2 = l[:]
         l2.append(obj)
         return l2, pv.append(obj)
@@ -146,7 +146,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         assume(l)
         l2 = l[:]
         i = data.draw(st.sampled_from(range(len(l))))
-        obj = TestObject()
+        obj = RefCountTracker()
         l2[i] = obj
         return l2, pv.set(i, obj)
 
@@ -160,7 +160,7 @@ class PVectorBuilder(RuleBasedStateMachine):
         assume(l)
         l2 = l[:]
         i = data.draw(st.sampled_from(range(len(l))))
-        obj = TestObject()
+        obj = RefCountTracker()
         l2[i] = obj
         return l2, pv.transform([i], obj)
 
@@ -236,7 +236,7 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         """
         Append an item to the pair of sequences.
         """
-        obj = TestObject()
+        obj = RefCountTracker()
         item.current_list.append(obj)
         item.current_evolver.append(obj)
 
@@ -267,7 +267,7 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         """
         assume(item.current_list)
         i = data.draw(st.sampled_from(range(len(item.current_list))))
-        obj = TestObject()
+        obj = RefCountTracker()
         item.current_list[i] = obj
         item.current_evolver[i] = obj
 
@@ -278,7 +278,7 @@ class PVectorEvolverBuilder(RuleBasedStateMachine):
         """
         assume(item.current_list)
         i = data.draw(st.sampled_from(range(len(item.current_list))))
-        obj = TestObject()
+        obj = RefCountTracker()
         item.current_list[i] = obj
         item.current_evolver.set(i, obj)
 
