@@ -265,16 +265,8 @@ static PyObject *PVector_repr(PVector *self) {
     return NULL;
   }
   
-  // Repr for list implemented differently in python 2 and 3. Need to
-  // handle this or core dump will occur.
-#if PY_MAJOR_VERSION >= 3
   PyObject *s = PyUnicode_FromFormat("%s%U%s", "pvector(", list_repr, ")");
   Py_DECREF(list_repr);
-#else
-  PyObject *s = PyString_FromString("pvector(");
-  PyString_ConcatAndDel(&s, list_repr);
-  PyString_ConcatAndDel(&s, PyString_FromString(")"));
-#endif
 
   return s;
 }
@@ -472,11 +464,7 @@ static PyObject* PVector_index(PVector *self, PyObject *args) {
   for (i = start; i < stop && i < self->count; i++) {
     int cmp = PyObject_RichCompareBool(_get_item(self, i), value, Py_EQ);
     if (cmp > 0) {
-#if PY_MAJOR_VERSION >= 3
       return PyLong_FromSsize_t(i);
-#else
-      return PyInt_FromSsize_t(i);
-#endif
     } else if (cmp < 0) {
       return NULL;
     }
@@ -499,11 +487,7 @@ static PyObject* PVector_count(PVector *self, PyObject *value) {
     }
   }
 
-#if PY_MAJOR_VERSION >= 3
-      return PyLong_FromSsize_t(count);
-#else
-      return PyInt_FromSsize_t(count);
-#endif
+  return PyLong_FromSsize_t(count);
 }
 
 static PyObject* PVector_pickle_reduce(PVector *self) {
@@ -790,12 +774,7 @@ static void extendWithItem(PVector *newVec, PyObject *item) {
 }
 
 
-#if PY_MAJOR_VERSION >= 3
-// This was changed in 3.2 but we do not claim compatibility with any older version of python 3.
 #define SLICE_CAST
-#else
-#define SLICE_CAST (PySliceObject *)
-#endif
 
 static PyObject *PVector_subscript(PVector* self, PyObject* item) {
   if (PyIndex_Check(item)) {
@@ -1088,11 +1067,7 @@ static PyObject* PVector_remove(PVector *self, PyObject *args) {
   PyObject* py_index = PVector_index(self, args);
 
   if(py_index != NULL) {
-#if PY_MAJOR_VERSION >= 3
       index = PyLong_AsSsize_t(py_index);
-#else
-      index = PyInt_AsSsize_t(py_index);
-#endif
     Py_DECREF(py_index);
     return internalDelete(self, index, NULL);
   }
@@ -1577,7 +1552,6 @@ static PyMethodDef PyrsistentMethods[] = {
 
 /********************* Python module initialization ************************/
 
-#if PY_MAJOR_VERSION >= 3
   static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "pvectorc",          /* m_name */
@@ -1589,7 +1563,6 @@ static PyMethodDef PyrsistentMethods[] = {
     NULL,                /* m_clear */
     NULL,                /* m_free */
   };
-#endif
 
 static PyObject* pyrsistent_pvectorc_moduleinit(void) {
   PyObject* m;
@@ -1609,11 +1582,7 @@ static PyObject* pyrsistent_pvectorc_moduleinit(void) {
   }
 
 
-#if PY_MAJOR_VERSION >= 3
   m = PyModule_Create(&moduledef);
-#else
-  m = Py_InitModule3("pvectorc", PyrsistentMethods, "Persistent vector");  
-#endif
 
   if (m == NULL) {
     return NULL;
@@ -1631,12 +1600,6 @@ static PyObject* pyrsistent_pvectorc_moduleinit(void) {
   return m;
 }
 
-#if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_pvectorc(void) {
   return pyrsistent_pvectorc_moduleinit();
 }
-#else
-PyMODINIT_FUNC initpvectorc(void) {
-  pyrsistent_pvectorc_moduleinit();
-}
-#endif
