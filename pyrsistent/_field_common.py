@@ -184,7 +184,7 @@ def _types_to_names(types):
     """Convert a tuple of types to a human-readable string."""
     return "".join(get_type(typ).__name__.capitalize() for typ in types)
 
-def _make_seq_field_type(checked_class, item_type):
+def _make_seq_field_type(checked_class, item_type, item_invariant):
     """Create a subclass of the given checked class with the given item type."""
     type_ = _seq_field_types.get((checked_class, item_type))
     if type_ is not None:
@@ -192,6 +192,7 @@ def _make_seq_field_type(checked_class, item_type):
 
     class TheType(checked_class):
         __type__ = item_type
+        __invariant__ = item_invariant
 
         def __reduce__(self):
             return (_restore_seq_field_pickle,
@@ -202,7 +203,9 @@ def _make_seq_field_type(checked_class, item_type):
     _seq_field_types[checked_class, item_type] = TheType
     return TheType
 
-def _sequence_field(checked_class, item_type, optional, initial):
+def _sequence_field(checked_class, item_type, optional, initial,
+                    invariant=PFIELD_NO_INVARIANT,
+                    item_invariant=PFIELD_NO_INVARIANT):
     """
     Create checked field for either ``PSet`` or ``PVector``.
 
@@ -214,7 +217,7 @@ def _sequence_field(checked_class, item_type, optional, initial):
 
     :return: A ``field`` containing a checked class.
     """
-    TheType = _make_seq_field_type(checked_class, item_type)
+    TheType = _make_seq_field_type(checked_class, item_type, item_invariant)
 
     if optional:
         def factory(argument, _factory_fields=None, ignore_extra=False):
@@ -227,10 +230,13 @@ def _sequence_field(checked_class, item_type, optional, initial):
 
     return field(type=optional_type(TheType) if optional else TheType,
                  factory=factory, mandatory=True,
+                 invariant=invariant,
                  initial=factory(initial))
 
 
-def pset_field(item_type, optional=False, initial=()):
+def pset_field(item_type, optional=False, initial=(),
+               invariant=PFIELD_NO_INVARIANT,
+               item_invariant=PFIELD_NO_INVARIANT):
     """
     Create checked ``PSet`` field.
 
@@ -242,11 +248,14 @@ def pset_field(item_type, optional=False, initial=()):
 
     :return: A ``field`` containing a ``CheckedPSet`` of the given type.
     """
-    return _sequence_field(CheckedPSet, item_type, optional,
-                           initial)
+    return _sequence_field(CheckedPSet, item_type, optional, initial,
+                           invariant=invariant,
+                           item_invariant=item_invariant)
 
 
-def pvector_field(item_type, optional=False, initial=()):
+def pvector_field(item_type, optional=False, initial=(),
+                  invariant=PFIELD_NO_INVARIANT,
+                  item_invariant=PFIELD_NO_INVARIANT):
     """
     Create checked ``PVector`` field.
 
@@ -258,8 +267,9 @@ def pvector_field(item_type, optional=False, initial=()):
 
     :return: A ``field`` containing a ``CheckedPVector`` of the given type.
     """
-    return _sequence_field(CheckedPVector, item_type, optional,
-                           initial)
+    return _sequence_field(CheckedPVector, item_type, optional, initial,
+                           invariant=invariant,
+                           item_invariant=item_invariant)
 
 
 _valid = lambda item: (True, "")
