@@ -142,12 +142,12 @@ static Py_ssize_t PVector_len(PVector *self) {
 }
 
 /* Convenience macros */
-#define ROOT_NODE_FULL(vec) ((vec->count >> SHIFT) > (1 << vec->shift))
+#define ROOT_NODE_FULL(vec) ((vec->count >> SHIFT) > (Py_ssize_t)(1 << vec->shift))
 #define TAIL_OFF(vec) ((vec->count < BRANCH_FACTOR) ? 0 : (((vec->count - 1) >> SHIFT) << SHIFT))
 #define TAIL_SIZE(vec) (vec->count - TAIL_OFF(vec))
 #define PVector_CheckExact(op) (Py_TYPE(op) == &PVectorType)
 
-static VNode* nodeFor(PVector *self, int i){
+static VNode* nodeFor(PVector *self, Py_ssize_t i){
   int level;
   if((i >= 0) && (i < self->count)) {
     if(i >= TAIL_OFF(self)) {
@@ -414,7 +414,7 @@ static PyObject* PVector_repeat(PVector *self, Py_ssize_t n) {
   } else if ((self->count * n)/self->count != n) {
     return PyErr_NoMemory();
   } else {
-    int i, j;
+    Py_ssize_t i, j;
     PVector *newVec = copyPVector(self);
     for(i=0; i<(n-1); i++) {
       for(j=0; j<self->count; j++) {
@@ -1203,10 +1203,10 @@ static PyMethodDef PVectorEvolver_methods[] = {
 	{"append",      (PyCFunction)PVectorEvolver_append, METH_O,       "Appends an element"},
 	{"extend",      (PyCFunction)PVectorEvolver_extend, METH_O|METH_COEXIST, "Extend"},
 	{"set",         (PyCFunction)PVectorEvolver_set, METH_VARARGS, "Set item"},
-        {"delete",      (PyCFunction)PVectorEvolver_delete, METH_VARARGS, "Delete item"},
-        {"persistent",  (PyCFunction)PVectorEvolver_persistent, METH_NOARGS, "Create PVector from evolver"},
-        {"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
-        {NULL,              NULL}           /* sentinel */
+	{"delete",      (PyCFunction)PVectorEvolver_delete, METH_VARARGS, "Delete item"},
+	{"persistent",  (PyCFunction)PVectorEvolver_persistent, METH_NOARGS, "Create PVector from evolver"},
+	{"is_dirty",    (PyCFunction)PVectorEvolver_is_dirty, METH_NOARGS, "Check if evolver contains modifications"},
+	{NULL,          NULL}           /* sentinel */
 };
 
 static PyTypeObject PVectorEvolverType = {
