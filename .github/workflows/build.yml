@@ -58,6 +58,9 @@ jobs:
           - os: macos-latest
             python: 39
             platform_id: macosx_universal2
+          - os: macos-latest
+            python: 310
+            platform_id: macosx_universal2
         exclude:
           - os: macos-latest
             bitness: 32
