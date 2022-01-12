@@ -699,6 +699,11 @@ Geert Barentsen https://github.com/barentsen
 
 phil-arh https://github.com/phil-arh
 
+Tamás Nepusz https://github.com/ntamas
+
+Hugo van Kemenade https://github.com/hugovk
+
+
 Contributing
 ------------
 

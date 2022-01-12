@@ -1,5 +1,11 @@
 Revision history
 ----------------
+0.18.1, 2022-01-12
+ * Add universal wheels for MacOS, thanks @ntamas for this!
+ * Add support for Python 3.10, thanks @hugovk for this!
+ * Fix #236 compilation errors under Python 3.10.
+ * Drop official support for Python 3.6 since it's EOL since 2021-12-23.
+
 0.18.0, 2021-06-28
  * Fix #209 Update freeze recurse into pyrsistent data structures and thaw to recurse into lists and dicts,
    Thanks @phil-arh for this!
