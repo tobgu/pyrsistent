@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [36, 37, 38, 39, 310]
+        python: [37, 38, 39, 310]
         bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
@@ -44,10 +44,7 @@ jobs:
           - os: macos-latest
             bitness: 64
             platform_id: macosx_universal2
-          # Python 3.6 and 3.7 did not have universal2 wheel support yet
-          - os: macos-latest
-            python: 36
-            platform_id: macosx_x86_64
+          # Python 3.7 does not have universal2 wheel support yet
           - os: macos-latest
             python: 37
             platform_id: macosx_x86_64
@@ -80,15 +77,6 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
-
-#      - name: Publish (Release)
-#        if: github.event_name == 'release'
-#        env:
-#          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#        run: |
-#          pip install twine
-#          twine upload wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
