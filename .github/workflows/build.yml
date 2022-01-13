@@ -15,10 +15,10 @@ on:
 
 jobs:
   build_wheels:
-    name: Build Wheels on ${{ matrix.os }}-${{ matrix.platform_id }}
+    name: Build ${{ matrix.python }} wheels on ${{ matrix.os }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     strategy:
-      # Ensure the wheels build even one fails.
+      # Ensure the wheels build even if one fails.
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -66,8 +66,8 @@ jobs:
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
       CIBW_TEST_REQUIRES: pytest==4.* hypothesis==4.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
-      CIBW_MANYLINUX_I686_IMAGE: manylinux1
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
     steps:
       - uses: actions/checkout@v2
 
