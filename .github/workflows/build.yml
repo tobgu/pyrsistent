@@ -64,7 +64,7 @@ jobs:
     env:
       CIBW_ARCHS_MACOS: x86_64 universal2
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-      CIBW_TEST_REQUIRES: pytest<7 hypothesis<7
+      CIBW_TEST_REQUIRES: pytest==6.* hypothesis==6.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
