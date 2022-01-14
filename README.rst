@@ -703,6 +703,8 @@ Tamás Nepusz https://github.com/ntamas
 
 Hugo van Kemenade https://github.com/hugovk
 
+Ben Beasley https://github.com/musicinmybrain
+
 
 Contributing
 ------------
