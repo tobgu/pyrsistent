@@ -31,12 +31,12 @@ class PMap(object):
     >>> m1 = m(a=1, b=3)
     >>> m2 = m1.set('c', 3)
     >>> m3 = m2.remove('a')
-    >>> m1
-    pmap({'b': 3, 'a': 1})
-    >>> m2
-    pmap({'c': 3, 'b': 3, 'a': 1})
-    >>> m3
-    pmap({'c': 3, 'b': 3})
+    >>> m1 == {'a': 1, 'b': 3}
+    True
+    >>> m2 == {'a': 1, 'b': 3, 'c': 3}
+    True
+    >>> m3 == {'b': 3, 'c': 3}
+    True
     >>> m3['c']
     3
     >>> m3.c
@@ -171,12 +171,12 @@ class PMap(object):
         >>> m1 = m(a=1, b=2)
         >>> m2 = m1.set('a', 3)
         >>> m3 = m1.set('c' ,4)
-        >>> m1
-        pmap({'b': 2, 'a': 1})
-        >>> m2
-        pmap({'b': 2, 'a': 3})
-        >>> m3
-        pmap({'c': 4, 'b': 2, 'a': 1})
+        >>> m1 == {'a': 1, 'b': 2}
+        True
+        >>> m2 == {'a': 3, 'b': 2}
+        True
+        >>> m3 == {'a': 1, 'b': 2, 'c': 4}
+        True
         """
         return self.evolver().set(key, val).persistent()
 
@@ -213,8 +213,8 @@ class PMap(object):
         maps the rightmost (last) value is inserted.
 
         >>> m1 = m(a=1, b=2)
-        >>> m1.update(m(a=2, c=3), {'a': 17, 'd': 35})
-        pmap({'c': 3, 'b': 2, 'a': 17, 'd': 35})
+        >>> m1.update(m(a=2, c=3), {'a': 17, 'd': 35}) == {'a': 17, 'b': 2, 'c': 3, 'd': 35}
+        True
         """
         return self.update_with(lambda l, r: r, *maps)
 
@@ -225,8 +225,8 @@ class PMap(object):
 
         >>> from operator import add
         >>> m1 = m(a=1, b=2)
-        >>> m1.update_with(add, m(a=2))
-        pmap({'b': 2, 'a': 3})
+        >>> m1.update_with(add, m(a=2)) == {'a': 3, 'b': 2}
+        True
 
         The reverse behaviour of the regular merge. Keep the leftmost element instead of the rightmost.
 
@@ -381,15 +381,15 @@ class PMap(object):
 
         The underlying pmap remains the same:
 
-        >>> m1
-        pmap({'b': 2, 'a': 1})
+        >>> m1 == {'a': 1, 'b': 2}
+        True
 
         The changes are kept in the evolver. An updated pmap can be created using the
         persistent() function on the evolver.
 
         >>> m2 = e.persistent()
-        >>> m2
-        pmap({'c': 3, 'b': 2})
+        >>> m2 == {'b': 2, 'c': 3}
+        True
 
         The new pmap will share data with the original pmap in the same way that would have
         been done if only using operations on the pmap.
@@ -442,8 +442,8 @@ def pmap(initial={}, pre_size=0):
     may have a positive performance impact in the cases where you know beforehand that a large number of elements
     will be inserted into the map eventually since it will reduce the number of reallocations required.
 
-    >>> pmap({'a': 13, 'b': 14})
-    pmap({'b': 14, 'a': 13})
+    >>> pmap({'a': 13, 'b': 14}) == {'a': 13, 'b': 14}
+    True
     """
     if not initial and pre_size == 0:
         return _EMPTY_PMAP
@@ -455,7 +455,7 @@ def m(**kwargs):
     """
     Creates a new persistent map. Inserts all key value arguments into the newly created map.
 
-    >>> m(a=13, b=14)
-    pmap({'b': 14, 'a': 13})
+    >>> m(a=13, b=14) == {'a': 13, 'b': 14}
+    True
     """
     return pmap(kwargs)
