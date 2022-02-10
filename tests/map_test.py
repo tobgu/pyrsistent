@@ -54,17 +54,19 @@ def test_remove_non_existing_element_raises_key_error():
 
 
 def test_various_iterations():
+    import pyrsistent as pyr
+    
     assert set(['a', 'b']) == set(m(a=1, b=2))
     assert ['a', 'b'] == sorted(m(a=1, b=2).keys())
-    assert isinstance(m().keys(), PVector)
+    assert isinstance(m().keys(), pyr.PSet)
 
     assert set([1, 2]) == set(m(a=1, b=2).itervalues())
     assert [1, 2] == sorted(m(a=1, b=2).values())
-    assert isinstance(m().values(), PVector)
+    assert isinstance(m().values(), pyr._pmap.PMapView)
 
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).iteritems())
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).items())
-    assert isinstance(m().items(), PVector)
+    assert isinstance(m().items(), pyr._pmap.PMapView)
 
 
 def test_initialization_with_two_elements():
