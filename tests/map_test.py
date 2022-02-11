@@ -58,26 +58,23 @@ def test_various_iterations():
     
     assert set(['a', 'b']) == set(m(a=1, b=2))
     assert ['a', 'b'] == sorted(m(a=1, b=2).keys())
-    assert isinstance(m().keys(), pyr.PSet)
 
     assert set([1, 2]) == set(m(a=1, b=2).itervalues())
     assert [1, 2] == sorted(m(a=1, b=2).values())
-    assert isinstance(m().values(), pyr._pmap.PMapView)
 
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).iteritems())
     assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).items())
-    assert isinstance(m().items(), pyr._pmap.PMapView)
 
     pm = pmap({k:k for k in range(100)})
     assert len(pm) == len(pm.keys())
     assert len(pm) == len(pm.values())
     assert len(pm) == len(pm.items())
     ks = pm.keys()
-    vs = pm.values()
-    us = pm.items()
     assert all(k in pm for k in ks)
-    assert all(pm[k] == v for (k,v) in us)
     assert all(k in ks for k in ks)
+    us = pm.items()
+    assert all(pm[k] == v for (k,v) in us)
+    vs = pm.values()
     assert all(v in vs for v in vs)
 
 def test_initialization_with_two_elements():

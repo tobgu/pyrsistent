@@ -3,7 +3,7 @@ from itertools import chain
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
 
-class PMapView(object):
+class PMapView:
     """View type for the persistent map/dict type `PMap`.
 
     Provides an equivalent of Python's built-in `dict_values` and `dict_items`
@@ -11,16 +11,17 @@ class PMapView(object):
     `{}.items()`. The equivalent for `{}.keys()` is absent because the keys are
     instead represented by a `PSet` object, which can be created in `O(1)` time.
 
+    The `PMapView` class is overloaded by the `PMapValues` and `PMapItems`
+    classes which handle the specific case of values and items, respectively
+
     Parameters
     ----------
     m : mapping
         The mapping/dict-like object of which a view is to be created. This
         should generally be a `PMap` object.
-    values : boolean, optional
-        If `True`, then a view of the values is created; if `False`, then a view
-        of the items is created.
     """
-    def __init__(self, m, values=False):
+    # The public methods that use the above.
+    def __init__(self, m):
         # Make sure this is a persistnt map
         if not isinstance(m, PMap):
             # We can convert mapping objects into pmap objects, I guess (but why?)
@@ -29,42 +30,78 @@ class PMapView(object):
             else:
                 raise TypeError("PViewMap requires a Mapping object")
         object.__setattr__(self, '_map', m)
-        object.__setattr__(self, '_values', values)
+
     def __len__(self):
         return len(self._map)
+
     def __setattr__(self, k, v):
         raise TypeError("%s is immutable" % (type(self),))
-    def __iter__(self):
-        if self._values:
-            return self._map.itervalues()
-        else:
-            return self._map.iteritems()
-    def __contains__(self, arg):
-        if self._values:
-            for v in self._map.itervalues():
-                if v == arg: return True
-            return False
-        else:
-            try: (k,v) = arg
-            except Exception: return False
-            m = self._map
-            return k in m and m[k] == v
+
     def __reversed__(self):
         raise TypeError("Persistent maps are not reversible")
-    # The str and repr methods mitate the dict_view style currently.
+
+class PMapValues(PMapView):
+    """View type for the values of the persistent map/dict type `PMap`.
+
+    Provides an equivalent of Python's built-in `dict_values` type that result
+    from expreessions such as `{}.values()`. See also `PMapView`.
+
+    Parameters
+    ----------
+    m : mapping
+        The mapping/dict-like object of which a view is to be created. This
+        should generally be a `PMap` object.
+    """
+    def __iter__(self):
+        return self._map.itervalues()
+
+    def __contains__(self, arg):
+        return arg in self._map.itervalues()
+
+    # The str and repr methods imitate the dict_view style currently.
     def __str__(self):
-        tag = 'values' if self._values else 'items'
-        return "pmap_%s(%s)" % (tag, list(iter(self)))
+        return f"pmap_values({list(iter(self))})"
+    
     def __repr__(self):
-        tag = 'values' if self._values else 'items'
-        return "pmap_%s(%s)" % (tag, list(iter(self)))
+        return f"pmap_values({list(iter(self))})"
+    
     def __eq__(self, x):
-        if x is self: return True
-        if not isinstance(x, PMapView): return False
         # For whatever reason, dict_values always seem to return False for ==
         # (probably it's not implemented), so we mimic that.
-        if self._values != False or x._values != False: return False
-        return self._map == x._map
+        if x is self: return True
+        else: return False
+    
+class PMapItems(PMapView):
+    """View type for the items of the persistent map/dict type `PMap`.
+
+    Provides an equivalent of Python's built-in `dict_items` type that result
+    from expreessions such as `{}.items()`. See also `PMapView`.
+
+    Parameters
+    ----------
+    m : mapping
+        The mapping/dict-like object of which a view is to be created. This
+        should generally be a `PMap` object.
+    """
+    def __iter__(self):
+        return self._map.iteritems()
+
+    def __contains__(self, arg):
+        try: (k,v) = arg
+        except Exception: return False
+        return k in self._map and self._map[k] == v
+
+    # The str and repr methods mitate the dict_view style currently.
+    def __str__(self):
+        return f"pmap_items({list(iter(self))})"
+    
+    def __repr__(self):
+        return f"pmap_items({list(iter(self))})"
+        
+    def __eq__(self, x):
+        if x is self: return True
+        elif not isinstance(x, type(self)): return False
+        else: return self._map == x._map
 
 class PMap(object):
     """
@@ -183,14 +220,14 @@ class PMap(object):
                     yield k, v
 
     def values(self):
-        return PMapView(self, values=True)
+        return PMapValues(self)
 
     def keys(self):
         from ._pset import PSet
         return PSet(self)
 
     def items(self):
-        return PMapView(self, values=False)
+        return PMapItems(self)
 
     def __len__(self):
         return self._size
