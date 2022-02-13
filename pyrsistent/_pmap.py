@@ -3,6 +3,105 @@ from itertools import chain
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
 
+class PMapView:
+    """View type for the persistent map/dict type `PMap`.
+
+    Provides an equivalent of Python's built-in `dict_values` and `dict_items`
+    types that result from expreessions such as `{}.values()` and
+    `{}.items()`. The equivalent for `{}.keys()` is absent because the keys are
+    instead represented by a `PSet` object, which can be created in `O(1)` time.
+
+    The `PMapView` class is overloaded by the `PMapValues` and `PMapItems`
+    classes which handle the specific case of values and items, respectively
+
+    Parameters
+    ----------
+    m : mapping
+        The mapping/dict-like object of which a view is to be created. This
+        should generally be a `PMap` object.
+    """
+    # The public methods that use the above.
+    def __init__(self, m):
+        # Make sure this is a persistnt map
+        if not isinstance(m, PMap):
+            # We can convert mapping objects into pmap objects, I guess (but why?)
+            if isinstance(m, Mapping):
+                m = pmap(m)
+            else:
+                raise TypeError("PViewMap requires a Mapping object")
+        object.__setattr__(self, '_map', m)
+
+    def __len__(self):
+        return len(self._map)
+
+    def __setattr__(self, k, v):
+        raise TypeError("%s is immutable" % (type(self),))
+
+    def __reversed__(self):
+        raise TypeError("Persistent maps are not reversible")
+
+class PMapValues(PMapView):
+    """View type for the values of the persistent map/dict type `PMap`.
+
+    Provides an equivalent of Python's built-in `dict_values` type that result
+    from expreessions such as `{}.values()`. See also `PMapView`.
+
+    Parameters
+    ----------
+    m : mapping
+        The mapping/dict-like object of which a view is to be created. This
+        should generally be a `PMap` object.
+    """
+    def __iter__(self):
+        return self._map.itervalues()
+
+    def __contains__(self, arg):
+        return arg in self._map.itervalues()
+
+    # The str and repr methods imitate the dict_view style currently.
+    def __str__(self):
+        return f"pmap_values({list(iter(self))})"
+    
+    def __repr__(self):
+        return f"pmap_values({list(iter(self))})"
+    
+    def __eq__(self, x):
+        # For whatever reason, dict_values always seem to return False for ==
+        # (probably it's not implemented), so we mimic that.
+        if x is self: return True
+        else: return False
+    
+class PMapItems(PMapView):
+    """View type for the items of the persistent map/dict type `PMap`.
+
+    Provides an equivalent of Python's built-in `dict_items` type that result
+    from expreessions such as `{}.items()`. See also `PMapView`.
+
+    Parameters
+    ----------
+    m : mapping
+        The mapping/dict-like object of which a view is to be created. This
+        should generally be a `PMap` object.
+    """
+    def __iter__(self):
+        return self._map.iteritems()
+
+    def __contains__(self, arg):
+        try: (k,v) = arg
+        except Exception: return False
+        return k in self._map and self._map[k] == v
+
+    # The str and repr methods mitate the dict_view style currently.
+    def __str__(self):
+        return f"pmap_items({list(iter(self))})"
+    
+    def __repr__(self):
+        return f"pmap_items({list(iter(self))})"
+        
+    def __eq__(self, x):
+        if x is self: return True
+        elif not isinstance(x, type(self)): return False
+        else: return self._map == x._map
 
 class PMap(object):
     """
@@ -89,6 +188,12 @@ class PMap(object):
     def __iter__(self):
         return self.iterkeys()
 
+    # If this method is not defined, then reversed(pmap) will attempt to reverse
+    # the map using len() and getitem, usually resulting in a mysterious
+    # KeyError.
+    def __reversed__(self):
+        raise TypeError("Persistent maps are not reversible")
+
     def __getattr__(self, key):
         try:
             return self[key]
@@ -115,13 +220,14 @@ class PMap(object):
                     yield k, v
 
     def values(self):
-        return pvector(self.itervalues())
+        return PMapValues(self)
 
     def keys(self):
-        return pvector(self.iterkeys())
+        from ._pset import PSet
+        return PSet(self)
 
     def items(self):
-        return pvector(self.iteritems())
+        return PMapItems(self)
 
     def __len__(self):
         return self._size
