@@ -72,7 +72,7 @@ def get_in(keys, coll, default=None, no_default=False):
     0
     >>> get_in(['y'], {}, no_default=True)
     Traceback (most recent call last):
-        ...
+    ...
     KeyError: 'y'
     """
     try:

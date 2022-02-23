@@ -170,6 +170,7 @@ v0.11.11, 2016-01-31
 
 v0.11.10, 2015-12-27, NOTE! This release contains a backwards incompatible change
                       despite only stepping the patch version number. See below.
+
  * Implement #74, attribute access on PClass evolver
  * Implement #75, lazily evaluated invariant messages by providing a
    callable with no arguments.
