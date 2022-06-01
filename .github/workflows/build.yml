@@ -78,26 +78,31 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
 
-  build_sdist:
+  build_dist:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         name: Install Python
         with:
           python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build          
 
-      - name: Build sdist
-        run: python setup.py sdist
+      - name: Build sdist and pure wheel
+        run: python -m build
 
       - uses: actions/upload-artifact@v2
         with:
-          path: dist/*.tar.gz
+          path: dist/*
 
   publish_pypi:
-    needs: [ build_wheels, build_sdist ]
+    needs: [ build_wheels, build_dist ]
     runs-on: ubuntu-latest
     # TODO: Migrate to automated release once verified?
     # upload to PyPI on every tag starting with 'v'
