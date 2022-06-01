@@ -402,9 +402,6 @@ class PMap(object):
             self.set(key, val)
 
         def set(self, key, val):
-            if len(self._buckets_evolver) < 0.67 * self._size:
-                self._reallocate(2 * len(self._buckets_evolver))
-
             kv = (key, val)
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
             if bucket:
@@ -421,6 +418,9 @@ class PMap(object):
                 self._buckets_evolver[index] = new_bucket
                 self._size += 1
             else:
+                if len(self._buckets_evolver) < 0.67 * self._size:
+                    self._reallocate(2 * len(self._buckets_evolver))
+
                 self._buckets_evolver[index] = [kv]
                 self._size += 1
 
