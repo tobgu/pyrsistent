@@ -1,5 +1,15 @@
 Revision history
 ----------------
+0.19.0, 2022-06-14
+ * Fix #159 (through PR #243). Pmap keys/values/items now behave more like the corresponding Python 3
+   methods on dicts. Previoulsy they returned a materialized PVector holding the items, now they return
+   views instead. This is a slight backwards incompatibility compared to previous behaviour, hence stepping
+   version to 0.19. Thanks @noahbenson for this!
+ * Fix #244, type for argument to PVector.delete missing. @thanks dscrofts for this!
+ * Fix #249, rename perf test directory to avoid tripping up automatic discovery in more recent setuptools versions
+ * Fix #247, performance bug when setting elements in maps and adding elements to sets
+ * Fix #248, build pure Python wheels. This is used by some installers. Thanks @andyreagan for this!
+
 0.18.1, 2022-01-14
  * Add universal wheels for MacOS, thanks @ntamas for this!
  * Add support for Python 3.10, thanks @hugovk for this!

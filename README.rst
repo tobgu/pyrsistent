@@ -705,6 +705,11 @@ Hugo van Kemenade https://github.com/hugovk
 
 Ben Beasley https://github.com/musicinmybrain
 
+Noah C. Benson https://github.com/noahbenson
+
+dscrofts https://github.com/dscrofts
+
+Andy Reagan https://github.com/andyreagan
 
 Contributing
 ------------
