@@ -15,7 +15,7 @@ else:
     readme = "Persistent collections, see https://github.com/tobgu/pyrsistent/ for details."
 
 extensions = []
-if platform.python_implementation() == 'CPython':
+if platform.python_implementation() == 'CPython' and os.getenv("PYRSISTENT_SKIP_EXTENSION") is None:
     extensions = [Extension('pvectorc', sources=['pvectorcmodule.c'])]
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
