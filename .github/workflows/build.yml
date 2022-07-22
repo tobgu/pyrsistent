@@ -79,7 +79,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_dist:
-    name: Build source distribution
+    name: Build source distribution and pure python wheel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -94,8 +94,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
 
-      - name: Build sdist and pure wheel
-        run: python -m build
+      - name: Build sdist
+        run: python -m build --sdist
+
+      - name: Build pure wheel
+        run: python -m build --wheel
         env:
           PYRSISTENT_SKIP_EXTENSION: yes
 
