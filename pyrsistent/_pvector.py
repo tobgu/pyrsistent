@@ -409,6 +409,13 @@ class PythonPVector(object):
         l = self.tolist()
         l.remove(value)
         return _EMPTY_PVECTOR.extend(l)
+    
+    def map(self, function):
+        """Map the values of this vector using the provided function. 
+        
+        Similar to the python builtin `map` function.
+        """
+        return pvector(map(function, self))
 
 class PVector(metaclass=ABCMeta):
     """
