@@ -22,8 +22,8 @@ data structures are designed to share common elements through path copying.
 It aims at taking these concepts and make them as pythonic as possible so that they can be easily integrated into any python
 program without hassle.
 
-If you want to go all in on persistent data structures and use literal syntax to define them in your code rather
-than function calls check out Pyrthon_.
+If you want use literal syntax to define them in your code rather
+than function calls check out Pyrthon_. Be aware, that one is experimental, unmaintained and alpha software. 
 
 Examples
 --------
