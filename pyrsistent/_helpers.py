@@ -2,6 +2,7 @@ from functools import wraps
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
 from pyrsistent._pvector import PVector, pvector
+from pyrsistent._psequence import PSequence
 
 def freeze(o, strict=True):
     """
@@ -49,7 +50,7 @@ def thaw(o, strict=True):
     """
     Recursively convert pyrsistent containers into simple Python containers.
 
-    - pvector is converted to list, recursively
+    - pvector and psequence are converted to list, recursively
     - pmap is converted to dict, recursively on values (but not keys)
     - pset is converted to set, but not recursively
     - tuple is converted to tuple, recursively.
@@ -68,7 +69,7 @@ def thaw(o, strict=True):
     (1, [])
     """
     typ = type(o)
-    if isinstance(o, PVector) or (strict and typ is list):
+    if isinstance(o, PVector) or isinstance(o, PSequence) or (strict and typ is list):
         curried_thaw = lambda x: thaw(x, strict)
         return list(map(curried_thaw, o))
     if isinstance(o, PMap) or (strict and typ is dict):

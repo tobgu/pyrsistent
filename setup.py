@@ -16,7 +16,13 @@ else:
 
 extensions = []
 if platform.python_implementation() == 'CPython' and os.getenv("PYRSISTENT_SKIP_EXTENSION") is None:
-    extensions = [Extension('pvectorc', sources=['pvectorcmodule.c'])]
+    extensions = [
+        Extension('pvectorc', sources=['pvectorcmodule.c']),
+        Extension(
+            'pyrsistent._psequence._c_ext',
+            sources=['pyrsistent/_psequence/_c_ext.c']
+        ),
+    ]
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
@@ -77,7 +83,10 @@ setup(
     setup_requires=pytest_runner,
     ext_modules=extensions,
     cmdclass={'build_ext': custom_build_ext},
-    packages=['pyrsistent'],
+    packages=[
+        'pyrsistent',
+        'pyrsistent._psequence',
+    ],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
     python_requires='>=3.7',
 )

@@ -1,6 +1,6 @@
 """Tests for freeze and thaw."""
 
-from pyrsistent import v, m, s, freeze, thaw, PRecord, field, mutant
+from pyrsistent import v, m, s, sq, freeze, thaw, PRecord, field, mutant
 
 
 ## Freeze (standard)
@@ -80,8 +80,13 @@ def test_thaw_basic():
     assert thaw(1) == 1
     assert thaw('foo') == 'foo'
 
-def test_thaw_list():
+def test_thaw_vector():
     result = thaw(v(1, 2))
+    assert result == [1, 2]
+    assert type(result) is list
+
+def test_thaw_sequence():
+    result = thaw(sq(1, 2))
     assert result == [1, 2]
     assert type(result) is list
 

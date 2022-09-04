@@ -20,6 +20,7 @@ try:
     from typing import Iterable
     from typing import Mapping
     from typing import Sequence
+    from typing import MutableSequence
     from typing import Sized
     from typing import TypeVar
 
@@ -33,6 +34,7 @@ try:
         'PMap',
         'PSet',
         'PVector',
+        'PSequence'
     ]
 
     T = TypeVar('T')
@@ -66,6 +68,12 @@ try:
         pass
 
     class PVector(Sequence[T], Hashable):
+        pass
+
+    class PSequence(Sequence[T], Hashable):
+        pass
+
+    class PSequenceEvolver(MutableSequence[T]):
         pass
 
     class PVectorEvolver(Generic[T]):

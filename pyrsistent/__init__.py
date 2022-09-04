@@ -12,6 +12,8 @@ from pyrsistent._plist import plist, l, PList
 
 from pyrsistent._pdeque import pdeque, dq, PDeque
 
+from pyrsistent._psequence import psequence, sq, PSequence
+
 from pyrsistent._checked_types import (
     CheckedPMap, CheckedPVector, CheckedPSet, InvariantException, CheckedKeyTypeError,
     CheckedValueTypeError, CheckedType, optional)
@@ -38,6 +40,7 @@ __all__ = ('pmap', 'm', 'PMap',
            'pbag', 'b', 'PBag',
            'plist', 'l', 'PList',
            'pdeque', 'dq', 'PDeque',
+           'psequence', 'sq', 'PSequence',
            'CheckedPMap', 'CheckedPVector', 'CheckedPSet', 'InvariantException', 'CheckedKeyTypeError', 'CheckedValueTypeError', 'CheckedType', 'optional',
            'PRecord', 'field', 'pset_field', 'pmap_field', 'pvector_field',
            'PClass', 'PClassMeta',
