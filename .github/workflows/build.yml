@@ -38,6 +38,9 @@ jobs:
           - os: ubuntu-latest
             bitness: 32
             platform_id: manylinux_i686
+          - os: ubuntu-latest
+            bitness: 64
+            platform_id: manylinux_aarch64
           - os: macos-latest
             bitness: 64
             platform_id: macosx_x86_64
@@ -62,14 +65,23 @@ jobs:
           - os: macos-latest
             bitness: 32
     env:
+      CIBW_ARCHS_LINUX: auto aarch64
       CIBW_ARCHS_MACOS: x86_64 universal2
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
       CIBW_TEST_REQUIRES: pytest==6.* hypothesis==6.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.3.1
