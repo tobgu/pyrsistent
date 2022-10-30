@@ -711,6 +711,8 @@ dscrofts https://github.com/dscrofts
 
 Andy Reagan https://github.com/andyreagan
 
+Aaron Durant https://github.com/Aaron-Durant
+
 Contributing
 ------------
 
