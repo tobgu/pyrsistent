@@ -2,7 +2,7 @@ Revision history
 ----------------
 0.19.1, 2022-10-30
  * Fix #159 (through PR #243). Pmap keys/values/items now behave more like the corresponding Python 3
-   methods on dicts. Previoulsy they returned a materialized PVector holding the items, now they return
+   methods on dicts. Previously they returned a materialized PVector holding the items, now they return
    views instead. This is a slight backwards incompatibility compared to previous behaviour, hence stepping
    version to 0.19. Thanks @noahbenson for this!
  * Fix #244, type for argument to PVector.delete missing. @thanks dscrofts for this!
