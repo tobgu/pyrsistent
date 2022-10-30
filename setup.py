@@ -57,7 +57,7 @@ setup(
     long_description_content_type='text/x-rst',
     author='Tobias Gustafsson',
     author_email='tobias.l.gustafsson@gmail.com',
-    url='http://github.com/tobgu/pyrsistent/',
+    url='https://github.com/tobgu/pyrsistent/',
     license='MIT',
     license_files=['LICENSE.mit'],
     py_modules=['_pyrsistent_version'],
