@@ -58,6 +58,9 @@ setup(
     author='Tobias Gustafsson',
     author_email='tobias.l.gustafsson@gmail.com',
     url='https://github.com/tobgu/pyrsistent/',
+    project_urls={
+        'Changelog': 'https://pyrsistent.readthedocs.io/en/latest/changes.html',
+    },
     license='MIT',
     license_files=['LICENSE.mit'],
     py_modules=['_pyrsistent_version'],
