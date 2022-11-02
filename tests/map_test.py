@@ -4,6 +4,7 @@ import pytest
 from pyrsistent import pmap, m, PVector
 import pickle
 
+
 def test_instance_of_hashable():
     assert isinstance(m(), Hashable)
 
@@ -18,8 +19,8 @@ def test_literalish_works():
 
 
 def test_empty_initialization():
-    map = pmap()
-    assert len(map) == 0
+    a_map = pmap()
+    assert len(a_map) == 0
 
 
 def test_initialization_with_one_element():
@@ -54,16 +55,14 @@ def test_remove_non_existing_element_raises_key_error():
 
 
 def test_various_iterations():
-    import pyrsistent as pyr
-    
-    assert set(['a', 'b']) == set(m(a=1, b=2))
+    assert {'a', 'b'} == set(m(a=1, b=2))
     assert ['a', 'b'] == sorted(m(a=1, b=2).keys())
 
-    assert set([1, 2]) == set(m(a=1, b=2).itervalues())
+    assert {1, 2} == set(m(a=1, b=2).itervalues())
     assert [1, 2] == sorted(m(a=1, b=2).values())
 
-    assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).iteritems())
-    assert set([('a', 1), ('b', 2)]) == set(m(a=1, b=2).items())
+    assert {('a', 1), ('b', 2)} == set(m(a=1, b=2).iteritems())
+    assert {('a', 1), ('b', 2)} == set(m(a=1, b=2).items())
 
     pm = pmap({k:k for k in range(100)})
     assert len(pm) == len(pm.keys())
@@ -77,13 +76,14 @@ def test_various_iterations():
     vs = pm.values()
     assert all(v in vs for v in vs)
 
-def test_initialization_with_two_elements():
-    map = pmap({'a': 2, 'b': 3})
-    assert len(map) == 2
-    assert map['a'] == 2
-    assert map['b'] == 3
 
-    map2 = map.remove('a')
+def test_initialization_with_two_elements():
+    map1 = pmap({'a': 2, 'b': 3})
+    assert len(map1) == 2
+    assert map1['a'] == 2
+    assert map1['b'] == 3
+
+    map2 = map1.remove('a')
     assert 'a' not in map2
     assert map2['b'] == 3
 
@@ -253,8 +253,10 @@ def test_update_no_arguments():
 def test_addition():
     assert m(x=1, y=2) + m(y=3, z=4) == m(x=1, y=3, z=4)
 
+
 def test_union_operator():
     assert m(x=1, y=2) | m(y=3, z=4) == m(x=1, y=3, z=4)
+
 
 def test_transform_base_case():
     # Works as set when called with only one key
@@ -290,39 +292,39 @@ def test_hash_collision_is_correctly_resolved():
     dummy3 = HashDummy()
     dummy4 = HashDummy()
 
-    map = pmap({dummy1: 1, dummy2: 2, dummy3: 3})
-    assert map[dummy1] == 1
-    assert map[dummy2] == 2
-    assert map[dummy3] == 3
-    assert dummy4 not in map
+    map1 = pmap({dummy1: 1, dummy2: 2, dummy3: 3})
+    assert map1[dummy1] == 1
+    assert map1[dummy2] == 2
+    assert map1[dummy3] == 3
+    assert dummy4 not in map1
 
     keys = set()
     values = set()
-    for k, v in map.iteritems():
+    for k, v in map1.iteritems():
         keys.add(k)
         values.add(v)
 
-    assert keys == set([dummy1, dummy2, dummy3])
-    assert values == set([1, 2, 3])
+    assert keys == {dummy1, dummy2, dummy3}
+    assert values == {1, 2, 3}
 
-    map2 = map.set(dummy1, 11)
+    map2 = map1.set(dummy1, 11)
     assert map2[dummy1] == 11
 
     # Re-use existing structure when inserted element is the same
     assert map2.set(dummy1, 11) is map2
 
-    map3 = map.set('a', 22)
+    map3 = map1.set('a', 22)
     assert map3['a'] == 22
     assert map3[dummy3] == 3
 
     # Remove elements
-    map4 = map.discard(dummy2)
+    map4 = map1.discard(dummy2)
     assert len(map4) == 2
     assert map4[dummy1] == 1
     assert dummy2 not in map4
     assert map4[dummy3] == 3
 
-    assert map.discard(dummy4) is map
+    assert map1.discard(dummy4) is map1
 
     # Empty map handling
     empty_map = map4.remove(dummy1).remove(dummy3)
@@ -331,19 +333,19 @@ def test_hash_collision_is_correctly_resolved():
 
 
 def test_bitmap_indexed_iteration():
-    map = pmap({'a': 2, 'b': 1})
+    a_map = pmap({'a': 2, 'b': 1})
     keys = set()
     values = set()
 
     count = 0
-    for k, v in map.iteritems():
+    for k, v in a_map.iteritems():
         count += 1
         keys.add(k)
         values.add(v)
 
     assert count == 2
-    assert keys == set(['a', 'b'])
-    assert values == set([2, 1])
+    assert keys == {'a', 'b'}
+    assert values == {2, 1}
 
 
 def test_iteration_with_many_elements():
@@ -358,12 +360,12 @@ def test_iteration_with_many_elements():
     # those properly as well
     init_dict[hash_dummy1] = 12345
     init_dict[hash_dummy2] = 54321
-    map = pmap(init_dict)
+    a_map = pmap(init_dict)
 
     actual_values = set()
     actual_keys = set()
 
-    for k, v in map.iteritems():
+    for k, v in a_map.iteritems():
         actual_values.add(v)
         actual_keys.add(k)
 
@@ -378,6 +380,7 @@ def test_str():
 def test_empty_truthiness():
     assert m(a=1)
     assert not m()
+
 
 def test_update_with():
     assert m(a=1).update_with(add, m(a=2, b=4)) == m(a=3, b=4)
@@ -398,7 +401,7 @@ def test_pickling_non_empty_map():
 
 
 def test_set_with_relocation():
-    x = pmap({'a':1000}, pre_size=1)
+    x = pmap({'a': 1000}, pre_size=1)
     x = x.set('b', 3000)
     x = x.set('c', 4000)
     x = x.set('d', 5000)
