@@ -404,6 +404,7 @@ class PMap(object):
         def set(self, key, val):
             kv = (key, val)
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
+            reallocation_required = len(self._buckets_evolver) < 0.67 * self._size
             if bucket:
                 for k, v in bucket:
                     if k == key:
@@ -413,20 +414,28 @@ class PMap(object):
 
                         return self
 
+                # Only check and perform reallocation if not replacing an existing value.
+                # This is a performance tweak, see #247.
+                if reallocation_required:
+                    self._reallocate()
+                    return self.set(key, val)
+
                 new_bucket = [kv]
                 new_bucket.extend(bucket)
                 self._buckets_evolver[index] = new_bucket
                 self._size += 1
             else:
-                if len(self._buckets_evolver) < 0.67 * self._size:
-                    self._reallocate(2 * len(self._buckets_evolver))
+                if reallocation_required:
+                    self._reallocate()
+                    return self.set(key, val)
 
                 self._buckets_evolver[index] = [kv]
                 self._size += 1
 
             return self
 
-        def _reallocate(self, new_size):
+        def _reallocate(self):
+            new_size = 2 * len(self._buckets_evolver)
             new_list = new_size * [None]
             buckets = self._buckets_evolver.persistent()
             for k, v in chain.from_iterable(x for x in buckets if x):

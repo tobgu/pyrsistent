@@ -503,6 +503,17 @@ def test_supports_weakref():
     weakref.ref(m(a=1))
 
 
+def test_insert_and_get_many_elements():
+    # This test case triggers reallocation of the underlying bucket structure.
+    a_map = m()
+    for x in range(1000):
+        a_map = a_map.set(str(x), x)
+
+    assert len(a_map) == 1000
+    for x in range(1000):
+        assert a_map[str(x)] == x, x
+
+
 def test_iterable():
     """
     PMaps can be created from iterables even though they can't be len() hinted.
