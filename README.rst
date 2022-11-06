@@ -4,7 +4,8 @@ Pyrsistent
     :target: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml
 
 
-.. _Pyrthon: https://www.github.com/tobgu/pyrthon/
+.. _Pyrthon: https://www.github.com/tobgu/pyrthon
+.. _Pyrsistent_extras: https://github.com/mingmingrr/pyrsistent-extras
 
 Pyrsistent is a number of persistent collections (by some referred to as functional data structures). Persistent in
 the sense that they are immutable.
@@ -24,6 +25,11 @@ program without hassle.
 
 If you want use literal syntax to define them in your code rather
 than function calls check out Pyrthon_. Be aware, that one is experimental, unmaintained and alpha software. 
+
+If you cannot find the persistent data structure you're looking for here you may want to take a look at
+Pyrsistent_extras_ which is maintained by @mingmingrr. If you still don't find what you're looking for please
+open an issue for discussion. If we agree that functionality is missing you may want to go ahead and create
+a Pull Request implement the missing functionality.
 
 Examples
 --------
