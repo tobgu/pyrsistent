@@ -742,7 +742,7 @@ Release
 * Update README.rst with any new contributors and potential info needed.
 * Update _pyrsistent_version.py
 * Commit and tag with new version: `git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'`
-* Push commit and tags: `git push && git push --tags`
+* Push commit and tags: `git push --follow-tags`
 * Build new release using Github actions
 
 Project status
