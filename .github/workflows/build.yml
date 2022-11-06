@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [37, 38, 39, 310]
+        python: [37, 38, 39, 310, 311]
         bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
@@ -61,6 +61,9 @@ jobs:
           - os: macos-latest
             python: 310
             platform_id: macosx_universal2
+          - os: macos-latest
+            python: 311
+            platform_id: macosx_universal2
         exclude:
           - os: macos-latest
             bitness: 32
@@ -75,7 +78,7 @@ jobs:
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
@@ -84,9 +87,9 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@v2.9.0
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
 
@@ -96,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         name: Install Python
         with:
           python-version: '3.9'
@@ -114,7 +117,7 @@ jobs:
         env:
           PYRSISTENT_SKIP_EXTENSION: yes
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: dist/*
 
@@ -128,14 +131,14 @@ jobs:
     # if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: artifact
           path: dist
 
       - name: Publish test release
         if: github.event.inputs.target == 'test'
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@v1.5.1
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -144,7 +147,7 @@ jobs:
 
       - name: Publish release
         if: github.event.inputs.target != 'test'
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@v1.5.1
         with:
          user: __token__
          password: ${{ secrets.PYPI_API_TOKEN }}
