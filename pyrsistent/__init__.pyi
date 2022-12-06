@@ -5,6 +5,7 @@
 from typing import Any
 from typing import AnyStr
 from typing import Callable
+from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -154,16 +155,16 @@ class PRecord(PMap[AnyStr, Any]):
     def discard(self: T_PRecord, key: KT) -> T_PRecord: ...
     def remove(self: T_PRecord, key: KT) -> T_PRecord: ...
 
-    def serialize(self, format: Optional[Any] = ...) -> MutableMapping: ...
+    def serialize(self, format: Optional[Any] = ...) -> Dict[str, Any]: ...
 
     # From pyrsistent documentation:
     #   This set function differs slightly from that in the PMap
     #   class. First of all it accepts key-value pairs. Second it accepts multiple key-value
     #   pairs to perform one, atomic, update of multiple fields.
     @overload
-    def set(self, key: KT, val: VT) -> Any: ...
+    def set(self: T_PRecord, key: KT, val: VT) -> T_PRecord: ...
     @overload
-    def set(self, **kwargs: VT) -> Any: ...
+    def set(self: T_PRecord, **kwargs: VT) -> T_PRecord: ...
 
 def immutable(
     members: Union[str, Iterable[str]] = '',
