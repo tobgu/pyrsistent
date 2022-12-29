@@ -1,5 +1,8 @@
 Revision history
 ----------------
+0.19.3, 2022-12-29
+ * Fix #264, add wheels and official support for Python 3.11. Thanks @hugovk for this!
+
 0.19.2, 2022-11-03
  * Fix #263, pmap regression in 0.19.1. Element access sometimes unreliable after insert.
    Thanks @mwchase for reporting this!
