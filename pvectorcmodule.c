@@ -15,7 +15,7 @@ Naming conventions
 ------------------
 initpyrsistentc - This is the method that initializes the whole module
 pyrsistent_* -    Methods part of the interface
-<typename>_* -    Instance methods of types. For examle PVector_append(...)
+<typename>_* -    Instance methods of types. For example PVector_append(...)
 
 All other methods are camel cased without prefix. All methods are static, none should
 require to be exposed outside of this module. 
