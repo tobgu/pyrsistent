@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [37, 38, 39, 310, 311]
+        python: [37, 38, 39, 310, 311, 312]
         platform_id:
           - win_amd64
           - win32
