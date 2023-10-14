@@ -31,7 +31,7 @@ def freeze(o, strict=True):
     (1, pvector([]))
     """
     typ = type(o)
-    if typ is dict or (strict and isinstance(o, PMap)):
+    if isinstance(o, dict) or (strict and isinstance(o, PMap)):
         return pmap({k: freeze(v, strict) for k, v in o.items()})
     if typ is list or (strict and isinstance(o, PVector)):
         curried_freeze = lambda x: freeze(x, strict)
