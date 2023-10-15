@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [37, 38, 39, 310, 311]
+        python: [38, 39, 310, 311, 312]
         bitness: [32, 64]
         include:
           # Run 32 and 64 bit version in parallel for Linux and Windows
@@ -43,26 +43,6 @@ jobs:
             platform_id: manylinux_aarch64
           - os: macos-latest
             bitness: 64
-            platform_id: macosx_x86_64
-          - os: macos-latest
-            bitness: 64
-            platform_id: macosx_universal2
-          # Python 3.7 does not have universal2 wheel support yet
-          - os: macos-latest
-            python: 37
-            platform_id: macosx_x86_64
-          # Python 3.8 and onwards only need universal2 wheels
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_universal2
-          - os: macos-latest
-            python: 39
-            platform_id: macosx_universal2
-          - os: macos-latest
-            python: 310
-            platform_id: macosx_universal2
-          - os: macos-latest
-            python: 311
             platform_id: macosx_universal2
         exclude:
           - os: macos-latest
