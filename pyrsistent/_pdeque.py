@@ -4,10 +4,10 @@ from numbers import Integral
 from typing import TypeVar, Generic
 from pyrsistent._plist import plist
 
-T = TypeVar("T")
+T_co = TypeVar('T_co', covariant=True)
 
 
-class PDeque(Generic[T]):
+class PDeque(Generic[T_co]):
     """
     Persistent double ended queue (deque). Allows quick appends and pops in both ends. Implemented
     using two persistent lists.
