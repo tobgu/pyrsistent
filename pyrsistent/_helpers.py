@@ -1,3 +1,4 @@
+import collections
 from functools import wraps
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
@@ -10,6 +11,7 @@ def freeze(o, strict=True):
 
     - list is converted to pvector, recursively
     - dict is converted to pmap, recursively on values (but not keys)
+    - defaultdict is converted to pmap, recursively on values (but not keys)
     - set is converted to pset, but not recursively
     - tuple is converted to tuple, recursively.
 
@@ -31,7 +33,9 @@ def freeze(o, strict=True):
     (1, pvector([]))
     """
     typ = type(o)
-    if isinstance(o, dict) or (strict and isinstance(o, PMap)):
+    if typ is dict or (strict and isinstance(o, PMap)):
+        return pmap({k: freeze(v, strict) for k, v in o.items()})
+    if typ is collections.defaultdict or (strict and isinstance(o, PMap)):
         return pmap({k: freeze(v, strict) for k, v in o.items()})
     if typ is list or (strict and isinstance(o, PVector)):
         curried_freeze = lambda x: freeze(x, strict)
