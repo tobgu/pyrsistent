@@ -10,3 +10,4 @@ tox
 setuptools>=0.16.1
 twine>=3.2
 pip>=20.2.3
+pip-tools
