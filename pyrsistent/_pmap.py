@@ -1,8 +1,12 @@
 from collections.abc import Mapping, Hashable
 from itertools import chain
+from typing import Generic, TypeVar
+
 from pyrsistent._pvector import pvector
 from pyrsistent._transformations import transform
 
+KT = TypeVar('KT')
+VT_co = TypeVar('VT_co', covariant=True)
 class PMapView:
     """View type for the persistent map/dict type `PMap`.
 
@@ -103,7 +107,7 @@ class PMapItems(PMapView):
         elif not isinstance(x, type(self)): return False
         else: return self._map == x._map
 
-class PMap(object):
+class PMap(Generic[KT, VT_co]):
     """
     Persistent map/dict. Tries to follow the same naming conventions as the built in dict where feasible.
 
