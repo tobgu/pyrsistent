@@ -5,8 +5,9 @@ psutil==5.7.0
 pyperform
 pytest
 Sphinx
-sphinx-rtd-theme==0.1.5
+sphinx-rtd-theme
 tox
 setuptools>=0.16.1
 twine>=3.2
 pip>=20.2.3
+pip-tools

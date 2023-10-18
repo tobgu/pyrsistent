@@ -15,7 +15,7 @@ Naming conventions
 ------------------
 initpyrsistentc - This is the method that initializes the whole module
 pyrsistent_* -    Methods part of the interface
-<typename>_* -    Instance methods of types. For examle PVector_append(...)
+<typename>_* -    Instance methods of types. For example PVector_append(...)
 
 All other methods are camel cased without prefix. All methods are static, none should
 require to be exposed outside of this module. 
@@ -232,13 +232,13 @@ static void PVector_dealloc(PVector *self) {
   }
   
   PyObject_GC_UnTrack((PyObject*)self);
-  Py_TRASHCAN_SAFE_BEGIN(self);
+  Py_TRASHCAN_BEGIN(self, PVector_dealloc);
 
   releaseNode(0, self->tail);
   releaseNode(self->shift, self->root);
   
   PyObject_GC_Del(self);
-  Py_TRASHCAN_SAFE_END(self);
+  Py_TRASHCAN_END;
 }
 
 static PyObject *PVector_toList(PVector *self) {
@@ -1289,7 +1289,7 @@ static void cleanVector(PVector *vector) {
 
 static void PVectorEvolver_dealloc(PVectorEvolver *self) {
   PyObject_GC_UnTrack(self);
-  Py_TRASHCAN_SAFE_BEGIN(self);
+  Py_TRASHCAN_BEGIN(self, PVectorEvolver_dealloc);
 
   if(self->originalVector != self->newVector) {
     cleanVector(self->newVector);
@@ -1300,7 +1300,7 @@ static void PVectorEvolver_dealloc(PVectorEvolver *self) {
   Py_DECREF(self->appendList);
 
   PyObject_GC_Del(self);
-  Py_TRASHCAN_SAFE_END(self);
+  Py_TRASHCAN_END;
 }
 
 static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {

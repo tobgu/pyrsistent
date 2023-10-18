@@ -1,5 +1,5 @@
 """Tests for freeze and thaw."""
-
+import collections
 from pyrsistent import v, m, s, freeze, thaw, PRecord, field, mutant
 
 
@@ -17,6 +17,13 @@ def test_freeze_dict():
     assert result == m(a='b')
     assert type(freeze({'a': 'b'})) is type(m())
 
+def test_freeze_defaultdict():
+    test_dict = collections.defaultdict(dict)
+    test_dict['a'] = 'b'
+    result = freeze(test_dict)
+    assert result == m(a='b')
+    assert type(freeze({'a': 'b'})) is type(m())
+
 def test_freeze_set():
     result = freeze(set([1, 2, 3]))
     assert result == s(1, 2, 3)
@@ -24,6 +31,13 @@ def test_freeze_set():
 
 def test_freeze_recurse_in_dictionary_values():
     result = freeze({'a': [1]})
+    assert result == m(a=v(1))
+    assert type(result['a']) is type(v())
+
+def test_freeze_recurse_in_defaultdict_values():
+    test_dict = collections.defaultdict(dict)
+    test_dict['a'] = [1]
+    result = freeze(test_dict)
     assert result == m(a=v(1))
     assert type(result['a']) is type(v())
 
