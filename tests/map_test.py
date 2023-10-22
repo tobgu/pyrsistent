@@ -547,5 +547,5 @@ def test_pmap_removal_with_broken_classes_deriving_from_namedtuple():
 
     # Both items are removed due to how they are compared for inequality
     assert BrokenPerson('X') not in s
-    assert BrokenItem('X') not in s
-    assert len(s) == 0
+    assert BrokenItem('X') in s
+    assert len(s) == 1

@@ -413,7 +413,8 @@ class PMap(Generic[KT, VT_co]):
                 for k, v in bucket:
                     if k == key:
                         if v is not val:
-                            new_bucket = [(k2, v2) if k2 != k else (k2, val) for k2, v2 in bucket]
+                            # Use `not (k2 == k)` rather than `!=` to avoid relying on a well implemented `__ne__`, see #268.
+                            new_bucket = [(k2, v2) if not (k2 == k) else (k2, val) for k2, v2 in bucket]
                             self._buckets_evolver[index] = new_bucket
 
                         return self
@@ -476,7 +477,8 @@ class PMap(Generic[KT, VT_co]):
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
 
             if bucket:
-                new_bucket = [(k, v) for (k, v) in bucket if k != key]
+                # Use `not (k == key)` rather than `!=` to avoid relying on a well implemented `__ne__`, see #268.
+                new_bucket = [(k, v) for (k, v) in bucket if not (k == key)]
                 size_diff = len(bucket) - len(new_bucket)
                 if size_diff > 0:
                     self._buckets_evolver[index] = new_bucket if new_bucket else None
