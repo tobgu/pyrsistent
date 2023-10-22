@@ -477,9 +477,10 @@ class PMap(Generic[KT, VT_co]):
 
             if bucket:
                 new_bucket = [(k, v) for (k, v) in bucket if k != key]
-                if len(bucket) > len(new_bucket):
+                size_diff = len(bucket) - len(new_bucket)
+                if size_diff > 0:
                     self._buckets_evolver[index] = new_bucket if new_bucket else None
-                    self._size -= 1
+                    self._size -= size_diff
                     return self
 
             raise KeyError('{0}'.format(key))

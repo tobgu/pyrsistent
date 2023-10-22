@@ -1,7 +1,8 @@
+from collections import namedtuple
 from collections.abc import Mapping, Hashable
 from operator import add
 import pytest
-from pyrsistent import pmap, m, PVector
+from pyrsistent import pmap, m
 import pickle
 
 
@@ -64,7 +65,7 @@ def test_various_iterations():
     assert {('a', 1), ('b', 2)} == set(m(a=1, b=2).iteritems())
     assert {('a', 1), ('b', 2)} == set(m(a=1, b=2).items())
 
-    pm = pmap({k:k for k in range(100)})
+    pm = pmap({k: k for k in range(100)})
     assert len(pm) == len(pm.keys())
     assert len(pm) == len(pm.values())
     assert len(pm) == len(pm.items())
@@ -72,7 +73,7 @@ def test_various_iterations():
     assert all(k in pm for k in ks)
     assert all(k in ks for k in ks)
     us = pm.items()
-    assert all(pm[k] == v for (k,v) in us)
+    assert all(pm[k] == v for (k, v) in us)
     vs = pm.values()
     assert all(v in vs for v in vs)
 
@@ -147,12 +148,11 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
 
 
 class HashabilityControlled(object):
-
     hashable = True
 
     def __hash__(self):
         if self.hashable:
-            return 4 # Proven random
+            return 4  # Proven random
         raise ValueError("I am not currently hashable.")
 
 
@@ -286,7 +286,6 @@ class HashDummy(object):
 
 
 def test_hash_collision_is_correctly_resolved():
-
     dummy1 = HashDummy()
     dummy2 = HashDummy()
     dummy3 = HashDummy()
@@ -422,7 +421,7 @@ def test_evolver_simple_update():
 
 
 def test_evolver_update_with_relocation():
-    x = pmap({'a':1000}, pre_size=1)
+    x = pmap({'a': 1000}, pre_size=1)
     e = x.evolver()
     e['b'] = 3000
     e['c'] = 4000
@@ -520,3 +519,33 @@ def test_iterable():
     """
 
     assert pmap(iter([("a", "b")])) == pmap([("a", "b")])
+
+
+class BrokenPerson(namedtuple('Person', 'name')):
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+class BrokenItem(namedtuple('Item', 'name')):
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+def test_pmap_removal_with_broken_classes_deriving_from_namedtuple():
+    """
+    The two classes above implement __eq__ but also would need to implement __ne__ to compare
+    consistently. See issue https://github.com/tobgu/pyrsistent/issues/268 for details.
+    """
+    s = pmap({BrokenPerson('X'): 2, BrokenItem('X'): 3})
+    s = s.remove(BrokenPerson('X'))
+
+    # Both items are removed due to how they are compared for inequality
+    assert BrokenPerson('X') not in s
+    assert BrokenItem('X') not in s
+    assert len(s) == 0
