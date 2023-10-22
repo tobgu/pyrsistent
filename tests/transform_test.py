@@ -115,3 +115,8 @@ def test_discard_multiple_elements_in_pvector():
 def test_transform_insert_empty_pmap():
     m = pmap().transform(['123'], pmap())
     assert m == pmap({'123': pmap()})
+
+
+def test_discard_does_not_insert_nodes():
+    m = freeze({}).transform(['foo', 'bar'], discard)
+    assert m == pmap({})
