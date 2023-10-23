@@ -60,7 +60,7 @@ jobs:
             platform_id: manylinux_aarch64
     env:
       CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_ARCHS_MACOS: x86_64 universal2
+      CIBW_ARCHS_MACOS: universal2
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
       CIBW_TEST_REQUIRES: pytest==6.* hypothesis==6.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
@@ -79,7 +79,7 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.9.0
+        uses: pypa/cibuildwheel@v2.16.2
 
       - uses: actions/upload-artifact@v3
         with:
@@ -94,7 +94,7 @@ jobs:
       - uses: actions/setup-python@v4
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           
       - name: Install dependencies
         run: |
