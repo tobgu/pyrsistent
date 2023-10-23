@@ -719,6 +719,12 @@ Andy Reagan https://github.com/andyreagan
 
 Aaron Durant https://github.com/Aaron-Durant
 
+Joshua Munn https://github.com/jams2
+
+Lukas https://github.com/lukasK9999
+
+Arshad https://github.com/arshad-ml
+
 Contributing
 ------------
 

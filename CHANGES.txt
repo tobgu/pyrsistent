@@ -1,5 +1,16 @@
 Revision history
 ----------------
+0.20.0, 2023-10-XX
+ * Fix #245, never introduce new nodes during discard.
+ * Fix #268, do not rely on well implemented __ne__ for keys in pmaps, instead do explicit inversion of equality
+   comparison when checking for inequality.
+ * Officially support Python 3.12.
+ * Officially drop support for Python 3.7.
+ * Fix #273, build more types of wheels. Thanks @jams2 for this!
+ * Fix #282, add generic types to types. Thanks @lukasK9999 for this!
+ * Fix #281, defaultdict can now be frozen. NB! This is a backwards incompatible fix since defaultdict was not
+   previously frozen.
+
 0.19.3, 2022-12-29
  * Fix #264, add wheels and official support for Python 3.11. Thanks @hugovk for this!
 
