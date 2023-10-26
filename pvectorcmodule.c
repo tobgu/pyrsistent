@@ -1313,12 +1313,10 @@ static PyObject *PVectorEvolver_append(PVectorEvolver *self, PyObject *args) {
 }
 
 static PyObject *PVectorEvolver_extend(PVectorEvolver *self, PyObject *args) {
-  PyObject *retVal = _PyList_Extend((PyListObject *)self->appendList, args);
-  if (retVal == NULL) {
+  if (PyList_SetSlice(self->appendList, PY_SSIZE_T_MAX, PY_SSIZE_T_MAX, args) < 0) {
     return NULL;
   }
 
-  Py_DECREF(retVal);
   Py_INCREF(self);
   return (PyObject*)self;
 }
