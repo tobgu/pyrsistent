@@ -29,6 +29,9 @@ jobs:
           - manylinux_x86_64
           - manylinux_i686
           - manylinux_aarch64
+          - musllinux_x86_64
+          - musllinux_i686
+          - musllinux_aarch64
           - macosx_universal2
         exclude:
           # Skip Linux and Mac builds on Windows
@@ -40,6 +43,12 @@ jobs:
             platform_id: manylinux_x86_64
           - os: windows-latest
             platform_id: macosx_universal2
+          - os: windows-latest
+            platform_id: musllinux_x86_64
+          - os: windows-latest
+            platform_id: musllinux_i686
+          - os: windows-latest
+            platform_id: musllinux_aarch64
           # Skip Mac and Windows builds on Linux
           - os: ubuntu-latest
             platform_id: macosx_universal2
@@ -58,6 +67,12 @@ jobs:
             platform_id: manylinux_i686
           - os: macos-latest
             platform_id: manylinux_aarch64
+          - os: macos-latest
+            platform_id: musllinux_x86_64
+          - os: macos-latest
+            platform_id: musllinux_i686
+          - os: macos-latest
+            platform_id: musllinux_aarch64
     env:
       CIBW_ARCHS_LINUX: auto aarch64
       CIBW_ARCHS_MACOS: universal2
@@ -67,13 +82,19 @@ jobs:
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+      CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_1
+      CIBW_MUSLLINUX_I686_IMAGE: musllinux_1_1
+      CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_1
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up QEMU
         if: |
-          runner.os == 'Linux' && (matrix.platform_id == 'manylinux_aarch64' || matrix.platform_id == 'manylinux_i686')
+          runner.os == 'Linux' && (
+            matrix.platform_id == 'manylinux_aarch64' || matrix.platform_id == 'manylinux_i686' ||
+            matrix.platform_id == 'musllinux_aarch64' || matrix.platform_id == 'musllinux_i686'
+          )
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
