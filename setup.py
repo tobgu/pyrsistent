@@ -18,9 +18,6 @@ extensions = []
 if platform.python_implementation() == 'CPython' and os.getenv("PYRSISTENT_SKIP_EXTENSION") is None:
     extensions = [Extension('pvectorc', sources=['pvectorcmodule.c'])]
 
-needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
-pytest_runner = ['pytest-runner'] if needs_pytest else []
-
 
 class custom_build_ext(build_ext):
     """Allow C extension building to fail."""
@@ -75,10 +72,7 @@ setup(
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
-    test_suite='tests',
-    tests_require=['pytest<7', 'hypothesis<7'],
     scripts=[],
-    setup_requires=pytest_runner,
     ext_modules=extensions,
     cmdclass={'build_ext': custom_build_ext},
     packages=['pyrsistent'],
