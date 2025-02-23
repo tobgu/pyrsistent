@@ -166,8 +166,8 @@ v0.14.0, 2017-10-08
 
 v0.13.0, 2017-09-01
  * Fix #113, Skip field factories when loading pickled objects. There is a
-   minor backwards incompatibilty in the behaviour because of this. Thanks
-   @teepark for fi this!
+   minor backwards incompatibility in the behaviour because of this. Thanks
+   @teepark for this!
  * Fix #116, negative indexing for pdeques. Thanks @Julian for this!
 
 v0.12.3, 2017-06-04
