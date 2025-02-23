@@ -21,43 +21,38 @@ jobs:
       # Ensure the wheels build even if one fails.
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [38, 39, 310, 311, 312]
+        python:
+          - "38"
+          - "39"
+          - "310"
+          - "311"
+          - "312"
         platform_id:
-          - win_amd64
-          - win32
-          - manylinux_x86_64
-          - manylinux_i686
-          - manylinux_aarch64
           - macosx_universal2
-        exclude:
-          # Skip Linux and Mac builds on Windows
-          - os: windows-latest
-            platform_id: manylinux_aarch64
-          - os: windows-latest
-            platform_id: manylinux_i686
-          - os: windows-latest
-            platform_id: manylinux_x86_64
-          - os: windows-latest
-            platform_id: macosx_universal2
-          # Skip Mac and Windows builds on Linux
-          - os: ubuntu-latest
-            platform_id: macosx_universal2
-          - os: ubuntu-latest
-            platform_id: win_amd64
-          - os: ubuntu-latest
-            platform_id: win32
-          # Skip Linux and Windows builds on Mac
-          - os: macos-latest
-            platform_id: win_amd64
-          - os: macos-latest
-            platform_id: win32
-          - os: macos-latest
-            platform_id: manylinux_x86_64
-          - os: macos-latest
-            platform_id: manylinux_i686
-          - os: macos-latest
-            platform_id: manylinux_aarch64
+          - manylinux_aarch64
+          - manylinux_i686
+          - manylinux_x86_64
+          - win32
+          - win_amd64
+
+        include:
+          # For each matching 'platform_id' above, add an 'os'.
+          # Linux
+          - platform_id: manylinux_aarch64
+            os: ubuntu-latest
+          - platform_id: manylinux_i686
+            os: ubuntu-latest
+          - platform_id: manylinux_x86_64
+            os: ubuntu-latest
+          # macOS
+          - platform_id: macosx_universal2
+            os: macos-latest
+          # Windows
+          - platform_id: win32
+            os: windows-latest
+          - platform_id: win_amd64
+            os: windows-latest
+
     env:
       CIBW_ARCHS_LINUX: auto aarch64
       CIBW_ARCHS_MACOS: universal2
