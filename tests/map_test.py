@@ -309,7 +309,7 @@ def test_hash_collision_is_correctly_resolved():
     map2 = map1.set(dummy1, 11)
     assert map2[dummy1] == 11
 
-    # Re-use existing structure when inserted element is the same
+    # Reuse existing structure when inserted element is the same
     assert map2.set(dummy1, 11) is map2
 
     map3 = map1.set('a', 22)
