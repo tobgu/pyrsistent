@@ -27,6 +27,7 @@ jobs:
           - "310"
           - "311"
           - "312"
+          - "313"
         platform_id:
           - macosx_universal2
           - manylinux_aarch64
