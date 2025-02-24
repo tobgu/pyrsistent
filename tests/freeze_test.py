@@ -25,7 +25,7 @@ def test_freeze_defaultdict():
     assert type(freeze({'a': 'b'})) is type(m())
 
 def test_freeze_set():
-    result = freeze(set([1, 2, 3]))
+    result = freeze({1, 2, 3})
     assert result == s(1, 2, 3)
     assert type(result) is type(s())
 
@@ -106,7 +106,7 @@ def test_thaw_dict():
 
 def test_thaw_set():
     result = thaw(s(1, 2))
-    assert result == set([1, 2])
+    assert result == {1, 2}
     assert type(result) is set
 
 def test_thaw_recurse_in_mapping_values():

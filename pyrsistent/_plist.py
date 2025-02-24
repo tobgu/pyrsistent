@@ -6,7 +6,7 @@ from typing import Generic, TypeVar
 T_co = TypeVar('T_co', covariant=True)
 
 
-class _PListBuilder(object):
+class _PListBuilder:
     """
     Helper class to allow construction of a list without
     having to reverse it in the end.
@@ -37,7 +37,7 @@ class _PListBuilder(object):
         return self._head
 
 
-class _PListBase(object):
+class _PListBase:
     __slots__ = ('__weakref__',)
 
     # Selected implementations can be taken straight from the Sequence
@@ -61,7 +61,7 @@ class _PListBase(object):
         return sum(1 for _ in self)
 
     def __repr__(self):
-        return "plist({0})".format(list(self))
+        return f"plist({list(self)})"
     __str__ = __repr__
 
     def cons(self, elem):
@@ -219,7 +219,7 @@ class _PListBase(object):
             builder.append_elem(head.first)
             head = head.rest
 
-        raise ValueError('{0} not found in PList'.format(elem))
+        raise ValueError(f'{elem} not found in PList')
 
 
 class PList(Generic[T_co], _PListBase):
@@ -252,7 +252,7 @@ class PList(Generic[T_co], _PListBase):
     __slots__ = ('first', 'rest')
 
     def __new__(cls, first, rest):
-        instance = super(PList, cls).__new__(cls)
+        instance = super().__new__(cls)
         instance.first = first
         instance.rest = rest
         return instance

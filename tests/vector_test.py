@@ -917,7 +917,7 @@ def test_get_evolver_referents(pvector):
 
 def test_failing_repr(pvector):
     # See https://github.com/tobgu/pyrsistent/issues/84
-    class A(object):
+    class A:
         def __repr__(self):
             raise ValueError('oh no!')
 

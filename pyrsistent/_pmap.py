@@ -39,7 +39,7 @@ class PMapView:
         return len(self._map)
 
     def __setattr__(self, k, v):
-        raise TypeError("%s is immutable" % (type(self),))
+        raise TypeError(f"{type(self)} is immutable")
 
     def __reversed__(self):
         raise TypeError("Persistent maps are not reversible")
@@ -148,7 +148,7 @@ class PMap(Generic[KT, VT_co]):
     __slots__ = ('_size', '_buckets', '__weakref__', '_cached_hash')
 
     def __new__(cls, size, buckets):
-        self = super(PMap, cls).__new__(cls)
+        self = super().__new__(cls)
         self._size = size
         self._buckets = buckets
         return self
@@ -203,7 +203,7 @@ class PMap(Generic[KT, VT_co]):
             return self[key]
         except KeyError as e:
             raise AttributeError(
-                "{0} has no attribute '{1}'".format(type(self).__name__, key)
+                f"{type(self).__name__} has no attribute '{key}'"
             ) from e
 
     def iterkeys(self):
@@ -220,8 +220,7 @@ class PMap(Generic[KT, VT_co]):
     def iteritems(self):
         for bucket in self._buckets:
             if bucket:
-                for k, v in bucket:
-                    yield k, v
+                yield from bucket
 
     def values(self):
         return PMapValues(self)
@@ -237,7 +236,7 @@ class PMap(Generic[KT, VT_co]):
         return self._size
 
     def __repr__(self):
-        return 'pmap({0})'.format(str(dict(self)))
+        return f'pmap({str(dict(self))})'
 
     def __eq__(self, other):
         if self is other:
@@ -391,7 +390,7 @@ class PMap(Generic[KT, VT_co]):
     def copy(self):
         return self
 
-    class _Evolver(object):
+    class _Evolver:
         __slots__ = ('_buckets_evolver', '_size', '_original_pmap')
 
         def __init__(self, original_pmap):
@@ -485,7 +484,7 @@ class PMap(Generic[KT, VT_co]):
                     self._size -= size_diff
                     return self
 
-            raise KeyError('{0}'.format(key))
+            raise KeyError(f'{key}')
 
     def evolver(self):
         """

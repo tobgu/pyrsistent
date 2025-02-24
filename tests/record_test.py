@@ -29,10 +29,10 @@ class UniqueThing(PRecord):
     id = field(type=uuid.UUID, factory=uuid.UUID)
 
 
-class Something(object):
+class Something:
     pass
 
-class Another(object):
+class Another:
     pass
 
 def test_create_ignore_extra_true():
@@ -118,8 +118,8 @@ def test_cannot_assign_wrong_type_to_fields():
     except PTypeError as e:
         assert e.source_class == ARecord
         assert e.field == 'x'
-        assert e.expected_types == set([int, float])
-        assert e.actual_type is type('foo')
+        assert e.expected_types == {int, float}
+        assert e.actual_type is str
 
 
 def test_cannot_construct_with_undeclared_fields():
@@ -329,7 +329,7 @@ def test_all_invariant_errors_reported():
         CRecord.create({'a': 0, 'b': {'x': -5}})
         assert False
     except InvariantException as e:
-        assert set(e.invariant_errors) == set(['x negative', 'a zero'])
+        assert set(e.invariant_errors) == {'x negative', 'a zero'}
         assert e.missing_fields == ('BRecord.y',)
 
 

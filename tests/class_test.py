@@ -297,7 +297,7 @@ def test_multiple_invariants_on_field():
         MultiInvariantField(one=1, two=2)
         assert False
     except InvariantException as e:
-        assert set(e.invariant_errors) == set([('one_one', 'one_two'), 'two_one'])
+        assert set(e.invariant_errors) == {('one_one', 'one_two'), 'two_one'}
 
 
 def test_multiple_global_invariants():
@@ -313,7 +313,7 @@ def test_multiple_global_invariants():
 
 
 def test_inherited_global_invariants():
-    class Distant(object):
+    class Distant:
         def __invariant__(self):
             return [(self.distant, "distant")]
 
@@ -334,7 +334,7 @@ def test_inherited_global_invariants():
 
 def test_diamond_inherited_global_invariants():
     counter = []
-    class Base(object):
+    class Base:
         def __invariant__(self):
             counter.append(None)
             return [(False, "base")]
@@ -402,7 +402,7 @@ def test_invariant_checks_static_initial_value():
 
 def test_lazy_invariant_message():
     class MyClass(PClass):
-        a = field(int, invariant=lambda x: (x < 5, lambda: "{x} is too large".format(x=x)))
+        a = field(int, invariant=lambda x: (x < 5, lambda: f"{x} is too large"))
 
     try:
         MyClass(a=5)
@@ -467,7 +467,7 @@ def test_value_can_be_overridden_in_subclass_new():
             items = kwargs.get('y', None)
             if items is None:
                 kwargs['y'] = ()
-            return super(X, cls).__new__(cls, **kwargs)
+            return super().__new__(cls, **kwargs)
 
     a = X(y=[])
     b = a.set(y=None)

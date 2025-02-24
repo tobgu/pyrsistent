@@ -131,7 +131,7 @@ class PBag(Generic[T_co]):
         return elt in self._counts
 
     def __repr__(self):
-        return "pbag({0})".format(list(self))
+        return f"pbag({list(self)})"
 
     def __eq__(self, other):
         """

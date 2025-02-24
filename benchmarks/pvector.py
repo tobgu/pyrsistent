@@ -4,7 +4,7 @@ from pyrsistent import _pvector, _pvector #!
 
 class Benchmarked(BenchmarkedFunction):
     def __init__(self, scale=1, *args, **kwargs):
-        super(Benchmarked, self).__init__(*args, timeit_number=scale*1000, **kwargs)
+        super().__init__(*args, timeit_number=scale*1000, **kwargs)
 
 ################# Create ###################
 

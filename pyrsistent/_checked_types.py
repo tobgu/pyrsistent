@@ -13,7 +13,7 @@ KT = TypeVar('KT')
 VT_co = TypeVar('VT_co', covariant=True)
 
 
-class CheckedType(object):
+class CheckedType:
     """
     Marker class to enable creation and serialization of checked object graphs.
     """
@@ -46,10 +46,10 @@ class InvariantException(Exception):
     def __init__(self, error_codes=(), missing_fields=(), *args, **kwargs):
         self.invariant_errors = tuple(e() if callable(e) else e for e in error_codes)
         self.missing_fields = missing_fields
-        super(InvariantException, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
-        return super(InvariantException, self).__str__() + \
+        return super().__str__() + \
             ", invariant_errors=[{invariant_errors}], missing_fields=[{missing_fields}]".format(
             invariant_errors=', '.join(str(e) for e in self.invariant_errors),
             missing_fields=', '.join(self.missing_fields))
@@ -93,7 +93,7 @@ def maybe_parse_user_type(t):
     else:
         # If this raises because `t` cannot be formatted, so be it.
         raise TypeError(
-            'Type specifications must be types or strings. Input: {}'.format(t)
+            f'Type specifications must be types or strings. Input: {t}'
         )
 
 
@@ -148,8 +148,7 @@ def _all_dicts(bases, seen=None):
             continue
         seen.add(cls)
         yield cls.__dict__
-        for b in _all_dicts(cls.__bases__, seen):
-            yield b
+        yield from _all_dicts(cls.__bases__, seen)
 
 
 def store_invariants(dct, bases, destination_name, source_name):
@@ -181,12 +180,12 @@ class _CheckedTypeMeta(ABCMeta):
 
         dct['__slots__'] = ()
 
-        return super(_CheckedTypeMeta, mcs).__new__(mcs, name, bases, dct)
+        return super().__new__(mcs, name, bases, dct)
 
 
 class CheckedTypeError(TypeError):
     def __init__(self, source_class, expected_types, actual_type, actual_value, *args, **kwargs):
-        super(CheckedTypeError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.source_class = source_class
         self.expected_types = expected_types
         self.actual_type = actual_type
@@ -292,7 +291,7 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
 
     def __new__(cls, initial=()):
         if type(initial) == PythonPVector:
-            return super(CheckedPVector, cls).__new__(cls, initial._count, initial._shift, initial._root, initial._tail)
+            return super().__new__(cls, initial._count, initial._shift, initial._root, initial._tail)
 
         return CheckedPVector.Evolver(cls, python_pvector()).extend(initial).persistent()
 
@@ -319,7 +318,7 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
         __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, vector):
-            super(CheckedPVector.Evolver, self).__init__(vector)
+            super().__init__(vector)
             self._destination_class = destination_class
             self._invariant_errors = []
 
@@ -330,16 +329,16 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
 
         def __setitem__(self, key, value):
             self._check([value])
-            return super(CheckedPVector.Evolver, self).__setitem__(key, value)
+            return super().__setitem__(key, value)
 
         def append(self, elem):
             self._check([elem])
-            return super(CheckedPVector.Evolver, self).append(elem)
+            return super().append(elem)
 
         def extend(self, it):
             it = list(it)
             self._check(it)
-            return super(CheckedPVector.Evolver, self).extend(it)
+            return super().extend(it)
 
         def persistent(self):
             if self._invariant_errors:
@@ -347,14 +346,14 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
 
             result = self._orig_pvector
             if self.is_dirty() or (self._destination_class != type(self._orig_pvector)):
-                pv = super(CheckedPVector.Evolver, self).persistent().extend(self._extra_tail)
+                pv = super().persistent().extend(self._extra_tail)
                 result = self._destination_class(pv)
                 self._reset(result)
 
             return result
 
     def __repr__(self):
-        return self.__class__.__name__ + "({0})".format(self.tolist())
+        return self.__class__.__name__ + f"({self.tolist()})"
 
     __str__ = __repr__
 
@@ -378,7 +377,7 @@ class CheckedPSet(PSet[T_co], CheckedType, metaclass=_CheckedTypeMeta):
 
     def __new__(cls, initial=()):
         if type(initial) is PMap:
-            return super(CheckedPSet, cls).__new__(cls, initial)
+            return super().__new__(cls, initial)
 
         evolver = CheckedPSet.Evolver(cls, pset())
         for e in initial:
@@ -387,14 +386,14 @@ class CheckedPSet(PSet[T_co], CheckedType, metaclass=_CheckedTypeMeta):
         return evolver.persistent()
 
     def __repr__(self):
-        return self.__class__.__name__ + super(CheckedPSet, self).__repr__()[4:]
+        return self.__class__.__name__ + super().__repr__()[4:]
 
     def __str__(self):
         return self.__repr__()
 
     def serialize(self, format=None):
         serializer = self.__serializer__
-        return set(serializer(format, v) for v in self)
+        return {serializer(format, v) for v in self}
 
     create = classmethod(_checked_type_create)
 
@@ -409,7 +408,7 @@ class CheckedPSet(PSet[T_co], CheckedType, metaclass=_CheckedTypeMeta):
         __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, original_set):
-            super(CheckedPSet.Evolver, self).__init__(original_set)
+            super().__init__(original_set)
             self._destination_class = destination_class
             self._invariant_errors = []
 
@@ -454,7 +453,7 @@ class _CheckedMapTypeMeta(type):
 
         dct['__slots__'] = ()
 
-        return super(_CheckedMapTypeMeta, mcs).__new__(mcs, name, bases, dct)
+        return super().__new__(mcs, name, bases, dct)
 
 # Marker object
 _UNDEFINED_CHECKED_PMAP_SIZE = object()
@@ -477,7 +476,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
 
     def __new__(cls, initial={}, size=_UNDEFINED_CHECKED_PMAP_SIZE):
         if size is not _UNDEFINED_CHECKED_PMAP_SIZE:
-            return super(CheckedPMap, cls).__new__(cls, size, initial)
+            return super().__new__(cls, size, initial)
 
         evolver = CheckedPMap.Evolver(cls, pmap())
         for k, v in initial.items():
@@ -489,7 +488,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
         return CheckedPMap.Evolver(self.__class__, self)
 
     def __repr__(self):
-        return self.__class__.__name__ + "({0})".format(str(dict(self)))
+        return self.__class__.__name__ + f"({str(dict(self))})"
 
     __str__ = __repr__
 
@@ -510,9 +509,9 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
         checked_value_type = next((t for t in value_types if issubclass(t, CheckedType)), None)
 
         if checked_key_type or checked_value_type:
-            return cls(dict((checked_key_type.create(key) if checked_key_type and not any(isinstance(key, t) for t in key_types) else key,
-                             checked_value_type.create(value) if checked_value_type and not any(isinstance(value, t) for t in value_types) else value)
-                            for key, value in source_data.items()))
+            return cls({checked_key_type.create(key) if checked_key_type and not any(isinstance(key, t) for t in key_types) else key:
+                             checked_value_type.create(value) if checked_value_type and not any(isinstance(value, t) for t in value_types) else value
+                            for key, value in source_data.items()})
 
         return cls(source_data)
 
@@ -524,7 +523,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
         __slots__ = ('_destination_class', '_invariant_errors')
 
         def __init__(self, destination_class, original_map):
-            super(CheckedPMap.Evolver, self).__init__(original_map)
+            super().__init__(original_map)
             self._destination_class = destination_class
             self._invariant_errors = []
 
@@ -535,7 +534,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
                                                                    for invariant in self._destination_class._checked_invariants)
                                           if not valid)
 
-            return super(CheckedPMap.Evolver, self).set(key, value)
+            return super().set(key, value)
 
         def persistent(self):
             if self._invariant_errors:

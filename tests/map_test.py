@@ -90,7 +90,7 @@ def test_initialization_with_two_elements():
 
 
 def test_initialization_with_many_elements():
-    init_dict = dict([(str(x), x) for x in range(1700)])
+    init_dict = {str(x): x for x in range(1700)}
     the_map = pmap(init_dict)
 
     assert len(the_map) == 1700
@@ -136,7 +136,7 @@ def test_hash():
 
 
 def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
-    x = pmap(dict((x, x) for x in range(1000)))
+    x = pmap({x: x for x in range(1000)})
     y = pmap({10: 10, 200: 200, 700: 700})
 
     for z in x:
@@ -147,7 +147,7 @@ def test_same_hash_when_content_the_same_but_underlying_vector_size_differs():
     assert hash(x) == hash(y)
 
 
-class HashabilityControlled(object):
+class HashabilityControlled:
     hashable = True
 
     def __hash__(self):
@@ -277,7 +277,7 @@ def test_transform_levels_missing():
     assert x.transform(['b', 'd', 'e'], 999) == m(a=1, b=m(c=3, d=m(e=999)))
 
 
-class HashDummy(object):
+class HashDummy:
     def __hash__(self):
         return 6528039219058920  # Hash of '33'
 

@@ -11,7 +11,6 @@ For example,
     myvector: PVector[str] = pvector(['a', 'b', 'c'])
 
 """
-from __future__ import absolute_import
 
 try:
     from typing import Container

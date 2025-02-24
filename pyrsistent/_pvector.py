@@ -28,14 +28,14 @@ def _index_or_slice(index, stop):
     return slice(index, stop)
 
 
-class PythonPVector(object):
+class PythonPVector:
     """
     Support structure for PVector that implements structural sharing for vectors using a trie.
     """
     __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '__weakref__')
 
     def __new__(cls, count, shift, root, tail):
-        self = super(PythonPVector, cls).__new__(cls)
+        self = super().__new__(cls)
         self._count = count
         self._shift = shift
         self._root = root
@@ -68,7 +68,7 @@ class PythonPVector(object):
         return self.extend(other)
 
     def __repr__(self):
-        return 'pvector({0})'.format(str(self.tolist()))
+        return f'pvector({str(self.tolist())})'
 
     def __str__(self):
         return self.__repr__()
@@ -151,7 +151,7 @@ class PythonPVector(object):
 
         return evolver.persistent()
 
-    class Evolver(object):
+    class Evolver:
         __slots__ = ('_count', '_shift', '_root', '_tail', '_tail_offset', '_dirty_nodes',
                      '_extra_tail', '_cached_leafs', '_orig_pvector')
 
@@ -217,7 +217,7 @@ class PythonPVector(object):
             elif index == self._count + len(self._extra_tail):
                 self._extra_tail.append(val)
             else:
-                raise IndexError("Index out of range: %s" % (index,))
+                raise IndexError(f"Index out of range: {index}")
 
         def _do_set(self, level, node, i, val):
             if id(node) in self._dirty_nodes:
@@ -288,7 +288,7 @@ class PythonPVector(object):
         if i == self._count:
             return self.append(val)
 
-        raise IndexError("Index out of range: %s" % (i,))
+        raise IndexError(f"Index out of range: {i}")
 
     def _do_set(self, level, node, i, val):
         ret = list(node)
@@ -312,7 +312,7 @@ class PythonPVector(object):
 
             return node
 
-        raise IndexError("Index out of range: %s" % (i,))
+        raise IndexError(f"Index out of range: {i}")
 
     def _create_new_root(self):
         new_shift = self._shift
