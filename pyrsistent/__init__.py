@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from pyrsistent._pmap import pmap, m, PMap
 
 from pyrsistent._pvector import pvector, v, PVector

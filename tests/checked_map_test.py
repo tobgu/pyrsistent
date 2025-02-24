@@ -79,7 +79,7 @@ def test_multi_level_serialization():
     assert str(x) == "IntToFloatSetMap({1: FloatSet([1.5, 1.25]), 2: FloatSet([2.75, 2.5])})"
 
     sx = x.serialize()
-    assert sx == {1: set([1.5, 1.25]), 2: set([2.75, 2.5])}
+    assert sx == {1: {1.5, 1.25}, 2: {2.75, 2.5}}
     assert isinstance(sx[1], set)
 
 def test_create_non_checked_types():

@@ -219,14 +219,14 @@ def run_len():
     for _ in range(r):
         len(v)
     len_duration = time.time() - before
-    print("Len: %s s, per call %s s" % (len_duration, len_duration / r))
+    print(f"Len: {len_duration} s, per call {len_duration / r} s")
 
     before = time.time()
     for _ in range(r):
         pass
     empty_duration = time.time() - before
-    print("Empty loop: %s s, per call %s s" % (empty_duration, empty_duration / r))
-    print("Len estimate: %s, per call: %s" % (len_duration - empty_duration, (len_duration - empty_duration) / r))
+    print(f"Empty loop: {empty_duration} s, per call {empty_duration / r} s")
+    print(f"Len estimate: {len_duration - empty_duration}, per call: {(len_duration - empty_duration) / r}")
 
 def random_access(s):
     testdata = [0, 4, 55, 10000, 98763, -2, 30000, 42004, 37289, 100, 2, 999999]
@@ -256,7 +256,7 @@ def run_multiple_random_inserts():
     for r in range(10000):
         for i in indices:
             new = new.set(i, 0)
-    print("Done simple, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
+    print(f"Done simple, time={time.time() - start} s, iterations={10000 * len(indices)}")
     assert original == original2
 
     # Using setter view
@@ -266,14 +266,13 @@ def run_multiple_random_inserts():
         for i in indices:
             evolver[i] = 0
     new2 = evolver.persistent()
-    print("Done evolver, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(indices)))
+    print(f"Done evolver, time={time.time() - start} s, iterations={10000 * len(indices)}")
 
     assert original == original2
 
     def interleave(it1, it2):
         for i in zip(it1, it2):
-            for j in i:
-                yield j
+            yield from i
 
     # Using mset
     start = time.time()
@@ -281,7 +280,7 @@ def run_multiple_random_inserts():
     args = list(interleave(indices, repeat(0)))
     for _ in range(10000):
         new3 = new3.mset(*args)
-    print("Done mset, time=%s s, iterations=%s" % (time.time() - start, 10000 * len(args)/2))
+    print(f"Done mset, time={time.time() - start} s, iterations={10000 * len(args)/2}")
 
     assert list(new) == list(new2)
     assert list(new2) == list(new3)
@@ -299,14 +298,14 @@ def run_multiple_inserts_in_pmap():
     # Using ordinary set
     start = time.time()
     m1 = pmap(elements)
-    print("Done initializing, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print(f"Done initializing, time={time.time() - start} s, count={COUNT}")
 
 
     start = time.time()
     m2 = pmap()
     for x in test_range():
         m2 = m2.set(x, x)
-    print("Done setting, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print(f"Done setting, time={time.time() - start} s, count={COUNT}")
 
     assert m1 == m2
 
@@ -316,7 +315,7 @@ def run_multiple_inserts_in_pmap():
     for x in test_range():
         e3[x] = x
     m3 = e3.persistent()
-    print("Done evolving, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print(f"Done evolving, time={time.time() - start} s, count={COUNT}")
 
     assert m3 == m2
 
@@ -324,7 +323,7 @@ def run_multiple_inserts_in_pmap():
     m4 = pmap()
     m4 = m4.update(elements)
     m4 = m4.update(elements)
-    print("Done updating, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print(f"Done updating, time={time.time() - start} s, count={COUNT}")
 
     assert m4 == m3
 
@@ -332,7 +331,7 @@ def run_multiple_inserts_in_pmap():
     m5 = pmap()
     m5 = m5.update_with(lambda l, r: r, elements)
     m5 = m5.update_with(lambda l, r: r, elements)
-    print("Done updating with, time=%s s, count=%s" % (time.time() - start, COUNT))
+    print(f"Done updating with, time={time.time() - start} s, count={COUNT}")
 
     assert m5 == m4
 

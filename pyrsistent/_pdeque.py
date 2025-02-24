@@ -51,7 +51,7 @@ class PDeque(Generic[T_co]):
     __slots__ = ('_left_list', '_right_list', '_length', '_maxlen', '__weakref__')
 
     def __new__(cls, left_list, right_list, length, maxlen=None):
-        instance = super(PDeque, cls).__new__(cls)
+        instance = super().__new__(cls)
         instance._left_list = left_list
         instance._right_list = right_list
         instance._length = length
@@ -94,8 +94,8 @@ class PDeque(Generic[T_co]):
         return chain(self._left_list, self._right_list.reverse())
 
     def __repr__(self):
-        return "pdeque({0}{1})".format(list(self),
-                                       ', maxlen={0}'.format(self._maxlen) if self._maxlen is not None else '')
+        return "pdeque({}{})".format(list(self),
+                                       f', maxlen={self._maxlen}' if self._maxlen is not None else '')
     __str__ = __repr__
 
     @property
@@ -280,7 +280,7 @@ class PDeque(Generic[T_co]):
                 return PDeque(self._left_list,
                               self._right_list.reverse().remove(elem).reverse(), self._length - 1)
             except ValueError as e:
-                raise ValueError('{0} not found in PDeque'.format(elem)) from e
+                raise ValueError(f'{elem} not found in PDeque') from e
 
     def reverse(self):
         """
@@ -340,7 +340,7 @@ class PDeque(Generic[T_co]):
         shifted = len(self) + index
         if shifted < 0:
             raise IndexError(
-                "pdeque index {0} out of range {1}".format(index, len(self)),
+                f"pdeque index {index} out of range {len(self)}",
             )
         return self.popleft(shifted).left
 

@@ -15,7 +15,7 @@ class FrozenMember(immutable('x, y_')):
 
 class DerivedWithNew(immutable(['x', 'y'])):
     def __new__(cls, x, y):
-        return super(DerivedWithNew, cls).__new__(cls, x, y)
+        return super().__new__(cls, x, y)
 
 
 def test_instantiate_object_with_no_members():

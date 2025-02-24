@@ -24,7 +24,7 @@ class RefCountTracker:
         self.id = id(self)
 
     def __repr__(self):
-        return "<%s>" % (self.id,)
+        return f"<{self.id}>"
 
     def __del__(self):
         # If self is a dangling memory reference this check might fail. Or

@@ -31,7 +31,7 @@ class PSet(Generic[T_co]):
     __slots__ = ('_map', '__weakref__')
 
     def __new__(cls, m):
-        self = super(PSet, cls).__new__(cls)
+        self = super().__new__(cls)
         self._map = m
         return self
 
@@ -48,7 +48,7 @@ class PSet(Generic[T_co]):
         if not self:
             return 'p' + str(set(self))
 
-        return 'pset([{0}])'.format(str(set(self))[1:-1])
+        return f'pset([{str(set(self))[1:-1]}])'
 
     def __str__(self):
         return self.__repr__()
@@ -62,7 +62,7 @@ class PSet(Generic[T_co]):
 
     @classmethod
     def _from_iterable(cls, it, pre_size=8):
-        return PSet(pmap(dict((k, True) for k in it), pre_size=pre_size))
+        return PSet(pmap({k: True for k in it}, pre_size=pre_size))
 
     def add(self, element):
         """
@@ -110,7 +110,7 @@ class PSet(Generic[T_co]):
 
         return self
 
-    class _Evolver(object):
+    class _Evolver:
         __slots__ = ('_original_pset', '_pmap_evolver')
 
         def __init__(self, original_pset):

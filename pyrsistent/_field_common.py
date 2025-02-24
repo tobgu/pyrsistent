@@ -40,7 +40,7 @@ def serialize(serializer, format, value):
 def check_type(destination_cls, field, name, value):
     if field.type and not any(isinstance(value, get_type(t)) for t in field.type):
         actual_type = type(value)
-        message = "Invalid type for field {0}.{1}, was {2}".format(destination_cls.__name__, name, actual_type.__name__)
+        message = f"Invalid type for field {destination_cls.__name__}.{name}, was {actual_type.__name__}"
         raise PTypeError(destination_cls, name, field.type, actual_type, message)
 
 
@@ -65,7 +65,7 @@ def is_field_ignore_extra_complaint(type_cls, field, ignore_extra):
 
 
 
-class _PField(object):
+class _PField:
     __slots__ = ('type', 'invariant', 'initial', 'mandatory', '_factory', 'serializer')
 
     def __init__(self, type, invariant, initial, mandatory, factory, serializer):
@@ -132,12 +132,12 @@ def field(type=PFIELD_NO_TYPE, invariant=PFIELD_NO_INVARIANT, initial=PFIELD_NO_
 def _check_field_parameters(field):
     for t in field.type:
         if not isinstance(t, type) and not isinstance(t, str):
-            raise TypeError('Type parameter expected, not {0}'.format(type(t)))
+            raise TypeError(f'Type parameter expected, not {type(t)}')
 
     if field.initial is not PFIELD_NO_INITIAL and \
             not callable(field.initial) and \
             field.type and not any(isinstance(field.initial, t) for t in field.type):
-        raise TypeError('Initial has invalid type {0}'.format(type(field.initial)))
+        raise TypeError(f'Initial has invalid type {type(field.initial)}')
 
     if not callable(field.invariant):
         raise TypeError('Invariant must be callable')
@@ -160,7 +160,7 @@ class PTypeError(TypeError):
     actual_type -- The non matching type
     """
     def __init__(self, source_class, field, expected_types, actual_type, *args, **kwargs):
-        super(PTypeError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.source_class = source_class
         self.field = field
         self.expected_types = expected_types
@@ -297,7 +297,7 @@ def _make_pmap_field_type(key_type, value_type):
             return (_restore_pmap_field_pickle,
                     (self.__key_type__, self.__value_type__, dict(self)))
 
-    TheMap.__name__ = "{0}To{1}PMap".format(
+    TheMap.__name__ = "{}To{}PMap".format(
         _types_to_names(TheMap._checked_key_types),
         _types_to_names(TheMap._checked_value_types))
     _pmap_field_types[key_type, value_type] = TheMap

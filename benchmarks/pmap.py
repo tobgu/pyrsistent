@@ -4,7 +4,7 @@ from pyrsistent import pmap #!
 
 class Benchmarked(BenchmarkedFunction):
     def __init__(self, scale=1, *args, **kwargs):
-        super(Benchmarked, self).__init__(*args, timeit_number=scale*1000, **kwargs)
+        super().__init__(*args, timeit_number=scale*1000, **kwargs)
 
 ################# Create ###################
 
@@ -20,11 +20,11 @@ def reference_create_empty_dict():
 
 
 def _small_dict():
-    small_dict = dict((i, i) for i in range(10))
+    small_dict = {i: i for i in range(10)}
 
 
 def _large_dict():
-    large_dict = dict((i, i) for i in range(2000))
+    large_dict = {i: i for i in range(2000)}
 
 
 @Benchmarked(setup=_small_dict)
@@ -55,7 +55,7 @@ def reference_create_large_dict():
 
 
 def _small_pmap():
-    small_pmap = pmap(dict((i, i) for i in range(10)))
+    small_pmap = pmap({i: i for i in range(10)})
 
 
 @Benchmarked(setup=_small_pmap)
@@ -71,7 +71,7 @@ def reference_random_replace_small_dict():
 
 
 def _large_pmap():
-    large_pmap = pmap(dict((i, i) for i in range(2000)))
+    large_pmap = pmap({i: i for i in range(2000)})
 
 
 @Benchmarked(setup=_large_pmap)
@@ -169,43 +169,43 @@ def reference_iteration_large_dict():
 # #################### Comparison ########################
 
 def _different_pmaps_same_size():
-    pmap1 = pmap(dict((i, i) for i in range(2000)))
-    pmap2 = pmap(dict((i, i + 1) for i in range(2000)))
+    pmap1 = pmap({i: i for i in range(2000)})
+    pmap2 = pmap({i: i + 1 for i in range(2000)})
 
 
 def _different_pmaps_different_size():
-    pmap1 = pmap(dict((i, i) for i in range(2000)))
-    pmap2 = pmap(dict((i, i + 1) for i in range(1500)))
+    pmap1 = pmap({i: i for i in range(2000)})
+    pmap2 = pmap({i: i + 1 for i in range(1500)})
 
 
 def _equal_pmaps():
-    pmap1 = pmap(dict((i, i) for i in range(2000)))
-    pmap2 = pmap(dict((i, i) for i in range(2000)))
+    pmap1 = pmap({i: i for i in range(2000)})
+    pmap2 = pmap({i: i for i in range(2000)})
 
 
 def _equal_pmap_and_dict():
-    dict1 = dict((i, i) for i in range(2000))
-    pmap1 = pmap(dict((i, i) for i in range(2000)))
+    dict1 = {i: i for i in range(2000)}
+    pmap1 = pmap({i: i for i in range(2000)})
 
 
 def _equal_dicts():
-    dict1 = dict((i, i) for i in range(2000))
-    dict2 = dict((i, i) for i in range(2000))
+    dict1 = {i: i for i in range(2000)}
+    dict2 = {i: i for i in range(2000)}
 
 
 def _different_dicts_same_size():
-    dict1 = dict((i, i) for i in range(2000))
-    dict2 = dict((i, i + 1) for i in range(2000))
+    dict1 = {i: i for i in range(2000)}
+    dict2 = {i: i + 1 for i in range(2000)}
 
 
 def _different_dicts_different_size():
-    dict1 = dict((i, i) for i in range(2000))
-    dict2 = dict((i, i + 1) for i in range(2000))
+    dict1 = {i: i for i in range(2000)}
+    dict2 = {i: i + 1 for i in range(2000)}
 
 
 def _equal_pmaps_different_bucket_size():
-    pmap1 = pmap(dict((i, i) for i in range(2000)), 1999)
-    pmap2 = pmap(dict((i, i) for i in range(2000)), 2000)
+    pmap1 = pmap({i: i for i in range(2000)}, 1999)
+    pmap2 = pmap({i: i for i in range(2000)}, 2000)
 
 
 def _equal_pmaps_same_bucket_size_different_insertion_order():

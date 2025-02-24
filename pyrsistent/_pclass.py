@@ -20,7 +20,7 @@ class PClassMeta(type):
         if _is_pclass(bases):
             dct['__slots__'] += ('__weakref__',)
 
-        return super(PClassMeta, mcs).__new__(mcs, name, bases, dct)
+        return super().__new__(mcs, name, bases, dct)
 
 _MISSING_VALUE = object()
 
@@ -44,7 +44,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
     More documentation and examples of PClass usage is available at https://github.com/tobgu/pyrsistent
     """
     def __new__(cls, **kwargs):    # Support *args?
-        result = super(PClass, cls).__new__(cls)
+        result = super().__new__(cls)
         factory_fields = kwargs.pop('_factory_fields', None)
         ignore_extra = kwargs.pop('ignore_extra', None)
         missing_fields = []
@@ -65,13 +65,13 @@ class PClass(CheckedType, metaclass=PClassMeta):
                 _check_and_set_attr(
                     cls, field, name, initial, result, invariant_errors)
             elif field.mandatory:
-                missing_fields.append('{0}.{1}'.format(cls.__name__, name))
+                missing_fields.append(f'{cls.__name__}.{name}')
 
         if invariant_errors or missing_fields:
             raise InvariantException(tuple(invariant_errors), tuple(missing_fields), 'Field invariant failed')
 
         if kwargs:
-            raise AttributeError("'{0}' are not among the specified fields for {1}".format(
+            raise AttributeError("'{}' are not among the specified fields for {}".format(
                 ', '.join(kwargs), cls.__name__))
 
         check_global_invariants(result, cls._pclass_invariants)
@@ -169,12 +169,12 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
     def __setattr__(self, key, value):
         if getattr(self, '_pclass_frozen', False):
-            raise AttributeError("Can't set attribute, key={0}, value={1}".format(key, value))
+            raise AttributeError(f"Can't set attribute, key={key}, value={value}")
 
-        super(PClass, self).__setattr__(key, value)
+        super().__setattr__(key, value)
 
     def __delattr__(self, key):
-            raise AttributeError("Can't delete attribute, key={0}, use remove()".format(key))
+            raise AttributeError(f"Can't delete attribute, key={key}, use remove()")
 
     def _to_dict(self):
         result = {}
@@ -186,12 +186,12 @@ class PClass(CheckedType, metaclass=PClassMeta):
         return result
 
     def __repr__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self._to_dict().items()))
+        return "{}({})".format(self.__class__.__name__,
+                                 ', '.join(f'{k}={repr(v)}' for k, v in self._to_dict().items()))
 
     def __reduce__(self):
         # Pickling support
-        data = dict((key, getattr(self, key)) for key in self._pclass_fields if hasattr(self, key))
+        data = {key: getattr(self, key) for key in self._pclass_fields if hasattr(self, key)}
         return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):
@@ -210,7 +210,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
         return evolver.persistent()
 
 
-class _PClassEvolver(object):
+class _PClassEvolver:
     __slots__ = ('_pclass_evolver_original', '_pclass_evolver_data', '_pclass_evolver_data_is_dirty', '_factory_fields')
 
     def __init__(self, original, initial_dict):
@@ -256,7 +256,7 @@ class _PClassEvolver(object):
         if key not in self.__slots__:
             self.set(key, value)
         else:
-            super(_PClassEvolver, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     def __getattr__(self, item):
         return self[item]
