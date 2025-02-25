@@ -32,6 +32,9 @@ jobs:
           - manylinux_aarch64
           - manylinux_i686
           - manylinux_x86_64
+          - musllinux_aarch64
+          - musllinux_i686
+          - musllinux_x86_64
           - win32
           - win_amd64
 
@@ -43,6 +46,12 @@ jobs:
           - platform_id: manylinux_i686
             os: ubuntu-latest
           - platform_id: manylinux_x86_64
+            os: ubuntu-latest
+          - platform_id: musllinux_aarch64
+            os: ubuntu-latest
+          - platform_id: musllinux_i686
+            os: ubuntu-latest
+          - platform_id: musllinux_x86_64
             os: ubuntu-latest
           # macOS
           - platform_id: macosx_universal2
@@ -62,13 +71,17 @@ jobs:
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+      CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
+      CIBW_MUSLLINUX_I686_IMAGE: musllinux_1_2
+      CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_2
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU
         if: |
-          runner.os == 'Linux' && (matrix.platform_id == 'manylinux_aarch64' || matrix.platform_id == 'manylinux_i686')
+          endsWith(matrix.platform_id, 'linux_aarch64')
+          || endsWith(matrix.platform_id, 'linux_i686')
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
