@@ -6,6 +6,7 @@
 build/
 pyrsistent.egg-info/
 dist/
+htmlcov/
 .idea
 .tox
 README.html
