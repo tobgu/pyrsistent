@@ -20,7 +20,7 @@ class Hierarchy(PClass):
 
 class TypedContainerObj(PClass):
     map = pmap_field(str, str)
-    set = pset_field(str)
+    set = pset_field(str)  # type: ignore[reportGeneralTypeIssues]
     vec = pvector_field(str)
 
 
@@ -261,7 +261,7 @@ def test_evolver_supports_chained_set_and_remove():
 def test_evolver_supports_dot_notation_for_setting_and_getting_elements():
     e = Point(x=1, y=2).evolver()
 
-    e.x = 3
+    e.x = 3  # type: ignore[reportGeneralTypeIssues]
     assert e.x == 3
     assert e.persistent() == Point(x=3, y=2)
 
@@ -315,11 +315,11 @@ def test_multiple_global_invariants():
 def test_inherited_global_invariants():
     class Distant(object):
         def __invariant__(self):
-            return [(self.distant, "distant")]
+            return [(self.distant, "distant")]  # type: ignore[reportGeneralTypeIssues]
 
     class Nearby(Distant):
         def __invariant__(self):
-            return [(self.nearby, "nearby")]
+            return [(self.nearby, "nearby")]  # type: ignore[reportGeneralTypeIssues]
 
     class MultipleInvariantGlobal(Nearby, PClass):
         distant = field()
@@ -438,7 +438,7 @@ def test_pickle_with_one_way_factory():
 def test_evolver_with_one_way_factory():
     thing = UniqueThing(id='cc65249a-56fe-4995-8719-ea02e124b234')
     ev = thing.evolver()
-    ev.x = 5  # necessary to prevent persistent() returning the original
+    ev.x = 5  # necessary to prevent persistent() returning the original  # type: ignore[reportGeneralTypeIssues]
     assert ev.persistent() == UniqueThing(id=str(thing.id), x=5)
 
 

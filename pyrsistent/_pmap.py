@@ -36,7 +36,7 @@ class PMapView:
         object.__setattr__(self, '_map', m)
 
     def __len__(self):
-        return len(self._map)
+        return len(self._map)  # type: ignore[reportGeneralTypeIssues]
 
     def __setattr__(self, k, v):
         raise TypeError("%s is immutable" % (type(self),))
@@ -57,10 +57,10 @@ class PMapValues(PMapView):
         should generally be a `PMap` object.
     """
     def __iter__(self):
-        return self._map.itervalues()
+        return self._map.itervalues()  # type: ignore[reportGeneralTypeIssues]
 
     def __contains__(self, arg):
-        return arg in self._map.itervalues()
+        return arg in self._map.itervalues()  # type: ignore[reportGeneralTypeIssues]
 
     # The str and repr methods imitate the dict_view style currently.
     def __str__(self):
@@ -88,12 +88,12 @@ class PMapItems(PMapView):
         should generally be a `PMap` object.
     """
     def __iter__(self):
-        return self._map.iteritems()
+        return self._map.iteritems()  # type: ignore[reportGeneralTypeIssues]
 
     def __contains__(self, arg):
         try: (k,v) = arg
         except Exception: return False
-        return k in self._map and self._map[k] == v
+        return k in self._map and self._map[k] == v  # type: ignore[reportGeneralTypeIssues]
 
     # The str and repr methods mitate the dict_view style currently.
     def __str__(self):
@@ -105,7 +105,7 @@ class PMapItems(PMapView):
     def __eq__(self, x):
         if x is self: return True
         elif not isinstance(x, type(self)): return False
-        else: return self._map == x._map
+        else: return self._map == x._map  # type: ignore[reportGeneralTypeIssues]
 
 class PMap(Generic[KT, VT_co]):
     """
@@ -149,8 +149,8 @@ class PMap(Generic[KT, VT_co]):
 
     def __new__(cls, size, buckets):
         self = super(PMap, cls).__new__(cls)
-        self._size = size
-        self._buckets = buckets
+        self._size = size  # type: ignore[reportGeneralTypeIssues]
+        self._buckets = buckets  # type: ignore[reportGeneralTypeIssues]
         return self
 
     @staticmethod
@@ -446,9 +446,9 @@ class PMap(Generic[KT, VT_co]):
             for k, v in chain.from_iterable(x for x in buckets if x):
                 index = hash(k) % new_size
                 if new_list[index]:
-                    new_list[index].append((k, v))
+                    new_list[index].append((k, v))  # type: ignore[reportGeneralTypeIssues]
                 else:
-                    new_list[index] = [(k, v)]
+                    new_list[index] = [(k, v)]  # type: ignore[reportCallIssue]
 
             # A reallocation should always result in a dirty buckets evolver to avoid
             # possible loss of elements when doing the reallocation.
@@ -518,7 +518,7 @@ class PMap(Generic[KT, VT_co]):
         """
         return self._Evolver(self)
 
-Mapping.register(PMap)
+Mapping.register(PMap)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(PMap)
 
 
@@ -549,7 +549,7 @@ def _turbo_mapping(initial, pre_size):
         if bucket:
             bucket.append((k, v))
         else:
-            buckets[index] = [(k, v)]
+            buckets[index] = [(k, v)]  # type: ignore[reportCallIssue]
 
     return PMap(len(initial), pvector().extend(buckets))
 

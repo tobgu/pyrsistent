@@ -28,7 +28,7 @@ def test_cons():
 
 
 def test_cons_empty_list():
-    assert plist().cons(0) == plist([0])
+    assert plist().cons(0) == plist([0])  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_truthiness():
@@ -144,8 +144,8 @@ def test_pickling_non_empty_list():
 def test_comparison():
     assert plist([1, 2]) < plist([1, 2, 3])
     assert plist([2, 1]) > plist([1, 2, 3])
-    assert plist() < plist([1])
-    assert plist([1]) > plist()
+    assert plist() < plist([1])  # type: ignore[reportOperatorIssue]
+    assert plist([1]) > plist()  # type: ignore[reportOperatorIssue]
 
 
 def test_comparison_with_other_type():
@@ -187,7 +187,7 @@ def test_remove_missing_element():
         plist([1, 2]).remove(3)
 
     with pytest.raises(ValueError):
-        plist().remove(2)
+        plist().remove(2)  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_mcons():

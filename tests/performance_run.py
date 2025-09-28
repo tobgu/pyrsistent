@@ -204,7 +204,7 @@ def run_to_list():
 
     try:
         before = time.time()
-        l1 = p._totuple()
+        l1 = p._totuple()  # type: ignore[reportGeneralTypeIssues]
         print("Totuple: " + str(time.time() - before))
     except:
         print("Totuple not implemented")
@@ -247,8 +247,8 @@ def run_multiple_random_inserts():
     print("Number of accesses: %s" % len(indices))
     print("Number of elements in vector: %s" % max(indices))
 
-    original = _pvector(range(max(indices) + 1))
-    original2 = _pvector(range(max(indices) + 1))
+    original = _pvector(range(max(indices) + 1))  # type: ignore[reportCallIssue]
+    original2 = _pvector(range(max(indices) + 1))  # type: ignore[reportCallIssue]
 
     # Using ordinary set
     start = time.time()

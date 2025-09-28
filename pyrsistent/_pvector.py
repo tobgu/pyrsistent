@@ -18,7 +18,7 @@ SHIFT = _bitcount(BIT_MASK)
 
 
 def compare_pvector(v, other, operator):
-    return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)
+    return operator(v.tolist(), other.tolist() if isinstance(other, PVector) else other)  # type: ignore[reportGeneralTypeIssues]
 
 
 def _index_or_slice(index, stop):
@@ -200,7 +200,7 @@ class PythonPVector(object):
             if index < 0:
                 index += self._count + len(self._extra_tail)
 
-            if 0 <= index < self._count:
+            if 0 <= index < self._count:  # type: ignore[reportGeneralTypeIssues]
                 node = self._cached_leafs.get(index >> SHIFT)
                 if node:
                     node[index & BIT_MASK] = val
@@ -277,10 +277,10 @@ class PythonPVector(object):
         if i < 0:
             i += self._count
 
-        if 0 <= i < self._count:
-            if i >= self._tail_offset:
+        if 0 <= i < self._count:  # type: ignore[reportGeneralTypeIssues]
+            if i >= self._tail_offset:  # type: ignore[reportGeneralTypeIssues]
                 new_tail = list(self._tail)
-                new_tail[i & BIT_MASK] = val
+                new_tail[i & BIT_MASK] = val  # type: ignore[reportGeneralTypeIssues]
                 return PythonPVector(self._count, self._shift, self._root, new_tail)
 
             return PythonPVector(self._count, self._shift, self._do_set(self._shift, self._root, i, val), self._tail)
@@ -493,7 +493,7 @@ class PVector(Generic[T_co],metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def __hash__(self):
+    def __hash__(self):  # type: ignore[reportGeneralTypeIssues]
         """
         >>> v1 = v(1, 2, 3)
         >>> v2 = v(1, 2, 3)
@@ -679,7 +679,7 @@ class PVector(Generic[T_co],metaclass=ABCMeta):
 
 _EMPTY_PVECTOR = PythonPVector(0, SHIFT, [], [])
 PVector.register(PythonPVector)
-Sequence.register(PVector)
+Sequence.register(PVector)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(PVector)
 
 def python_pvector(iterable=()):

@@ -103,16 +103,16 @@ def _get_keys_and_values(structure, key_spec):
 
 if signature is None:
     def _get_arity(f):
-        argspec = getfullargspec(f)
+        argspec = getfullargspec(f)  # type: ignore[reportPossiblyUnboundVariable]
         return len(argspec.args) - len(argspec.defaults or ())
 else:
     def _get_arity(f):
         return sum(
             1
             for p
-            in signature(f).parameters.values()
-            if p.default is Parameter.empty
-            and p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+            in signature(f).parameters.values()  # type: ignore[reportOptionalCall]
+            if p.default is Parameter.empty  # type: ignore[reportPossiblyUnboundVariable]
+            and p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)  # type: ignore[reportPossiblyUnboundVariable]
         )
 
 

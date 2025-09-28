@@ -30,25 +30,25 @@ def _large_dict():
 @Benchmarked(setup=_small_dict)
 def create_small_pmap():
     for x in range(100):
-        _ = pmap(small_dict)
+        _ = pmap(small_dict)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_dict)
 def reference_create_small_dict():
     for x in range(100):
-        _ = dict(small_dict)
+        _ = dict(small_dict)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_dict)
 def create_large_pmap():
     for x in range(1):
-        _ = pmap(large_dict)
+        _ = pmap(large_dict)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_dict)
 def reference_create_large_dict():
     for x in range(1):
-        _ = dict(large_dict)
+        _ = dict(large_dict)  # type: ignore[reportUndefinedVariable]
 
 
 # ######################### Insert ######################
@@ -61,13 +61,13 @@ def _small_pmap():
 @Benchmarked(setup=_small_pmap)
 def random_replace_small_pmap():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        small_pmap.set(x, x)
+        small_pmap.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_dict)
 def reference_random_replace_small_dict():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        small_dict[x] = x
+        small_dict[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 def _large_pmap():
@@ -77,18 +77,18 @@ def _large_pmap():
 @Benchmarked(setup=_large_pmap)
 def random_replace_large_pmap():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        large_pmap.set(x, x)
+        large_pmap.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_dict)
 def reference_random_replace_large_dict():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        large_dict[x] = x
+        large_dict[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_pmap)
 def random_replace_small_pmap_evolver():
-    e = small_pmap.evolver()
+    e = small_pmap.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
         e[x] = x
     m = e.persistent()
@@ -96,7 +96,7 @@ def random_replace_small_pmap_evolver():
 
 @Benchmarked(setup=_large_pmap)
 def random_replace_large_pmap_evolver():
-    e = large_pmap.evolver()
+    e = large_pmap.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
         e[x] = x
     m = e.persistent()
@@ -105,25 +105,25 @@ def random_replace_large_pmap_evolver():
 @Benchmarked(setup=_small_pmap)
 def random_insert_new_small_pmap():
     for x in (19, 11, 14, 15, 17, 117, 13, 12):
-        small_pmap.set(x, x)
+        small_pmap.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_dict)
 def reference_random_insert_new_small_dict():
     for x in (19, 11, 14, 15, 17, 117, 13, 12):
-        small_dict[x] = x
+        small_dict[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_pmap)
 def random_insert_new_large_pmap():
     for x in (100999, 100111, 10074, 1001233, 1006, 1001997, 100400, 1001000):
-        large_pmap.set(x, x)
+        large_pmap.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_dict)
 def reference_random_insert_new_large_dict():
     for x in (100999, 100111, 10074, 1001233, 1006, 1001997, 100400, 1001000):
-        large_dict[x] = x
+        large_dict[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 # ################## Read ########################
@@ -131,38 +131,38 @@ def reference_random_insert_new_large_dict():
 @Benchmarked(setup=_small_pmap)
 def random_read_small_pmap():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        y = small_pmap[x]
+        y = small_pmap[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_dict)
 def reference_random_read_small_dict():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        y = small_dict[x]
+        y = small_dict[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_pmap)
 def random_read_large_native_pvector():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        y = large_pmap[x]
+        y = large_pmap[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_dict)
 def reference_random_read_large_list():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        y = large_dict[x]
+        y = large_dict[x]  # type: ignore[reportUndefinedVariable]
 
 
 # #################### Iteration #########################
 
 @Benchmarked(setup=_large_pmap)
 def iteration_large_pmap():
-    for k in large_pmap:
+    for k in large_pmap:  # type: ignore[reportUndefinedVariable]
         pass
 
 
 @Benchmarked(setup=_large_dict)
 def reference_iteration_large_dict():
-    for k in large_dict:
+    for k in large_dict:  # type: ignore[reportUndefinedVariable]
         pass
 
 
@@ -215,54 +215,54 @@ def _equal_pmaps_same_bucket_size_different_insertion_order():
 
 @Benchmarked(setup=_large_pmap)
 def compare_same_pmap():
-    large_pmap == large_pmap
+    large_pmap == large_pmap  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_large_dict)
 def reference_compare_same_dict():
-    large_dict == large_dict
+    large_dict == large_dict  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_equal_pmaps)
 def compare_equal_pmaps():
-    pmap1 == pmap2
+    pmap1 == pmap2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_equal_dicts)
 def reference_compare_equal_dicts():
-    dict1 == dict2
+    dict1 == dict2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_equal_pmap_and_dict)
 def compare_equal_pmap_and_dict():
-    pmap1 == dict1
+    pmap1 == dict1  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_equal_pmaps_same_bucket_size_different_insertion_order)
 def compare_equal_pmaps_different_insertion_order():
-    pmap1 == pmap2
+    pmap1 == pmap2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_equal_pmaps_different_bucket_size)
 def compare_equal_pmaps_different_bucket_size():
-    pmap1 == pmap2
+    pmap1 == pmap2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_different_pmaps_same_size)
 def compare_different_pmaps_same_size():
-    pmap1 == pmap2
+    pmap1 == pmap2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_different_dicts_same_size)
 def reference_compare_different_dicts_same_size():
-    dict1 == dict2
+    dict1 == dict2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_different_pmaps_different_size)
 def compare_different_pmaps_different_size():
-    pmap1 == pmap2
+    pmap1 == pmap2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]
 
 
 @Benchmarked(setup=_different_dicts_different_size)
 def reference_compare_different_dicts_different_size():
-    dict1 == dict2
+    dict1 == dict2  # type: ignore[reportUndefinedVariable,reportUnusedExpression]

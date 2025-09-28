@@ -103,8 +103,8 @@ class _PListBase(object):
         result = plist()
         head = self
         while head:
-            result = result.cons(head.first)
-            head = head.rest
+            result = result.cons(head.first)  # type: ignore[reportGeneralTypeIssues]
+            head = head.rest  # type: ignore[reportGeneralTypeIssues]
 
         return result
     __reversed__ = reverse
@@ -121,8 +121,8 @@ class _PListBase(object):
         right_list = self
         i = 0
         while right_list and i < index:
-            lb.append_elem(right_list.first)
-            right_list = right_list.rest
+            lb.append_elem(right_list.first)  # type: ignore[reportGeneralTypeIssues]
+            right_list = right_list.rest  # type: ignore[reportGeneralTypeIssues]
             i += 1
 
         if not right_list:
@@ -134,8 +134,8 @@ class _PListBase(object):
     def __iter__(self):
         li = self
         while li:
-            yield li.first
-            li = li.rest
+            yield li.first  # type: ignore[reportGeneralTypeIssues]
+            li = li.rest  # type: ignore[reportGeneralTypeIssues]
 
     def __lt__(self, other):
         if not isinstance(other, _PListBase):
@@ -155,10 +155,10 @@ class _PListBase(object):
         self_head = self
         other_head = other
         while self_head and other_head:
-            if not self_head.first == other_head.first:
+            if not self_head.first == other_head.first:  # type: ignore[reportGeneralTypeIssues]
                 return False
-            self_head = self_head.rest
-            other_head = other_head.rest
+            self_head = self_head.rest  # type: ignore[reportGeneralTypeIssues]
+            other_head = other_head.rest  # type: ignore[reportGeneralTypeIssues]
 
         return not self_head and not other_head
 
@@ -181,7 +181,7 @@ class _PListBase(object):
             index += len(self)
 
         try:
-            return self._drop(index).first
+            return self._drop(index).first  # type: ignore[reportGeneralTypeIssues]
         except AttributeError as e:
             raise IndexError("PList index out of range") from e
 
@@ -191,7 +191,7 @@ class _PListBase(object):
 
         head = self
         while count > 0:
-            head = head.rest
+            head = head.rest  # type: ignore[reportGeneralTypeIssues]
             count -= 1
 
         return head
@@ -213,11 +213,11 @@ class _PListBase(object):
         builder = _PListBuilder()
         head = self
         while head:
-            if head.first == elem:
-                return builder.append_plist(head.rest)
+            if head.first == elem:  # type: ignore[reportGeneralTypeIssues]
+                return builder.append_plist(head.rest)  # type: ignore[reportGeneralTypeIssues]
 
-            builder.append_elem(head.first)
-            head = head.rest
+            builder.append_elem(head.first)  # type: ignore[reportGeneralTypeIssues]
+            head = head.rest  # type: ignore[reportGeneralTypeIssues]
 
         raise ValueError('{0} not found in PList'.format(elem))
 
@@ -262,7 +262,7 @@ class PList(Generic[T_co], _PListBase):
     __nonzero__ = __bool__
 
 
-Sequence.register(PList)
+Sequence.register(PList)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(PList)
 
 
@@ -282,7 +282,7 @@ class _EmptyPList(_PListBase):
         return self
 
 
-Sequence.register(_EmptyPList)
+Sequence.register(_EmptyPList)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(_EmptyPList)
 
 _EMPTY_PLIST = _EmptyPList()

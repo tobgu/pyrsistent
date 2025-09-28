@@ -1,19 +1,19 @@
 import pytest
 from pyrsistent import immutable
 
-class Empty(immutable(verbose=True)):
+class Empty(immutable(verbose=True)):  # type: ignore[reportGeneralTypeIssues]
     pass
 
 
-class Single(immutable('x')):
+class Single(immutable('x')):  # type: ignore[reportGeneralTypeIssues]
     pass
 
 
-class FrozenMember(immutable('x, y_')):
+class FrozenMember(immutable('x, y_')):  # type: ignore[reportGeneralTypeIssues]
     pass
 
 
-class DerivedWithNew(immutable(['x', 'y'])):
+class DerivedWithNew(immutable(['x', 'y'])):  # type: ignore[reportGeneralTypeIssues]
     def __new__(cls, x, y):
         return super(DerivedWithNew, cls).__new__(cls, x, y)
 

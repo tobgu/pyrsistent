@@ -4,7 +4,7 @@ Script to try do detect any memory leaks that may be lurking in the C implementa
 import inspect
 import sys
 import time
-import memory_profiler
+import memory_profiler  # type: ignore[reportMissingImports]
 import vector_test
 from pyrsistent import pvector
 
@@ -40,7 +40,7 @@ def profile_tests():
         fn_args = inspect.getfullargspec(fn)[0]
         if 'pvector' in fn_args:
             print('Executing %s' % name)
-            result = memory_profiler.memory_usage((run_function, (fn,), {}), interval=.1)
+            result = memory_profiler.memory_usage((run_function, (fn,), {}), interval=.1)  # type: ignore[reportGeneralTypeIssues]
             assert not detect_memory_leak(result), (name, result)
 
 

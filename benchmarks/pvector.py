@@ -11,12 +11,12 @@ class Benchmarked(BenchmarkedFunction):
 @Benchmarked()
 def create_empty_native_pvector():
     for x in range(1000):
-        _ = _pvector()
+        _ = _pvector()  # type: ignore[reportCallIssue]
 
 @Benchmarked()
 def create_empty_python_pvector():
     for x in range(1000):
-        _ = _pvector()
+        _ = _pvector()  # type: ignore[reportCallIssue]
 
 @Benchmarked()
 def reference_create_empty_list():
@@ -32,63 +32,63 @@ def _large_list():
 @Benchmarked(setup=_small_list)
 def create_small_native_pvector():
     for x in range(100):
-        _ = _pvector(small_list)
+        _ = _pvector(small_list)  # type: ignore[reportCallIssue,reportUndefinedVariable]
 
 @Benchmarked(setup=_small_list)
 def create_small_python_pvector():
     for x in range(100):
-        _ = _pvector(small_list)
+        _ = _pvector(small_list)  # type: ignore[reportCallIssue,reportUndefinedVariable]
 
 @Benchmarked(setup=_small_list)
 def reference_create_small_list():
     for x in range(100):
-        _ = list(small_list)
+        _ = list(small_list)  # type: ignore[reportUndefinedVariable]
 
 @Benchmarked(setup=_large_list)
 def create_large_native_pvector():
     for x in range(10):
-        _ = _pvector(large_list)
+        _ = _pvector(large_list)  # type: ignore[reportCallIssue,reportUndefinedVariable]
 
 @Benchmarked(setup=_large_list)
 def create_large_python_pvector():
     for x in range(10):
-        _ = _pvector(large_list)
+        _ = _pvector(large_list)  # type: ignore[reportCallIssue,reportUndefinedVariable]
 
 @Benchmarked(setup=_large_list)
 def reference_create_large_list():
     for x in range(10):
-        _ = list(large_list)
+        _ = list(large_list)  # type: ignore[reportUndefinedVariable]
 
 
 ####################### Append #####################
 
 @Benchmarked()
-def append_native_pvector():
-    v = _pvector()
+def append_native_pvector():  # type: ignore[reportRedeclaration]
+    v = _pvector()  # type: ignore[reportCallIssue]
     for x in range(100):
         v = v.append(x)
 
 @Benchmarked()
-def append_python_pvector():
-    v = _pvector()
+def append_python_pvector():  # type: ignore[reportRedeclaration]
+    v = _pvector()  # type: ignore[reportCallIssue]
     for x in range(100):
         v = v.append(x)
 
 @Benchmarked()
-def reference_append_list():
+def reference_append_list():  # type: ignore[reportRedeclaration]
     l = []
     for x in range(100):
         l.append(x)
 
 @Benchmarked()
 def append_native_pvector():
-    v = _pvector()
+    v = _pvector()  # type: ignore[reportCallIssue]
     for x in range(100):
         v = v.append(x)
 
 @Benchmarked()
 def append_python_pvector():
-    v = _pvector()
+    v = _pvector()  # type: ignore[reportCallIssue]
     for x in range(100):
         v = v.append(x)
 
@@ -102,60 +102,60 @@ def reference_append_list():
 ######################### Insert ######################
 
 def _small_native_vector():
-    small_native_vector = _pvector(range(10))
+    small_native_vector = _pvector(range(10))  # type: ignore[reportCallIssue]
 
 
 def _small_python_vector():
-    small_python_vector = _pvector(range(10))
+    small_python_vector = _pvector(range(10))  # type: ignore[reportCallIssue]
 
 
 @Benchmarked(setup=_small_native_vector)
 def random_insert_small_native_pvector():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        small_native_vector.set(x, x)
+        small_native_vector.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_python_vector)
 def random_insert_small_python_pvector():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        small_python_vector.set(x, x)
+        small_python_vector.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_list)
 def reference_random_insert_small_list():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        small_list[x] = x
+        small_list[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 def _large_native_vector():
-    large_native_vector = _pvector(range(2000))
+    large_native_vector = _pvector(range(2000))  # type: ignore[reportCallIssue]
 
 
 def _large_python_vector():
-    large_python_vector = _pvector(range(2000))
+    large_python_vector = _pvector(range(2000))  # type: ignore[reportCallIssue]
 
 
 @Benchmarked(setup=_large_native_vector)
 def random_insert_large_native_pvector():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        large_native_vector.set(x, x)
+        large_native_vector.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_python_vector)
 def random_insert_large_python_pvector():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        large_python_vector.set(x, x)
+        large_python_vector.set(x, x)  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_list)
 def reference_random_insert_large_list():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        large_list[x] = x
+        large_list[x] = x  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_native_vector)
 def random_insert_small_native_pvector_evolver():
-    e = small_native_vector.evolver()
+    e = small_native_vector.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
         e[x] = x
     v = e.persistent()
@@ -163,15 +163,15 @@ def random_insert_small_native_pvector_evolver():
 
 @Benchmarked(setup=_small_python_vector)
 def random_insert_small_python_pvector_evolver():
-    e = small_python_vector.evolver()
+    e = small_python_vector.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
         e[x] = x
     v = e.persistent()
 
 
 @Benchmarked(setup=_large_native_vector)
-def random_insert_large_native_pvector_evolver():
-    e = large_native_vector.evolver()
+def random_insert_large_native_pvector_evolver():  # type: ignore[reportRedeclaration]
+    e = large_native_vector.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
         e[x] = x
     v = e.persistent()
@@ -179,7 +179,7 @@ def random_insert_large_native_pvector_evolver():
 
 @Benchmarked(setup=_large_python_vector)
 def random_insert_large_native_pvector_evolver():
-    e = large_python_vector.evolver()
+    e = large_python_vector.evolver()  # type: ignore[reportUndefinedVariable]
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
         e[x] = x
     v = e.persistent()
@@ -189,52 +189,52 @@ def random_insert_large_native_pvector_evolver():
 @Benchmarked(setup=_small_native_vector)
 def random_read_small_native_pvector():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        y = small_native_vector[x]
+        y = small_native_vector[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_python_vector)
 def random_read_small_python_pvector():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        y = small_python_vector[x]
+        y = small_python_vector[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_small_list)
 def reference_random_read_small_list():
     for x in (9, 1, 4, 5, 7, 7, 3, 2):
-        y = small_list[x]
+        y = small_list[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_native_vector)
 def random_read_large_native_pvector():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        y = large_native_vector[x]
+        y = large_native_vector[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_python_vector)
 def random_read_large_python_pvector():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        y = large_python_vector[x]
+        y = large_python_vector[x]  # type: ignore[reportUndefinedVariable]
 
 
 @Benchmarked(setup=_large_list)
 def reference_random_read_large_list():
     for x in (999, 111, 74, 1233, 6, 1997, 400, 1000):
-        y = large_list[x]
+        y = large_list[x]  # type: ignore[reportUndefinedVariable]
 
 
 #################### Iteration #########################
 
 @Benchmarked(setup=_large_native_vector)
 def iteration_large_native_pvector():
-    for x in large_native_vector:
+    for x in large_native_vector:  # type: ignore[reportUndefinedVariable]
         pass
 
 @Benchmarked(setup=_large_python_vector)
 def iteration_large_python_pvector():
-    for x in large_python_vector:
+    for x in large_python_vector:  # type: ignore[reportUndefinedVariable]
         pass
 
 @Benchmarked(setup=_large_list)
 def reference_iteration_large_list():
-    for x in large_list:
+    for x in large_list:  # type: ignore[reportUndefinedVariable]
         pass

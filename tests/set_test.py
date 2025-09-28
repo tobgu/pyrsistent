@@ -4,7 +4,7 @@ import pickle
 
 def test_key_is_tuple():
     with pytest.raises(KeyError):
-        pset().remove((1,1))
+        pset().remove((1,1))  # type: ignore[reportGeneralTypeIssues]
 
 def test_literalish_works():
     assert s() is pset()

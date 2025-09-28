@@ -19,7 +19,7 @@ def test_construction_with_maxlen():
 
 def test_construction_with_invalid_maxlen():
     with pytest.raises(TypeError):
-        pdeque([], maxlen='foo')
+        pdeque([], maxlen='foo')  # type: ignore[reportGeneralTypeIssues]
 
     with pytest.raises(ValueError):
         pdeque([], maxlen=-3)
@@ -198,7 +198,7 @@ def test_set_maxlen():
     assert x.maxlen == 4
 
     with pytest.raises(AttributeError):
-        x.maxlen = 5
+        x.maxlen = 5  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_comparison():
@@ -255,7 +255,7 @@ def test_indexing_out_of_range():
 
 def test_indexing_invalid_type():
     with pytest.raises(TypeError) as e:
-        pdeque([1, 2, 3])['foo']
+        pdeque([1, 2, 3])['foo']  # type: ignore[reportCallIssue]
 
     assert 'cannot be interpreted' in str(e.value)
 

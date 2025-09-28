@@ -49,7 +49,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
         ignore_extra = kwargs.pop('ignore_extra', None)
         missing_fields = []
         invariant_errors = []
-        for name, field in cls._pclass_fields.items():
+        for name, field in cls._pclass_fields.items():  # type: ignore[reportGeneralTypeIssues]
             if name in kwargs:
                 if factory_fields is None or name in factory_fields:
                     if is_field_ignore_extra_complaint(PClass, field, ignore_extra):
@@ -74,7 +74,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
             raise AttributeError("'{0}' are not among the specified fields for {1}".format(
                 ', '.join(kwargs), cls.__name__))
 
-        check_global_invariants(result, cls._pclass_invariants)
+        check_global_invariants(result, cls._pclass_invariants)  # type: ignore[reportGeneralTypeIssues]
 
         result._pclass_frozen = True
         return result
@@ -103,7 +103,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
         factory_fields = set(kwargs)
 
-        for key in self._pclass_fields:
+        for key in self._pclass_fields:  # type: ignore[reportGeneralTypeIssues]
             if key not in kwargs:
                 value = getattr(self, key, _MISSING_VALUE)
                 if value is not _MISSING_VALUE:
@@ -112,7 +112,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
         return self.__class__(_factory_fields=factory_fields, **kwargs)
 
     @classmethod
-    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):
+    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):  # type: ignore[reportGeneralTypeIssues]
         """
         Factory method. Will create a new PClass of the current type and assign the values
         specified in kwargs.
@@ -124,7 +124,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
             return kwargs
 
         if ignore_extra:
-            kwargs = {k: kwargs[k] for k in cls._pclass_fields if k in kwargs}
+            kwargs = {k: kwargs[k] for k in cls._pclass_fields if k in kwargs}  # type: ignore[reportGeneralTypeIssues]
 
         return cls(_factory_fields=_factory_fields, ignore_extra=ignore_extra, **kwargs)
 
@@ -134,10 +134,10 @@ class PClass(CheckedType, metaclass=PClassMeta):
         such have been supplied.
         """
         result = {}
-        for name in self._pclass_fields:
+        for name in self._pclass_fields:  # type: ignore[reportGeneralTypeIssues]
             value = getattr(self, name, _MISSING_VALUE)
             if value is not _MISSING_VALUE:
-                result[name] = serialize(self._pclass_fields[name].serializer, format, value)
+                result[name] = serialize(self._pclass_fields[name].serializer, format, value)  # type: ignore[reportGeneralTypeIssues]
 
         return result
 
@@ -152,7 +152,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            for name in self._pclass_fields:
+            for name in self._pclass_fields:  # type: ignore[reportGeneralTypeIssues]
                 if getattr(self, name, _MISSING_VALUE) != getattr(other, name, _MISSING_VALUE):
                     return False
 
@@ -165,7 +165,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
     def __hash__(self):
         # May want to optimize this by caching the hash somehow
-        return hash(tuple((key, getattr(self, key, _MISSING_VALUE)) for key in self._pclass_fields))
+        return hash(tuple((key, getattr(self, key, _MISSING_VALUE)) for key in self._pclass_fields))  # type: ignore[reportGeneralTypeIssues]
 
     def __setattr__(self, key, value):
         if getattr(self, '_pclass_frozen', False):
@@ -178,7 +178,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
     def _to_dict(self):
         result = {}
-        for key in self._pclass_fields:
+        for key in self._pclass_fields:  # type: ignore[reportGeneralTypeIssues]
             value = getattr(self, key, _MISSING_VALUE)
             if value is not _MISSING_VALUE:
                 result[key] = value
@@ -191,7 +191,7 @@ class PClass(CheckedType, metaclass=PClassMeta):
 
     def __reduce__(self):
         # Pickling support
-        data = dict((key, getattr(self, key)) for key in self._pclass_fields if hasattr(self, key))
+        data = dict((key, getattr(self, key)) for key in self._pclass_fields if hasattr(self, key))  # type: ignore[reportGeneralTypeIssues]
         return _restore_pickle, (self.__class__, data,)
 
     def evolver(self):

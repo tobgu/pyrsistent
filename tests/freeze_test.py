@@ -19,7 +19,7 @@ def test_freeze_dict():
 
 def test_freeze_defaultdict():
     test_dict = collections.defaultdict(dict)
-    test_dict['a'] = 'b'
+    test_dict['a'] = 'b'  # type: ignore[reportGeneralTypeIssues]
     result = freeze(test_dict)
     assert result == m(a='b')
     assert type(freeze({'a': 'b'})) is type(m())
@@ -36,7 +36,7 @@ def test_freeze_recurse_in_dictionary_values():
 
 def test_freeze_recurse_in_defaultdict_values():
     test_dict = collections.defaultdict(dict)
-    test_dict['a'] = [1]
+    test_dict['a'] = [1]  # type: ignore[reportGeneralTypeIssues]
     result = freeze(test_dict)
     assert result == m(a=v(1))
     assert type(result['a']) is type(v())
@@ -73,7 +73,7 @@ def test_freeze_recurse_in_tuples():
 
 def test_freeze_nonstrict_no_recurse_in_pmap_values():
     input = {'a': m(b={'c': 1})}
-    result = freeze(input, strict=False)
+    result = freeze(input, strict=False)  # type: ignore[reportGeneralTypeIssues]
     # PMap and PVector are == to their mutable equivalents
     assert result == input
     assert type(result) is type(m())
@@ -81,7 +81,7 @@ def test_freeze_nonstrict_no_recurse_in_pmap_values():
 
 def test_freeze_nonstrict_no_recurse_in_pvectors():
     input = [1, v(2, [3])]
-    result = freeze(input, strict=False)
+    result = freeze(input, strict=False)  # type: ignore[reportGeneralTypeIssues]
     # PMap and PVector are == to their mutable equivalents
     assert result == input
     assert type(result) is type(v())
@@ -148,13 +148,13 @@ def test_thaw_can_handle_subclasses_of_persistent_base_types():
 ## Thaw (weak)
 
 def test_thaw_non_strict_no_recurse_in_dict_values():
-    result = thaw({'a': v(1, m(b=2))}, strict=False)
+    result = thaw({'a': v(1, m(b=2))}, strict=False)  # type: ignore[reportGeneralTypeIssues]
     assert result == {'a': [1, {'b': 2}]}
     assert type(result['a']) is type(v())
     assert type(result['a'][1]) is type(m())
 
 def test_thaw_non_strict_no_recurse_in_lists():
-    result = thaw(v(['a', m(b=1), v(2)]), strict=False)
+    result = thaw(v(['a', m(b=1), v(2)]), strict=False)  # type: ignore[reportGeneralTypeIssues]
     assert result == [['a', {'b': 1}, [2]]]
     assert type(result[0][1]) is type(m())
 

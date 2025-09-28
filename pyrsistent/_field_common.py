@@ -293,13 +293,13 @@ def _make_pmap_field_type(key_type, value_type):
         __key_type__ = key_type
         __value_type__ = value_type
 
-        def __reduce__(self):
+        def __reduce__(self):  # type: ignore[reportGeneralTypeIssues]
             return (_restore_pmap_field_pickle,
                     (self.__key_type__, self.__value_type__, dict(self)))
 
     TheMap.__name__ = "{0}To{1}PMap".format(
-        _types_to_names(TheMap._checked_key_types),
-        _types_to_names(TheMap._checked_value_types))
+        _types_to_names(TheMap._checked_key_types),  # type: ignore[reportGeneralTypeIssues]
+        _types_to_names(TheMap._checked_value_types))  # type: ignore[reportGeneralTypeIssues]
     _pmap_field_types[key_type, value_type] = TheMap
     return TheMap
 
@@ -325,7 +325,7 @@ def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIA
             else:
                 return TheMap.create(argument)
     else:
-        factory = TheMap.create
+        factory = TheMap.create  # type: ignore[reportGeneralTypeIssues]
 
     return field(mandatory=True, initial=TheMap(),
                  type=optional_type(TheMap) if optional else TheMap,

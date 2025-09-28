@@ -127,8 +127,8 @@ class FloatVector(CheckedPVector):
 
 
 class VectorToSetMap(CheckedPMap):
-    __key_type__ = 'checked_map_test.FloatVector'
-    __value_type__ = 'checked_map_test.FloatSet'
+    __key_type__ = 'checked_map_test.FloatVector'  # type: ignore[reportGeneralTypeIssues]
+    __value_type__ = 'checked_map_test.FloatSet'  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_type_check_with_string_specification():

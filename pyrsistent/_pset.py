@@ -32,17 +32,17 @@ class PSet(Generic[T_co]):
 
     def __new__(cls, m):
         self = super(PSet, cls).__new__(cls)
-        self._map = m
+        self._map = m  # type: ignore[reportGeneralTypeIssues]
         return self
 
     def __contains__(self, element):
-        return element in self._map
+        return element in self._map  # type: ignore[reportGeneralTypeIssues]
 
     def __iter__(self):
-        return iter(self._map)
+        return iter(self._map)  # type: ignore[reportGeneralTypeIssues]
 
     def __len__(self):
-        return len(self._map)
+        return len(self._map)  # type: ignore[reportGeneralTypeIssues]
 
     def __repr__(self):
         if not self:
@@ -54,7 +54,7 @@ class PSet(Generic[T_co]):
         return self.__repr__()
 
     def __hash__(self):
-        return hash(self._map)
+        return hash(self._map)  # type: ignore[reportGeneralTypeIssues]
 
     def __reduce__(self):
         # Pickling support
@@ -96,7 +96,7 @@ class PSet(Generic[T_co]):
         >>> s1.remove(2)
         pset([1])
         """
-        if element in self._map:
+        if element in self._map:  # type: ignore[reportGeneralTypeIssues]
             return self.evolver().remove(element).persistent()
 
         raise KeyError("Element '%s' not present in PSet" % repr(element))
@@ -105,7 +105,7 @@ class PSet(Generic[T_co]):
         """
         Return a new PSet with element removed. Returns itself if element is not present.
         """
-        if element in self._map:
+        if element in self._map:  # type: ignore[reportGeneralTypeIssues]
             return self.evolver().remove(element).persistent()
 
         return self
@@ -196,7 +196,7 @@ class PSet(Generic[T_co]):
 
     isdisjoint = Set.isdisjoint
 
-Set.register(PSet)
+Set.register(PSet)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(PSet)
 
 _EMPTY_PSET = PSet(pmap())
