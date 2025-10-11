@@ -10,7 +10,7 @@ if platform.system() != "Windows":
     with codecs.open(readme_path, encoding='utf8') as f:
         readme = f.read()
 else:
-    # The format is messed up with extra line breaks when building wheels on windows.
+    # The format is messed up with extra line breaks when building wheels on windows. 
     # Skip readme in this case.
     readme = "Persistent collections, see https://github.com/tobgu/pyrsistent/ for details."
 
