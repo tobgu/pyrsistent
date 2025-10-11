@@ -25,7 +25,7 @@ class custom_build_ext(build_ext):
     warning_message = """
 ********************************************************************************
 WARNING: Could not build the %s.
-         Pyrsistent will still work but performance may be degraded.
+         Pyrsistent will still work but performance may be degraded. 
          %s
 ********************************************************************************
 """
