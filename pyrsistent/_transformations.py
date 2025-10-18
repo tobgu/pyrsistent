@@ -140,4 +140,4 @@ def _update_structure(structure, kvs, path, command):
             if result is not v or is_empty:
                 e[k] = result
 
-    return e.persistent() 
+    return e.persistent()
