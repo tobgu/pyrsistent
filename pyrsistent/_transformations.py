@@ -6,7 +6,7 @@ except ImportError:
     from inspect import getfullargspec
 
 
-_EMPTY_SENTINEL = object()
+_EMPTY_SENTINEL = object() 
 
 
 def inc(x):
