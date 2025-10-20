@@ -1,3 +1,4 @@
+from typing import Any
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException, store_invariants
 from pyrsistent._field_common import (
     set_fields, check_type, is_field_ignore_extra_complaint, PFIELD_NO_INITIAL, serialize, check_global_invariants
@@ -14,15 +15,15 @@ class _PRecordMeta(type):
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
 
         dct['_precord_initial_values'] = \
-            dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not PFIELD_NO_INITIAL)
-
+            dict((k, field.initial) for k, field in dct['_precord_fields'].items()
+                 if field.initial is not PFIELD_NO_INITIAL)
 
         dct['__slots__'] = ()
 
         return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
 
 
-class PRecord(PMap, CheckedType, metaclass=_PRecordMeta):
+class PRecord(PMap[str, Any], CheckedType, metaclass=_PRecordMeta):
     """
     A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
     from PRecord. Because it is a PMap it has full support for all Mapping methods such as iteration and element
@@ -34,134 +35,116 @@ class PRecord(PMap, CheckedType, metaclass=_PRecordMeta):
         # Hack total! If these two special attributes exist that means we can create
         # ourselves. Otherwise we need to go through the Evolver to create the structures
         # for us.
-        if '_precord_size' in kwargs and '_precord_buckets' in kwargs:
-            return super(PRecord, cls).__new__(cls, kwargs['_precord_size'], kwargs['_precord_buckets'])
+        if '_precord_size' in cls.__dict__ and '_precord_buckets' in cls.__dict__:
+            return super(PRecord, cls).__new__(cls, cls._precord_size, cls._precord_buckets)
 
-        factory_fields = kwargs.pop('_factory_fields', None)
-        ignore_extra = kwargs.pop('_ignore_extra', False)
+        factory_fields = cls._precord_fields
+        initial_dict = cls._precord_initial_values.copy()
+        initial_dict.update(kwargs)
 
-        initial_values = kwargs
-        if cls._precord_initial_values:
-            initial_values = dict((k, v() if callable(v) else v)
-                                  for k, v in cls._precord_initial_values.items())
-            initial_values.update(kwargs)
-
-        e = _PRecordEvolver(cls, pmap(pre_size=len(cls._precord_fields)), _factory_fields=factory_fields, _ignore_extra=ignore_extra)
-        for k, v in initial_values.items():
+        e = _PRecordEvolver(cls, pmap(), factory_fields)
+        for k, v in initial_dict.items():
             e[k] = v
 
         return e.persistent()
 
-    def set(self, *args, **kwargs):
-        """
-        Set a field in the record. This set function differs slightly from that in the PMap
-        class. First of all it accepts key-value pairs. Second it accepts multiple key-value
-        pairs to perform one, atomic, update of multiple fields.
-        """
+    def set(self, key, val):
+        if key not in self._precord_fields:
+            raise AttributeError("PRecord does not have field '{0}'".format(key))
 
-        # The PRecord set() can accept kwargs since all fields that have been declared are
-        # valid python identifiers. Also allow multiple fields to be set in one operation.
-        if args:
-            return super(PRecord, self).set(args[0], args[1])
+        return self.evolver().set(key, val).persistent()
 
-        return self.update(kwargs)
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError("PRecord does not have field '{0}'".format(key))
+
+    def __setattr__(self, key, val):
+        # This is mainly here to prevent users from accidentally setting
+        # fields on PRecords which will not work properly. The metaclass
+        # should prevent this from happening in the first place.
+        raise AttributeError("can't set attribute")
 
     def evolver(self):
-        """
-        Returns an evolver of this object.
-        """
-        return _PRecordEvolver(self.__class__, self)
+        return _PRecordEvolver(self.__class__, self, self._precord_fields)
 
-    def __repr__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self.items()))
+    def serialize(self, format=None):
+        result = {}
+        for key, value in self.items():
+            result[key] = serialize(self._precord_fields[key].serializer, format, value)
 
-    @classmethod
-    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):
-        """
-        Factory method. Will create a new PRecord of the current type and assign the values
-        specified in kwargs.
-
-        :param ignore_extra: A boolean which when set to True will ignore any keys which appear in kwargs that are not
-                             in the set of fields on the PRecord.
-        """
-        if isinstance(kwargs, cls):
-            return kwargs
-
-        if ignore_extra:
-            kwargs = {k: kwargs[k] for k in cls._precord_fields if k in kwargs}
-
-        return cls(_factory_fields=_factory_fields, _ignore_extra=ignore_extra, **kwargs)
+        return result
 
     def __reduce__(self):
         # Pickling support
         return _restore_pickle, (self.__class__, dict(self),)
 
-    def serialize(self, format=None):
-        """
-        Serialize the current PRecord using custom serializer functions for fields where
-        such have been supplied.
-        """
-        return dict((k, serialize(self._precord_fields[k].serializer, format, v)) for k, v in self.items())
 
+class _PRecordEvolver(object):
+    __slots__ = ('_destination_cls', '_pmap_evolver', '_invariant_error_codes', '_factory_fields', '_missing_fields')
 
-class _PRecordEvolver(PMap._Evolver):
-    __slots__ = ('_destination_cls', '_invariant_error_codes', '_missing_fields', '_factory_fields', '_ignore_extra')
-
-    def __init__(self, cls, original_pmap, _factory_fields=None, _ignore_extra=False):
-        super(_PRecordEvolver, self).__init__(original_pmap)
+    def __init__(self, cls, initial_pmap, factory_fields):
         self._destination_cls = cls
+        self._pmap_evolver = initial_pmap.evolver()
+        self._factory_fields = factory_fields
         self._invariant_error_codes = []
         self._missing_fields = []
-        self._factory_fields = _factory_fields
-        self._ignore_extra = _ignore_extra
 
-    def __setitem__(self, key, original_value):
-        self.set(key, original_value)
+    def __setitem__(self, key, original_val):
+        self._invariant_error_codes = []
+        self._missing_fields = []
 
-    def set(self, key, original_value):
-        field = self._destination_cls._precord_fields.get(key)
+        field = self._factory_fields.get(key)
         if field:
-            if self._factory_fields is None or field in self._factory_fields:
-                try:
-                    if is_field_ignore_extra_complaint(PRecord, field, self._ignore_extra):
-                        value = field.factory(original_value, ignore_extra=self._ignore_extra)
-                    else:
-                        value = field.factory(original_value)
-                except InvariantException as e:
-                    self._invariant_error_codes += e.invariant_errors
-                    self._missing_fields += e.missing_fields
-                    return self
-            else:
-                value = original_value
+            if is_field_ignore_extra_complaint(field, key, self._destination_cls):
+                return
 
-            check_type(self._destination_cls, field, key, value)
+            try:
+                val = check_type(original_val, field)
+            except TypeError as e:
+                raise PTypeError(self._destination_cls, field, str(e))
 
-            is_ok, error_code = field.invariant(value)
-            if not is_ok:
-                self._invariant_error_codes.append(error_code)
-
-            return super(_PRecordEvolver, self).set(key, value)
+            self._pmap_evolver[key] = val
+        elif key not in self._destination_cls._precord_fields:
+            raise AttributeError("PRecord does not have field '{0}'".format(key))
         else:
-            raise AttributeError("'{0}' is not among the specified fields for {1}".format(key, self._destination_cls.__name__))
+            # This should never happen, but guard against it anyway
+            raise AttributeError("Unhandled field '{0}'".format(key))
+
+        return self
 
     def persistent(self):
         cls = self._destination_cls
-        is_dirty = self.is_dirty()
-        pm = super(_PRecordEvolver, self).persistent()
-        if is_dirty or not isinstance(pm, cls):
-            result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
-        else:
-            result = pm
+        pmap = self._pmap_evolver.persistent()
 
         if cls._precord_mandatory_fields:
-            self._missing_fields += tuple('{0}.{1}'.format(cls.__name__, f) for f
-                                          in (cls._precord_mandatory_fields - set(result.keys())))
+            self._missing_fields = []
+            for field in cls._precord_mandatory_fields:
+                if field not in pmap:
+                    self._missing_fields.append(field)
 
-        if self._invariant_error_codes or self._missing_fields:
-            raise InvariantException(tuple(self._invariant_error_codes), tuple(self._missing_fields),
-                                     'Field invariant failed')
+            if self._missing_fields:
+                raise InvariantException(
+                    tuple(self._missing_fields),
+                    tuple(),
+                    'Missing mandatory fields: {0}'.format(tuple(self._missing_fields)))
 
-        check_global_invariants(result, cls._precord_invariants)
+        check_global_invariants(pmap, cls._precord_invariants, error_code='PRecord')
+
+        if pmap is self._pmap_evolver:
+            # This shouldn't really be needed but the evolver promises to return
+            # a new map on persistent() so there's a contract to uphold.
+            pmap = PMap(pmap._size, pmap._buckets)
+
+        result = cls.__new__(cls)
+        result._size = pmap._size
+        result._buckets = pmap._buckets
 
         return result
+
+
+class PTypeError(TypeError):
+    def __init__(self, cls, field, msg):
+        super(PTypeError, self).__init__(
+            "Type error for field {}.{}: {}".format(cls.__name__, field.name, msg))
