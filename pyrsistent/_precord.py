@@ -118,7 +118,7 @@ class _PRecordEvolver(PMap._Evolver):
         if field:
             if self._factory_fields is None or field in self._factory_fields:
                 try:
-                    if is_field_ignore_extra_complaint(PRecord, field, self._ignore_extra):
+                    if is_field_ignore_extra_complaint(CheckedType, field, self._ignore_extra):
                         value = field.factory(original_value, ignore_extra=self._ignore_extra)
                     else:
                         value = field.factory(original_value)
