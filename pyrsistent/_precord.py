@@ -1,3 +1,4 @@
+from typing import Any
 from pyrsistent._checked_types import CheckedType, _restore_pickle, InvariantException, store_invariants
 from pyrsistent._field_common import (
     set_fields, check_type, is_field_ignore_extra_complaint, PFIELD_NO_INITIAL, serialize, check_global_invariants
@@ -9,20 +10,15 @@ class _PRecordMeta(type):
     def __new__(mcs, name, bases, dct):
         set_fields(dct, bases, name='_precord_fields')
         store_invariants(dct, bases, '_precord_invariants', '__invariant__')
-
         dct['_precord_mandatory_fields'] = \
             set(name for name, field in dct['_precord_fields'].items() if field.mandatory)
-
         dct['_precord_initial_values'] = \
             dict((k, field.initial) for k, field in dct['_precord_fields'].items() if field.initial is not PFIELD_NO_INITIAL)
-
-
         dct['__slots__'] = ()
-
         return super(_PRecordMeta, mcs).__new__(mcs, name, bases, dct)
 
 
-class PRecord(PMap, CheckedType, metaclass=_PRecordMeta):
+class PRecord(PMap[str, Any], CheckedType, metaclass=_PRecordMeta):
     """
     A PRecord is a PMap with a fixed set of specified fields. Records are declared as python classes inheriting
     from PRecord. Because it is a PMap it has full support for all Mapping methods such as iteration and element
@@ -39,7 +35,6 @@ class PRecord(PMap, CheckedType, metaclass=_PRecordMeta):
 
         factory_fields = kwargs.pop('_factory_fields', None)
         ignore_extra = kwargs.pop('_ignore_extra', False)
-
         initial_values = kwargs
         if cls._precord_initial_values:
             initial_values = dict((k, v() if callable(v) else v)
@@ -58,7 +53,6 @@ class PRecord(PMap, CheckedType, metaclass=_PRecordMeta):
         class. First of all it accepts key-value pairs. Second it accepts multiple key-value
         pairs to perform one, atomic, update of multiple fields.
         """
-
         # The PRecord set() can accept kwargs since all fields that have been declared are
         # valid python identifiers. Also allow multiple fields to be set in one operation.
         if args:
@@ -124,7 +118,7 @@ class _PRecordEvolver(PMap._Evolver):
         if field:
             if self._factory_fields is None or field in self._factory_fields:
                 try:
-                    if is_field_ignore_extra_complaint(PRecord, field, self._ignore_extra):
+                    if is_field_ignore_extra_complaint(CheckedType, field, self._ignore_extra):
                         value = field.factory(original_value, ignore_extra=self._ignore_extra)
                     else:
                         value = field.factory(original_value)
@@ -136,7 +130,6 @@ class _PRecordEvolver(PMap._Evolver):
                 value = original_value
 
             check_type(self._destination_cls, field, key, value)
-
             is_ok, error_code = field.invariant(value)
             if not is_ok:
                 self._invariant_error_codes.append(error_code)
@@ -149,6 +142,7 @@ class _PRecordEvolver(PMap._Evolver):
         cls = self._destination_cls
         is_dirty = self.is_dirty()
         pm = super(_PRecordEvolver, self).persistent()
+
         if is_dirty or not isinstance(pm, cls):
             result = cls(_precord_buckets=pm._buckets, _precord_size=pm._size)
         else:

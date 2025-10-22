@@ -21,7 +21,7 @@ class CheckedType(object):
 
     @classmethod
     @abstractmethod
-    def create(cls, source_data, _factory_fields=None):
+    def create(cls, source_data, _factory_fields=None, ignore_extra=False):
         raise NotImplementedError()
 
     @abstractmethod
@@ -498,7 +498,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
         return dict(serializer(format, k, v) for k, v in self.items())
 
     @classmethod
-    def create(cls, source_data, _factory_fields=None):
+    def create(cls, source_data, _factory_fields=None, ignore_extra=False):
         if isinstance(source_data, cls):
             return source_data
 
