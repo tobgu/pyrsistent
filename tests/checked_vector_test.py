@@ -98,14 +98,14 @@ def test_create_with_instance_of_checked_pvector_returns_the_argument():
     assert Naturals.create(x) is x
 
 class OptionalNaturals(CheckedPVector):
-    __type__ = optional(int)
+    __type__ = optional(int)  # type: ignore[reportGeneralTypeIssues]
     __invariant__ = lambda value: (value is None or value >= 0, 'Negative value')
 
 def test_multiple_allowed_types():
     assert list(OptionalNaturals([1, None, 3])) == [1, None, 3]
 
 class NaturalsVector(CheckedPVector):
-    __type__ = optional(Naturals)
+    __type__ = optional(Naturals)  # type: ignore[reportGeneralTypeIssues]
 
 def test_create_of_nested_structure():
     assert NaturalsVector([Naturals([1, 2]), Naturals([3, 4]), None]) ==\
@@ -154,7 +154,7 @@ def test_invariant_must_be_callable():
 def test_type_spec_must_be_type():
     with pytest.raises(TypeError):
         class InvalidType(CheckedPVector):
-            __type__ = 1
+            __type__ = 1  # type: ignore[reportGeneralTypeIssues]
 
 def test_repr():
     x = Naturals([1, 2])
@@ -174,7 +174,7 @@ def test_pickling():
 
 def test_multiple_optional_types():
     class Numbers(CheckedPVector):
-        __type__ = optional(int, float)
+        __type__ = optional(int, float)  # type: ignore[reportGeneralTypeIssues]
 
     numbers = Numbers([1, 2.5, None])
     assert numbers.serialize() == [1, 2.5, None]
@@ -184,7 +184,7 @@ def test_multiple_optional_types():
 
 
 class NaturalsVectorStr(CheckedPVector):
-    __type__ = 'checked_vector_test.Naturals'
+    __type__ = 'checked_vector_test.Naturals'  # type: ignore[reportGeneralTypeIssues]
 
 
 def test_check_with_string_specification():

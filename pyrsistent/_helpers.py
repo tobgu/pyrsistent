@@ -39,7 +39,7 @@ def freeze(o, strict=True):
         return pmap({k: freeze(v, strict) for k, v in o.items()})
     if typ is list or (strict and isinstance(o, PVector)):
         curried_freeze = lambda x: freeze(x, strict)
-        return pvector(map(curried_freeze, o))
+        return pvector(map(curried_freeze, o))  # type: ignore[reportGeneralTypeIssues]
     if typ is tuple:
         curried_freeze = lambda x: freeze(x, strict)
         return tuple(map(curried_freeze, o))
@@ -74,7 +74,7 @@ def thaw(o, strict=True):
     typ = type(o)
     if isinstance(o, PVector) or (strict and typ is list):
         curried_thaw = lambda x: thaw(x, strict)
-        return list(map(curried_thaw, o))
+        return list(map(curried_thaw, o))  # type: ignore[reportGeneralTypeIssues]
     if isinstance(o, PMap) or (strict and typ is dict):
         return {k: thaw(v, strict) for k, v in o.items()}
     if typ is tuple:
@@ -96,6 +96,6 @@ def mutant(fn):
     """
     @wraps(fn)
     def inner_f(*args, **kwargs):
-        return freeze(fn(*[freeze(e) for e in args], **dict(freeze(item) for item in kwargs.items())))
+        return freeze(fn(*[freeze(e) for e in args], **dict(freeze(item) for item in kwargs.items())))  # type: ignore[reportCallIssue]
 
     return inner_f

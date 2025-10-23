@@ -22,7 +22,7 @@ class Hierarchy(PRecord):
 class RecordContainingContainers(PRecord):
     map = pmap_field(str, str)
     vec = pvector_field(str)
-    set = pset_field(str)
+    set = pset_field(str)  # type: ignore[reportGeneralTypeIssues]
 
 
 class UniqueThing(PRecord):
@@ -684,7 +684,7 @@ def test_pvector_field_create_from_nested_serialized_data():
         bar = pvector_field(Foo)
 
     data = Bar(bar=v(Foo(foo="foo")))
-    Bar.create(data.serialize()) == data
+    Bar.create(data.serialize()) == data  # type: ignore[reportUnusedExpression]
 
 def test_pmap_field_initial_value():
     """
@@ -855,7 +855,7 @@ def test_pmap_field_create_from_nested_serialized_data():
         bar = pmap_field(str, Foo)
 
     data = Bar(bar=m(foo_key=Foo(foo="foo")))
-    Bar.create(data.serialize()) == data
+    Bar.create(data.serialize()) == data  # type: ignore[reportUnusedExpression]
 
 
 def test_supports_weakref():

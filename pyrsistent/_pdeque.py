@@ -334,19 +334,19 @@ class PDeque(Generic[T_co]):
         if not isinstance(index, Integral):
             raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
 
-        if index >= 0:
-            return self.popleft(index).left
+        if index >= 0:  # type: ignore[reportOperatorIssue]
+            return self.popleft(index).left  # type: ignore[reportGeneralTypeIssues]
 
         shifted = len(self) + index
-        if shifted < 0:
+        if shifted < 0:  # type: ignore[reportOperatorIssue]
             raise IndexError(
                 "pdeque index {0} out of range {1}".format(index, len(self)),
             )
-        return self.popleft(shifted).left
+        return self.popleft(shifted).left  # type: ignore[reportGeneralTypeIssues]
 
     index = Sequence.index
 
-Sequence.register(PDeque)
+Sequence.register(PDeque)  # type: ignore[reportGeneralTypeIssues]
 Hashable.register(PDeque)
 
 

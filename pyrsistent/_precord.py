@@ -36,12 +36,12 @@ class PRecord(PMap[str, Any], CheckedType, metaclass=_PRecordMeta):
         factory_fields = kwargs.pop('_factory_fields', None)
         ignore_extra = kwargs.pop('_ignore_extra', False)
         initial_values = kwargs
-        if cls._precord_initial_values:
+        if cls._precord_initial_values:  # type: ignore[reportGeneralTypeIssues]
             initial_values = dict((k, v() if callable(v) else v)
-                                  for k, v in cls._precord_initial_values.items())
+                                  for k, v in cls._precord_initial_values.items())  # type: ignore[reportGeneralTypeIssues]
             initial_values.update(kwargs)
 
-        e = _PRecordEvolver(cls, pmap(pre_size=len(cls._precord_fields)), _factory_fields=factory_fields, _ignore_extra=ignore_extra)
+        e = _PRecordEvolver(cls, pmap(pre_size=len(cls._precord_fields)), _factory_fields=factory_fields, _ignore_extra=ignore_extra)  # type: ignore[reportGeneralTypeIssues]
         for k, v in initial_values.items():
             e[k] = v
 
@@ -71,7 +71,7 @@ class PRecord(PMap[str, Any], CheckedType, metaclass=_PRecordMeta):
                                  ', '.join('{0}={1}'.format(k, repr(v)) for k, v in self.items()))
 
     @classmethod
-    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):
+    def create(cls, kwargs, _factory_fields=None, ignore_extra=False):  # type: ignore[reportGeneralTypeIssues]
         """
         Factory method. Will create a new PRecord of the current type and assign the values
         specified in kwargs.
@@ -83,11 +83,11 @@ class PRecord(PMap[str, Any], CheckedType, metaclass=_PRecordMeta):
             return kwargs
 
         if ignore_extra:
-            kwargs = {k: kwargs[k] for k in cls._precord_fields if k in kwargs}
+            kwargs = {k: kwargs[k] for k in cls._precord_fields if k in kwargs}  # type: ignore[reportGeneralTypeIssues]
 
         return cls(_factory_fields=_factory_fields, _ignore_extra=ignore_extra, **kwargs)
 
-    def __reduce__(self):
+    def __reduce__(self):  # type: ignore[reportGeneralTypeIssues]
         # Pickling support
         return _restore_pickle, (self.__class__, dict(self),)
 
@@ -113,7 +113,7 @@ class _PRecordEvolver(PMap._Evolver):
     def __setitem__(self, key, original_value):
         self.set(key, original_value)
 
-    def set(self, key, original_value):
+    def set(self, key, original_value):  # type: ignore[reportGeneralTypeIssues]
         field = self._destination_cls._precord_fields.get(key)
         if field:
             if self._factory_fields is None or field in self._factory_fields:

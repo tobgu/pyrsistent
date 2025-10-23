@@ -255,7 +255,7 @@ def test_addition():
 
 
 def test_union_operator():
-    assert m(x=1, y=2) | m(y=3, z=4) == m(x=1, y=3, z=4)
+    assert m(x=1, y=2) | m(y=3, z=4) == m(x=1, y=3, z=4)  # type: ignore[reportOperatorIssue]
 
 
 def test_transform_base_case():
@@ -312,8 +312,8 @@ def test_hash_collision_is_correctly_resolved():
     # Reuse existing structure when inserted element is the same
     assert map2.set(dummy1, 11) is map2
 
-    map3 = map1.set('a', 22)
-    assert map3['a'] == 22
+    map3 = map1.set('a', 22)  # type: ignore[reportGeneralTypeIssues]
+    assert map3['a'] == 22  # type: ignore[reportGeneralTypeIssues]
     assert map3[dummy3] == 3
 
     # Remove elements
@@ -357,8 +357,8 @@ def test_iteration_with_many_elements():
 
     # Throw in a couple of hash collision nodes to tests
     # those properly as well
-    init_dict[hash_dummy1] = 12345
-    init_dict[hash_dummy2] = 54321
+    init_dict[hash_dummy1] = 12345  # type: ignore[reportGeneralTypeIssues]
+    init_dict[hash_dummy2] = 54321  # type: ignore[reportGeneralTypeIssues]
     a_map = pmap(init_dict)
 
     actual_values = set()
@@ -451,10 +451,10 @@ def test_evolver_set_with_reallocation_edge_case():
 
 def test_evolver_remove_element():
     e = m(a=1000, b=2000).evolver()
-    assert 'a' in e
+    assert 'a' in e  # type: ignore[reportOperatorIssue]
 
     del e['a']
-    assert 'a' not in e
+    assert 'a' not in e  # type: ignore[reportOperatorIssue]
 
 
 def test_evolver_remove_element_not_present():
@@ -485,16 +485,16 @@ def test_dot_access_of_non_existing_element_raises_attribute_error():
 
 def test_pmap_unorderable():
     with pytest.raises(TypeError):
-        _ = m(a=1) < m(b=2)
+        _ = m(a=1) < m(b=2)  # type: ignore[reportOperatorIssue]
 
     with pytest.raises(TypeError):
-        _ = m(a=1) <= m(b=2)
+        _ = m(a=1) <= m(b=2)  # type: ignore[reportOperatorIssue]
 
     with pytest.raises(TypeError):
-        _ = m(a=1) > m(b=2)
+        _ = m(a=1) > m(b=2)  # type: ignore[reportOperatorIssue]
 
     with pytest.raises(TypeError):
-        _ = m(a=1) >= m(b=2)
+        _ = m(a=1) >= m(b=2)  # type: ignore[reportOperatorIssue]
 
 
 def test_supports_weakref():

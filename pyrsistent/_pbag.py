@@ -233,8 +233,8 @@ class PBag(Generic[T_co]):
         return hash(self._counts)
 
 
-Container.register(PBag)
-Iterable.register(PBag)
+Container.register(PBag)  # type: ignore[reportGeneralTypeIssues]
+Iterable.register(PBag)  # type: ignore[reportGeneralTypeIssues]
 Sized.register(PBag)
 Hashable.register(PBag)
 

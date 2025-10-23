@@ -270,7 +270,7 @@ def _checked_type_create(cls, source_data, _factory_fields=None, ignore_extra=Fa
     types = get_types(cls._checked_types)
     checked_type = next((t for t in types if issubclass(t, CheckedType)), None)
     if checked_type:
-        return cls([checked_type.create(data, ignore_extra=ignore_extra)
+        return cls([checked_type.create(data, ignore_extra=ignore_extra)  # type: ignore[reportCallIssue]
                     if not any(isinstance(data, t) for t in types) else data
                     for data in source_data])
 
@@ -296,22 +296,22 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
 
         return CheckedPVector.Evolver(cls, python_pvector()).extend(initial).persistent()
 
-    def set(self, key, value):
+    def set(self, key, value):  # type: ignore[reportGeneralTypeIssues]
         return self.evolver().set(key, value).persistent()
 
     def append(self, val):
         return self.evolver().append(val).persistent()
 
-    def extend(self, it):
+    def extend(self, it):  # type: ignore[reportGeneralTypeIssues]
         return self.evolver().extend(it).persistent()
 
-    create = classmethod(_checked_type_create)
+    create = classmethod(_checked_type_create)  # type: ignore[reportGeneralTypeIssues]
 
     def serialize(self, format=None):
-        serializer = self.__serializer__
+        serializer = self.__serializer__  # type: ignore[reportGeneralTypeIssues]
         return list(serializer(format, v) for v in self)
 
-    def __reduce__(self):
+    def __reduce__(self):  # type: ignore[reportGeneralTypeIssues]
         # Pickling support
         return _restore_pickle, (self.__class__, list(self),)
 
@@ -332,11 +332,11 @@ class CheckedPVector(Generic[T_co], PythonPVector, CheckedType, metaclass=_Check
             self._check([value])
             return super(CheckedPVector.Evolver, self).__setitem__(key, value)
 
-        def append(self, elem):
+        def append(self, elem):  # type: ignore[reportGeneralTypeIssues]
             self._check([elem])
             return super(CheckedPVector.Evolver, self).append(elem)
 
-        def extend(self, it):
+        def extend(self, it):  # type: ignore[reportGeneralTypeIssues]
             it = list(it)
             self._check(it)
             return super(CheckedPVector.Evolver, self).extend(it)
@@ -393,12 +393,12 @@ class CheckedPSet(PSet[T_co], CheckedType, metaclass=_CheckedTypeMeta):
         return self.__repr__()
 
     def serialize(self, format=None):
-        serializer = self.__serializer__
+        serializer = self.__serializer__  # type: ignore[reportGeneralTypeIssues]
         return set(serializer(format, v) for v in self)
 
-    create = classmethod(_checked_type_create)
+    create = classmethod(_checked_type_create)  # type: ignore[reportGeneralTypeIssues]
 
-    def __reduce__(self):
+    def __reduce__(self):  # type: ignore[reportGeneralTypeIssues]
         # Pickling support
         return _restore_pickle, (self.__class__, list(self),)
 
@@ -504,9 +504,9 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
 
         # Recursively apply create methods of checked types if the types of the supplied data
         # does not match any of the valid types.
-        key_types = get_types(cls._checked_key_types)
+        key_types = get_types(cls._checked_key_types)  # type: ignore[reportGeneralTypeIssues]
         checked_key_type = next((t for t in key_types if issubclass(t, CheckedType)), None)
-        value_types = get_types(cls._checked_value_types)
+        value_types = get_types(cls._checked_value_types)  # type: ignore[reportGeneralTypeIssues]
         checked_value_type = next((t for t in value_types if issubclass(t, CheckedType)), None)
 
         if checked_key_type or checked_value_type:
@@ -516,7 +516,7 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
 
         return cls(source_data)
 
-    def __reduce__(self):
+    def __reduce__(self):  # type: ignore[reportGeneralTypeIssues]
         # Pickling support
         return _restore_pickle, (self.__class__, dict(self),)
 
@@ -528,8 +528,8 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
             self._destination_class = destination_class
             self._invariant_errors = []
 
-        def set(self, key, value):
-            _check_types([key], self._destination_class._checked_key_types, self._destination_class, CheckedKeyTypeError)
+        def set(self, key, value):  # type: ignore[reportGeneralTypeIssues]
+            _check_types([key], self._destination_class._checked_key_types, self._destination_class, CheckedKeyTypeError)  # type: ignore[reportGeneralTypeIssues]
             _check_types([value], self._destination_class._checked_value_types, self._destination_class)
             self._invariant_errors.extend(data for valid, data in (invariant(key, value)
                                                                    for invariant in self._destination_class._checked_invariants)

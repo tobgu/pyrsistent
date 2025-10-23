@@ -74,7 +74,7 @@ setup(
     ],
     scripts=[],
     ext_modules=extensions,
-    cmdclass={'build_ext': custom_build_ext},
+    cmdclass={'build_ext': custom_build_ext},  # type: ignore[reportGeneralTypeIssues]
     packages=['pyrsistent'],
     package_data={'pyrsistent': ['py.typed', '__init__.pyi', 'typing.pyi']},
     python_requires='>=3.8',
