@@ -45,3 +45,5 @@ __all__ = ('pmap', 'm', 'PMap',
            'freeze', 'thaw', 'mutant',
            'get_in',
            'inc', 'discard', 'rex', 'ny')
+
+# TEMP: trigger CodeRabbit test generation

@@ -330,3 +330,5 @@ def pmap_field(key_type, value_type, optional=False, invariant=PFIELD_NO_INVARIA
     return field(mandatory=True, initial=TheMap(),
                  type=optional_type(TheMap) if optional else TheMap,
                  factory=factory, invariant=invariant)
+
+# TEMP: trigger CodeRabbit test generation

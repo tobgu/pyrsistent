@@ -81,3 +81,5 @@ def get_in(keys, coll, default=None, no_default=False):
         if no_default:
             raise
         return default
+
+# TEMP: trigger CodeRabbit test generation

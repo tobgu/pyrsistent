@@ -80,3 +80,5 @@ try:
         pass
 except ImportError:
     pass
+
+# TEMP: trigger CodeRabbit test generation
