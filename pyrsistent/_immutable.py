@@ -96,4 +96,3 @@ class {class_name}(namedtuple('ImmutableBase', [{quoted_members}])):
 
     return namespace[name]
 
-# TEMP: trigger CodeRabbit test generation

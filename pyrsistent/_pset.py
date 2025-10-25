@@ -229,4 +229,3 @@ def s(*elements):
     """
     return pset(elements)
 
-# TEMP: trigger CodeRabbit test generation

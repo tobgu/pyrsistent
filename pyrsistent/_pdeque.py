@@ -378,4 +378,3 @@ def dq(*elements):
     """
     return pdeque(elements)
 
-# TEMP: trigger CodeRabbit test generation

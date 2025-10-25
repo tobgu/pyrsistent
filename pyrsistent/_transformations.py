@@ -142,4 +142,3 @@ def _update_structure(structure, kvs, path, command):
 
     return e.persistent()
 
-# TEMP: trigger CodeRabbit test generation

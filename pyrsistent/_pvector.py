@@ -714,4 +714,3 @@ def v(*elements):
     """
     return pvector(elements)
 
-# TEMP: trigger CodeRabbit test generation

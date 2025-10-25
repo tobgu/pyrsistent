@@ -546,4 +546,3 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
 
             return self._original_pmap
 
-# TEMP: trigger CodeRabbit test generation
