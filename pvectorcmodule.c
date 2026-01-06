@@ -1357,6 +1357,7 @@ static VNode* doSetWithDirty(VNode* node, unsigned int level, unsigned int posit
     if(!IS_DIRTY(node)) {
       resultNode = allocNode();
       copyInsert(resultNode->items, node->items, position & BIT_MASK, value);
+      SET_NODE_REF_COUNT(resultNode, 1);
       incRefs((PyObject**)resultNode->items);
       SET_DIRTY(resultNode);
     } else {
