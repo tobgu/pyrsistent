@@ -16,6 +16,7 @@ README.html
 .pytest_cache
 .eggs
 Pipfile*
+coverage.xml
 
 # Environments
 .env
