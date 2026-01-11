@@ -1,10 +1,5 @@
 name: Build and release
 
-#on:
-#  push:
-#  release:
-#    types: [created]
-
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +13,6 @@ jobs:
     name: Build ${{ matrix.python }} wheels on ${{ matrix.os }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     strategy:
-      # Ensure the wheels build even if one fails.
       fail-fast: false
       matrix:
         python:
@@ -27,71 +21,67 @@ jobs:
           - "312"
           - "313"
           - "314"
+
         platform_id:
           - macosx_universal2
-          - manylinux_aarch64
-          - manylinux_i686
           - manylinux_x86_64
-          - win32
+          - manylinux_aarch64
           - win_amd64
 
         include:
-          # For each matching 'platform_id' above, add an 'os'.
           # Linux
-          - platform_id: manylinux_aarch64
-            os: ubuntu-latest
-          - platform_id: manylinux_i686
-            os: ubuntu-latest
           - platform_id: manylinux_x86_64
             os: ubuntu-latest
+          - platform_id: manylinux_aarch64
+            os: ubuntu-latest
+
           # macOS
           - platform_id: macosx_universal2
             os: macos-latest
+
           # Windows
-          - platform_id: win32
-            os: windows-latest
           - platform_id: win_amd64
             os: windows-latest
 
     env:
-      CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_ARCHS_MACOS: universal2
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+      CIBW_ARCHS_LINUX: auto
+      CIBW_ARCHS_MACOS: universal2
       CIBW_TEST_REQUIRES: pytest==9.* hypothesis==6.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        if: |
-          runner.os == 'Linux' && (matrix.platform_id == 'manylinux_aarch64' || matrix.platform_id == 'manylinux_i686')
+      - name: Set up QEMU (Linux aarch64)
+        if: runner.os == 'Linux' && matrix.platform_id == 'manylinux_aarch64'
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: all
+          platforms: arm64
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.1
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
   build_dist:
     name: Build source distribution and pure python wheel
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        name: Install Python
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-          
-      - name: Install dependencies
+
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build
@@ -109,18 +99,12 @@ jobs:
           path: dist/*
 
   publish_pypi:
-    needs: [ build_wheels, build_dist ]
+    needs: [build_wheels, build_dist]
     runs-on: ubuntu-latest
-    # TODO: Migrate to automated release once verified?
-    # upload to PyPI on every tag starting with 'v'
-    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
           path: dist
 
       - name: Publish test release
@@ -136,5 +120,5 @@ jobs:
         if: github.event.inputs.target != 'test'
         uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
-         user: __token__
-         password: ${{ secrets.PYPI_API_TOKEN }}
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
