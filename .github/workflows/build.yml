@@ -47,7 +47,7 @@ jobs:
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
       CIBW_ARCHS_LINUX: auto
       CIBW_ARCHS_MACOS: universal2
-      CIBW_TEST_REQUIRES: pytest==9.* hypothesis==6.*
+      CIBW_TEST_REQUIRES: pytest==9.* hypothesis==6.* typing-extension==4.*
       CIBW_TEST_COMMAND: "bash {project}/tools/test_wheels.sh {project}"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
