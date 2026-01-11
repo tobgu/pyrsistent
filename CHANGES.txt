@@ -1,5 +1,14 @@
 Revision history
 ----------------
+0.21.0, 2026-01-11
+ * Drop official support for Python 3.8 and 3.9, these versions are no longer part of the test matrix.
+ * Add Python 3.13 and 3.14 to test matrix and re-establish test coverage.
+ * #307. Improve typing of pmap. Thanks @vthemelis for this!
+ * Fix #242, add type parameters to PRecord for pylance/pyright compatibility. Thanks @VYaswanthKumar for this!
+ * Fix #307, Initialize refCount at doSetWithDirty. Thanks @abio-arista for this!
+ * #293, #295, #296, #297, #298, Simplify and clean up build and test matrix. Thanks @kurtmckee for this!
+ * #284, Replace _PyList_Extend with PyList_SetSlice for Python 3.13 compatibility. Thanks @musicinmybrain for this!
+
 0.20.0, 2023-10-25
  * Fix #245, never introduce new nodes during discard.
  * Fix #268, do not rely on well implemented __ne__ for keys in pmaps, instead do explicit inversion of equality

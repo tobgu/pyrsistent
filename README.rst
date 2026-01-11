@@ -3,6 +3,8 @@ Pyrsistent
 .. image:: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml/badge.svg
     :target: https://github.com/tobgu/pyrsistent/actions/workflows/tests.yaml
 
+.. image:: https://coveralls.io/repos/github/tobgu/pyrsistent/badge.svg?branch=master
+    :target: https://coveralls.io/github/tobgu/pyrsistent?branch=master
 
 .. _Pyrthon: https://www.github.com/tobgu/pyrthon
 .. _Pyrsistent_extras: https://github.com/mingmingrr/pyrsistent-extras
@@ -725,6 +727,14 @@ Lukas https://github.com/lukasK9999
 
 Arshad https://github.com/arshad-ml
 
+Ignasi Abio https://github.com/abio-arista
+
+Kurt McKee https://github.com/kurtmckee
+
+Vasilis Themelis https://github.com/vthemelis
+
+Yaswanth Kumar https://github.com/VYaswanthKumar
+
 Contributing
 ------------
 
@@ -743,13 +753,13 @@ Run test for Python 3.13: ``tox -e py313``
 
 Release
 ~~~~~~~
-* `pip install -r requirements.txt`
-* Update CHANGES.txt
-* Update README.rst with any new contributors and potential info needed.
-* Update _pyrsistent_version.py
-* Commit and tag with new version: `git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'`
-* Push commit and tags: `git push --follow-tags`
-* Build new release using Github actions
+1. `pip install -r requirements.txt`
+2. Update CHANGES.txt
+3. Update README.rst with any new contributors and potential info needed.
+4. Update _pyrsistent_version.py
+5. Commit and tag with new version: `git add -u . && git commit -m 'Prepare version vX.Y.Z' && git tag -a vX.Y.Z -m 'vX.Y.Z'`
+6. Push commit and tags: `git push --follow-tags`
+7. Build new release using Github actions
 
 Project status
 --------------
