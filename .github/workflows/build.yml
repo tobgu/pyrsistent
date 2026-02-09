@@ -27,6 +27,7 @@ jobs:
           - manylinux_x86_64
           - manylinux_aarch64
           - win_amd64
+          - win_arm64
 
         include:
           # Linux
@@ -42,6 +43,8 @@ jobs:
           # Windows
           - platform_id: win_amd64
             os: windows-latest
+          - platform_id: win_arm64
+            os: windows-11-arm
 
     env:
       CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
