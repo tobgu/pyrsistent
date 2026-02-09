@@ -27,6 +27,7 @@ jobs:
           - manylinux_x86_64
           - manylinux_aarch64
           - win_amd64
+          - win_arm64
 
         include:
           # Linux
