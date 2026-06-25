@@ -472,3 +472,17 @@ def test_value_can_be_overridden_in_subclass_new():
     a = X(y=[])
     b = a.set(y=None)
     assert a == b
+
+
+def test_field_type_generic_alias():
+    """Parameterized generics (e.g. tuple[int, int]) must not cause infinite recursion."""
+    class Coords(PClass):
+        position = field(type=tuple[int, int])
+        items = field(type=list[str])
+        mapping = field(type=dict[str, int])
+
+    c = Coords(position=(1, 2), items=['a'], mapping={'x': 1})
+    assert c.position == (1, 2)
+
+    with pytest.raises(Exception):
+        Coords(position='not a tuple', items=[], mapping={})
