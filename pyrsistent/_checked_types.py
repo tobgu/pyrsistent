@@ -1,8 +1,9 @@
+import types as _builtin_types
 from enum import Enum
 
 from abc import abstractmethod, ABCMeta
 from collections.abc import Iterable
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, get_origin
 
 from pyrsistent._pmap import PMap, pmap
 from pyrsistent._pset import PSet, pset
@@ -85,6 +86,15 @@ def maybe_parse_user_type(t):
     elif is_string:
         return [t]
     elif is_type and not is_iterable:
+        return [t]
+    elif isinstance(t, _builtin_types.GenericAlias) or (not is_type and hasattr(t, '__origin__')):
+        # Parameterized generics like ``tuple[int, int]`` or ``List[str]`` are
+        # Iterable, but iterating them yields starred self-references that cause
+        # infinite recursion.  Resolve to the bare origin type instead so that
+        # runtime ``isinstance`` checks work correctly.
+        origin = get_origin(t)
+        if origin is not None and isinstance(origin, type):
+            return [origin]
         return [t]
     elif is_iterable:
         # Recur to validate contained types as well.
