@@ -1,7 +1,7 @@
 import pickle
 import pytest
 from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector, \
-    CheckedKeyTypeError, CheckedValueTypeError
+    CheckedKeyTypeError, CheckedValueTypeError, PRecord, field, pmap
 
 
 class FloatToIntMap(CheckedPMap):
@@ -99,6 +99,45 @@ def test_create_checked_types():
     x = IntSetToFloatVectorMap.create({frozenset([1, 2]): [1.25, 2.5]})
 
     assert str(x) == "IntSetToFloatVectorMap({IntSet([1, 2]): FloatVector([1.25, 2.5])})"
+
+def test_create_ignore_extra_forwarded_to_value_type():
+    class ValueRecord(PRecord):
+        a = field()
+
+    class StrToRecordMap(CheckedPMap):
+        __key_type__ = str
+        __value_type__ = ValueRecord
+
+    x = StrToRecordMap.create({'k': {'a': 1, 'extra': 2}}, ignore_extra=True)
+
+    assert x['k'] == ValueRecord(a=1)
+
+def test_create_ignore_extra_forwarded_to_key_type():
+    class KeyRecord(PRecord):
+        a = field()
+
+    class RecordToIntMap(CheckedPMap):
+        __key_type__ = KeyRecord
+        __value_type__ = int
+
+    # A hashable PMap carrying an extra field is turned into KeyRecord via
+    # KeyRecord.create(); ignore_extra must be threaded through so the extra
+    # field is dropped instead of raising.
+    raw_key = pmap({'a': 1, 'extra': 2})
+    x = RecordToIntMap.create({raw_key: 5}, ignore_extra=True)
+
+    assert x[KeyRecord(a=1)] == 5
+
+def test_create_ignore_extra_false_still_raises():
+    class ValueRecord(PRecord):
+        a = field()
+
+    class StrToRecordMap(CheckedPMap):
+        __key_type__ = str
+        __value_type__ = ValueRecord
+
+    with pytest.raises(AttributeError):
+        StrToRecordMap.create({'k': {'a': 1, 'extra': 2}})
 
 def test_evolver_returns_same_instance_when_no_updates():
     x = FloatToIntMap({1.25: 1, 2.25: 2})
