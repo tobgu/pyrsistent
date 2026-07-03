@@ -510,8 +510,8 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
         checked_value_type = next((t for t in value_types if issubclass(t, CheckedType)), None)
 
         if checked_key_type or checked_value_type:
-            return cls(dict((checked_key_type.create(key) if checked_key_type and not any(isinstance(key, t) for t in key_types) else key,
-                             checked_value_type.create(value) if checked_value_type and not any(isinstance(value, t) for t in value_types) else value)
+            return cls(dict((checked_key_type.create(key, ignore_extra=ignore_extra) if checked_key_type and not any(isinstance(key, t) for t in key_types) else key,
+                             checked_value_type.create(value, ignore_extra=ignore_extra) if checked_value_type and not any(isinstance(value, t) for t in value_types) else value)
                             for key, value in source_data.items()))
 
         return cls(source_data)
