@@ -1,7 +1,7 @@
 import pickle
 import pytest
 from pyrsistent import CheckedPMap, InvariantException, PMap, CheckedType, CheckedPSet, CheckedPVector, \
-    CheckedKeyTypeError, CheckedValueTypeError
+    CheckedKeyTypeError, CheckedValueTypeError, PRecord, field
 
 
 class FloatToIntMap(CheckedPMap):
@@ -99,6 +99,47 @@ def test_create_checked_types():
     x = IntSetToFloatVectorMap.create({frozenset([1, 2]): [1.25, 2.5]})
 
     assert str(x) == "IntSetToFloatVectorMap({IntSet([1, 2]): FloatVector([1.25, 2.5])})"
+
+
+class ARecord(PRecord):
+    x = field()
+
+
+class StrToARecordMap(CheckedPMap):
+    __key_type__ = str
+    __value_type__ = ARecord
+
+
+def test_create_forwards_ignore_extra_to_value():
+    # ``ignore_extra`` must be threaded through to the nested checked
+    # value type, just like it is for CheckedPVector/CheckedPSet.
+    # https://github.com/tobgu/pyrsistent/issues/326
+    x = StrToARecordMap.create({'k': {'x': 1, 'extra': 2}}, ignore_extra=True)
+
+    assert x['k'] == ARecord(x=1)
+    assert isinstance(x['k'], ARecord)
+
+
+def test_create_without_ignore_extra_still_raises_for_value():
+    with pytest.raises(AttributeError):
+        StrToARecordMap.create({'k': {'x': 1, 'extra': 2}})
+
+
+def test_create_forwards_ignore_extra_to_nested_checked_value():
+    # The value type is itself a CheckedPVector of records, so
+    # ``ignore_extra`` has to be forwarded all the way down.
+    class ARecordVector(CheckedPVector):
+        __type__ = ARecord
+
+    class StrToARecordVectorMap(CheckedPMap):
+        __key_type__ = str
+        __value_type__ = ARecordVector
+
+    x = StrToARecordVectorMap.create(
+        {'k': [{'x': 1, 'extra': 2}]}, ignore_extra=True)
+
+    assert x['k'] == ARecordVector([ARecord(x=1)])
+
 
 def test_evolver_returns_same_instance_when_no_updates():
     x = FloatToIntMap({1.25: 1, 2.25: 2})
