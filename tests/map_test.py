@@ -331,6 +331,57 @@ def test_hash_collision_is_correctly_resolved():
     assert empty_map.discard(dummy1) is empty_map
 
 
+class AlwaysEqualDummy(object):
+    """
+    A key whose __eq__ always claims equality with any other instance of the
+    same class, regardless of identity. A correct map implementation must
+    still distinguish between distinct instances by checking identity first,
+    exactly like the builtin dict does before ever calling __eq__.
+    """
+    def __eq__(self, other):
+        return isinstance(other, AlwaysEqualDummy)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return object.__hash__(self)
+
+
+def test_getitem_does_not_confuse_distinct_keys_with_bad_eq():
+    # A few hundred keys is enough to reliably produce hash bucket collisions
+    # given typical bucket-table sizes, without the cost of a much larger run.
+    dummies = [AlwaysEqualDummy() for _ in range(300)]
+    map1 = pmap({d: i for i, d in enumerate(dummies)})
+
+    for i, d in enumerate(dummies):
+        assert map1[d] == i
+
+
+def test_contains_does_not_confuse_distinct_keys_with_bad_eq():
+    dummies = [AlwaysEqualDummy() for _ in range(300)]
+    map1 = pmap({d: i for i, d in enumerate(dummies)})
+
+    for d in dummies:
+        assert d in map1
+
+    assert AlwaysEqualDummy() not in map1
+
+
+def test_set_updates_correct_key_with_bad_eq():
+    dummies = [AlwaysEqualDummy() for _ in range(300)]
+    map1 = pmap({d: i for i, d in enumerate(dummies)})
+
+    target = dummies[150]
+    map2 = map1.set(target, 'updated')
+
+    for i, d in enumerate(dummies):
+        if d is target:
+            assert map2[d] == 'updated'
+        else:
+            assert map2[d] == i
+
+
 def test_bitmap_indexed_iteration():
     a_map = pmap({'a': 2, 'b': 1})
     keys = set()

@@ -163,8 +163,16 @@ class PMap(Generic[KT, VT_co]):
     def _getitem(buckets, key):
         _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
+            # Mirror the builtin dict: a key is only considered a match if it
+            # is literally the same object, or if it has the same hash *and*
+            # compares equal. Buckets group entries by hash % len(buckets),
+            # which is coarser than hash equality, so relying on `k == key`
+            # alone (or even adding only an `is` shortcut) is not enough to
+            # protect against a pathological __eq__ that claims equality
+            # between objects that don't actually share a hash, see #212.
+            key_hash = hash(key)
             for k, v in bucket:
-                if k == key:
+                if k is key or (hash(k) == key_hash and k == key):
                     return v
 
         raise KeyError(key)
@@ -176,8 +184,10 @@ class PMap(Generic[KT, VT_co]):
     def _contains(buckets, key):
         _, bucket = PMap._get_bucket(buckets, key)
         if bucket:
+            # See the comment in _getitem regarding hash gating for `k == key`.
+            key_hash = hash(key)
             for k, _ in bucket:
-                if k == key:
+                if k is key or (hash(k) == key_hash and k == key):
                     return True
 
             return False
@@ -410,11 +420,13 @@ class PMap(Generic[KT, VT_co]):
             index, bucket = PMap._get_bucket(self._buckets_evolver, key)
             reallocation_required = len(self._buckets_evolver) < 0.67 * self._size
             if bucket:
+                # See the comment in PMap._getitem regarding hash gating for `k == key`.
+                key_hash = hash(key)
                 for k, v in bucket:
-                    if k == key:
+                    if k is key or (hash(k) == key_hash and k == key):
                         if v is not val:
                             # Use `not (k2 == k)` rather than `!=` to avoid relying on a well implemented `__ne__`, see #268.
-                            new_bucket = [(k2, v2) if not (k2 == k) else (k2, val) for k2, v2 in bucket]
+                            new_bucket = [(k2, v2) if not (k2 is k or (hash(k2) == key_hash and k2 == k)) else (k2, val) for k2, v2 in bucket]
                             self._buckets_evolver[index] = new_bucket
 
                         return self
@@ -478,7 +490,9 @@ class PMap(Generic[KT, VT_co]):
 
             if bucket:
                 # Use `not (k == key)` rather than `!=` to avoid relying on a well implemented `__ne__`, see #268.
-                new_bucket = [(k, v) for (k, v) in bucket if not (k == key)]
+                # See the comment in PMap._getitem regarding hash gating for `k == key`.
+                key_hash = hash(key)
+                new_bucket = [(k, v) for (k, v) in bucket if not (k is key or (hash(k) == key_hash and k == key))]
                 size_diff = len(bucket) - len(new_bucket)
                 if size_diff > 0:
                     self._buckets_evolver[index] = new_bucket if new_bucket else None
