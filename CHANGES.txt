@@ -1,5 +1,10 @@
 Revision history
 ----------------
+unreleased
+ * Fix PDeque.remove() and PDeque.reverse() dropping the maxlen of a bounded
+   deque, which silently unbounded the result so later appends could grow it
+   past its declared maximum length.
+
 0.21.0, 2026-01-11
  * Drop official support for Python 3.8 and 3.9, these versions are no longer part of the test matrix.
  * Add Python 3.13 and 3.14 to test matrix and re-establish test coverage.

@@ -272,13 +272,13 @@ class PDeque(Generic[T_co]):
         pdeque([1, 2])
         """
         try:
-            return PDeque(self._left_list.remove(elem), self._right_list, self._length - 1)
+            return PDeque(self._left_list.remove(elem), self._right_list, self._length - 1, self._maxlen)
         except ValueError:
             # Value not found in left list, try the right list
             try:
                 # This is severely inefficient with a double reverse, should perhaps implement a remove_last()?
                 return PDeque(self._left_list,
-                              self._right_list.reverse().remove(elem).reverse(), self._length - 1)
+                              self._right_list.reverse().remove(elem).reverse(), self._length - 1, self._maxlen)
             except ValueError as e:
                 raise ValueError('{0} not found in PDeque'.format(elem)) from e
 
@@ -294,7 +294,7 @@ class PDeque(Generic[T_co]):
         >>> reversed(pdeque([1, 2, 3]))
         pdeque([3, 2, 1])
         """
-        return PDeque(self._right_list, self._left_list, self._length)
+        return PDeque(self._right_list, self._left_list, self._length, self._maxlen)
     __reversed__ = reverse
 
     def rotate(self, steps):

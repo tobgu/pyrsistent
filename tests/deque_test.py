@@ -169,6 +169,14 @@ def test_remove():
     assert pdeque([1, 2, 3, 3, 4, 5, 4, 6]).remove(4) == pdeque([1, 2, 3, 3, 5, 4, 6])
 
 
+def test_remove_preserves_maxlen():
+    # A bounded deque must stay bounded after a remove, or later appends grow
+    # it past maxlen.
+    x = pdeque([1, 2, 3], maxlen=3).remove(2)
+    assert x.maxlen == 3
+    assert x.append(4).append(5) == pdeque([3, 4, 5], maxlen=3)
+
+
 def test_remove_element_missing():
     with pytest.raises(ValueError):
         pdeque().remove(2)
@@ -180,6 +188,12 @@ def test_remove_element_missing():
 def test_reverse():
     assert pdeque([1, 2, 3, 4]).reverse() == pdeque([4, 3, 2, 1])
     assert pdeque().reverse() == pdeque()
+
+
+def test_reverse_preserves_maxlen():
+    x = pdeque([1, 2, 3], maxlen=3).reverse()
+    assert x.maxlen == 3
+    assert x.append(4) == pdeque([2, 1, 4], maxlen=3)
 
 
 def test_rotate_right():
