@@ -1,5 +1,6 @@
 include *.rst
 include tests/*_test.py
 include tests/memory_profiling.py
+include tox.ini
 include CHANGES.txt
 include LICENSE.mit
