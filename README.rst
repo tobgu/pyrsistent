@@ -342,13 +342,13 @@ to take care of fields that require special treatment.
 
     >>> from datetime import date
     >>> class Person(PRecord):
-    ...     name = field(type=unicode)
+    ...     name = field(type=str)
     ...     birth_date = field(type=date,
     ...                        serializer=lambda format, d: d.strftime(format['date']))
     ...
-    >>> john = Person(name=u'John', birth_date=date(1985, 10, 21))
+    >>> john = Person(name='John', birth_date=date(1985, 10, 21))
     >>> john.serialize({'date': '%Y-%m-%d'})
-    {'birth_date': '1985-10-21', 'name': u'John'}
+    {'birth_date': '1985-10-21', 'name': 'John'}
 
 
 .. _instar: https://github.com/boxed/instar/
@@ -382,7 +382,7 @@ Checked collections currently come in three flavors: CheckedPVector, CheckedPMap
 
     >>> from pyrsistent import CheckedPVector, CheckedPMap, CheckedPSet, thaw
     >>> class Positives(CheckedPSet):
-    ...     __type__ = (long, int)
+    ...     __type__ = int
     ...     __invariant__ = lambda n: (n >= 0, 'Negative')
     ...
     >>> class Lottery(PRecord):
