@@ -291,3 +291,39 @@ def test_iterable():
     """
 
     assert pdeque(iter("a")) == pdeque(iter("a"))
+
+
+@pytest.mark.parametrize('values', [[], [0], list(range(5))])
+@pytest.mark.parametrize('maxlen', [None, 8])
+@pytest.mark.parametrize('steps', [-16, -10, -6, -1, 0, 1, 6, 10, 16])
+def test_large_rotations_match_deque(values, maxlen, steps):
+    from collections import deque
+
+    expected = deque(values, maxlen=maxlen)
+    expected.rotate(steps)
+    original = pdeque(values, maxlen=maxlen)
+    result = original.rotate(steps)
+    assert list(result) == list(expected)
+    assert result.maxlen == maxlen
+    assert list(original) == values
+
+
+@pytest.mark.parametrize('steps', [10**100, -(10**100)])
+def test_rotation_steps_are_reduced_before_slicing(steps):
+    original = pdeque([0, 1, 2], maxlen=4)
+    assert original.rotate(steps) == original.rotate(steps % len(original))
+
+
+def test_rotate_accepts_index_protocol():
+    class Steps:
+        def __index__(self):
+            return 4
+
+    assert pdeque([0, 1, 2]).rotate(Steps()) == pdeque([2, 0, 1])
+
+
+@pytest.mark.parametrize('values', [[], [0, 1, 2]])
+@pytest.mark.parametrize('steps', [1.5, '1', None])
+def test_rotate_rejects_non_integer_steps(values, steps):
+    with pytest.raises(TypeError):
+        pdeque(values).rotate(steps)

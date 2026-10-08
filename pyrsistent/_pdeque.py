@@ -1,6 +1,7 @@
 from collections.abc import Sequence, Hashable
 from itertools import islice, chain
 from numbers import Integral
+from operator import index as _index
 from typing import TypeVar, Generic
 from pyrsistent._plist import plist
 
@@ -307,6 +308,10 @@ class PDeque(Generic[T_co]):
         >>> x.rotate(-2)
         pdeque([3, 1, 2])
         """
+        steps = _index(steps)
+        if not self._length:
+            return self
+        steps = steps % self._length if steps >= 0 else -(-steps % self._length)
         popped_deque = self.pop(steps)
         if steps >= 0:
             return popped_deque.extendleft(islice(self.reverse(), steps))
