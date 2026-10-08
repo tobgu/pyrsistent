@@ -291,3 +291,31 @@ def test_iterable():
     """
 
     assert pdeque(iter("a")) == pdeque(iter("a"))
+
+
+@pytest.mark.parametrize('values', [[], [0], list(range(5))])
+@pytest.mark.parametrize('maxlen', [None, 8])
+@pytest.mark.parametrize('start, stop', [
+    (None, None), (0, 0), (0, 5), (5, None), (-100, 100),
+    (100, None), (None, -100), (-2, -1), (3, 1), (1, 100),
+])
+def test_slice_bounds_match_list(values, maxlen, start, stop):
+    original = pdeque(values, maxlen=maxlen)
+    result = original[start:stop]
+    assert list(result) == values[start:stop]
+    assert result.maxlen == maxlen
+    assert list(original) == values
+
+
+def test_slice_bounds_accept_index_protocol():
+    class Index:
+        def __index__(self):
+            return 1
+
+    assert list(pdeque([0, 1, 2])[Index():]) == [1, 2]
+
+
+@pytest.mark.parametrize('key', [slice(1.5, None), slice(None, 2.5), slice(None, None, 1.0)])
+def test_slice_bounds_reject_non_integer_indices(key):
+    with pytest.raises(TypeError):
+        pdeque([0, 1, 2])[key]

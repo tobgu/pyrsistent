@@ -323,13 +323,8 @@ class PDeque(Generic[T_co]):
                 # Too difficult, no structural sharing possible
                 return pdeque(tuple(self)[index], maxlen=self._maxlen)
 
-            result = self
-            if index.start is not None:
-                result = result.popleft(index.start % self._length)
-            if index.stop is not None:
-                result = result.pop(self._length - (index.stop % self._length))
-
-            return result
+            start, stop, _ = index.indices(self._length)
+            return self.popleft(start).pop(self._length - max(start, stop))
 
         if not isinstance(index, Integral):
             raise TypeError("'%s' object cannot be interpreted as an index" % type(index).__name__)
