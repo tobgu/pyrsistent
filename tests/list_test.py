@@ -110,6 +110,33 @@ def test_slicing_drop_out_of_range():
     assert plist([1, 2, 3])[3:] is plist()
 
 
+@pytest.mark.parametrize('values', [[], [1, 2, 3]])
+@pytest.mark.parametrize('start', [-100, -3, -2, -1, 0, 1, 3, 100])
+@pytest.mark.parametrize('step', [None, 1])
+def test_suffix_slicing_matches_builtin_list(values, start, step):
+    suffix = slice(start, None, step)
+    assert list(plist(values)[suffix]) == values[suffix]
+
+
+def test_negative_suffix_slice_shares_structure():
+    values = plist([1, 2, 3])
+    assert values[-2:] is values.rest
+    assert values[-100:] is values
+
+
+def test_suffix_slice_accepts_index_protocol():
+    class Index:
+        def __index__(self):
+            return -1
+
+    assert plist([1, 2, 3])[Index():] == plist([3])
+
+
+def test_suffix_slice_rejects_non_integer_start():
+    with pytest.raises(TypeError):
+        plist([1, 2, 3])[1.5:]
+
+
 def test_contains():
     assert 2 in plist([1, 2, 3])
     assert 4 not in plist([1, 2, 3])

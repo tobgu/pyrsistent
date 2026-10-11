@@ -1,6 +1,7 @@
 from collections.abc import Sequence, Hashable
 from numbers import Integral
 from functools import reduce
+import operator
 from typing import Generic, TypeVar
 
 T_co = TypeVar('T_co', covariant=True)
@@ -168,7 +169,10 @@ class _PListBase(object):
 
         if isinstance(index, slice):
             if index.start is not None and index.stop is None and (index.step is None or index.step == 1):
-                return self._drop(index.start)
+                start = operator.index(index.start)
+                if start < 0:
+                    start = max(0, len(self) + start)
+                return self._drop(start)
 
             # Take the easy way out for all other slicing cases, not much structural reuse possible anyway
             return plist(tuple(self)[index])
@@ -190,7 +194,7 @@ class _PListBase(object):
             raise IndexError("PList index out of range")
 
         head = self
-        while count > 0:
+        while count > 0 and head:
             head = head.rest
             count -= 1
 
