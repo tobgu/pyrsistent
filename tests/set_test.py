@@ -179,3 +179,51 @@ def test_iterable():
     """
 
     assert pset(iter("a")) == pset(iter("a"))
+
+
+@pytest.mark.parametrize('operation', ['add', 'remove'])
+def test_evolver_repeated_persistent_retains_latest_set(operation):
+    original = s(1, 2)
+    evolver = original.evolver()
+    if operation == 'add':
+        evolver.add(3)
+        expected = s(1, 2, 3)
+    else:
+        evolver.remove(2)
+        expected = s(1)
+
+    snapshot = evolver.persistent()
+    assert snapshot == expected
+    assert not evolver.is_dirty()
+    assert evolver.persistent() is snapshot
+    assert len(evolver) == len(snapshot)
+    assert original == s(1, 2)
+
+
+def test_evolver_noop_after_snapshot_retains_latest_set():
+    original = s(1)
+    evolver = original.evolver()
+    evolver.add(2)
+    snapshot = evolver.persistent()
+    evolver.add(2)
+    assert not evolver.is_dirty()
+    assert evolver.persistent() is snapshot
+    assert snapshot == s(1, 2)
+    assert original == s(1)
+
+
+def test_evolver_sequential_snapshots_remain_independent():
+    original = s(1)
+    evolver = original.evolver()
+    evolver.add(2)
+    first = evolver.persistent()
+    evolver.add(3)
+    second = evolver.persistent()
+    evolver.remove(1)
+    third = evolver.persistent()
+
+    assert evolver.persistent() is third
+    assert first == s(1, 2)
+    assert second == s(1, 2, 3)
+    assert third == s(2, 3)
+    assert original == s(1)

@@ -129,10 +129,10 @@ class PSet(Generic[T_co]):
             return self._pmap_evolver.is_dirty()
 
         def persistent(self):
-            if not self.is_dirty():
-                return  self._original_pset
+            if self.is_dirty():
+                self._original_pset = PSet(self._pmap_evolver.persistent())
 
-            return PSet(self._pmap_evolver.persistent())
+            return self._original_pset
 
         def __len__(self):
             return len(self._pmap_evolver)
