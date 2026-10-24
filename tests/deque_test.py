@@ -291,3 +291,15 @@ def test_iterable():
     """
 
     assert pdeque(iter("a")) == pdeque(iter("a"))
+
+
+@pytest.mark.parametrize('position', [0, 1, 2, 3])
+def test_remove_identical_nan(position):
+    item = float('nan')
+    elements = [0, 1, 2, 3]
+    elements[position] = item
+    values = pdeque(elements)
+    assert item in values
+    assert values.count(item) == 1
+    assert list(values.remove(item)) == elements[:position] + elements[position + 1:]
+    assert list(values) == elements

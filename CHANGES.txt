@@ -1,3 +1,7 @@
+Unreleased
+==========
+* Preserve element identity in PList equality and removal, including removal through PDeque.
+
 Revision history
 ----------------
 0.21.0, 2026-01-11

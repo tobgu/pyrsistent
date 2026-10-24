@@ -207,3 +207,73 @@ def test_iterable():
     """
 
     assert plist(iter("a")) == plist(iter("a"))
+
+
+class NonReflexive:
+    def __eq__(self, other):
+        return False
+
+
+class EqualityRaises:
+    def __eq__(self, other):
+        raise RuntimeError('comparison called')
+
+
+@pytest.mark.parametrize('item', [float('nan'), NonReflexive(), EqualityRaises()])
+def test_equality_preserves_identical_elements(item):
+    values = plist([0, item, 2])
+    assert values == values
+    assert values == plist([0, item, 2])
+    assert not (values != plist([0, item, 2]))
+
+
+@pytest.mark.parametrize('item', [float('nan'), NonReflexive()])
+@pytest.mark.parametrize('position', [0, 1, 2])
+def test_remove_identical_elements(item, position):
+    elements = [0, 1, 2]
+    elements[position] = item
+    values = plist(elements)
+    assert item in values
+    assert values.count(item) == 1
+    result = values.remove(item)
+    assert list(result) == elements[:position] + elements[position + 1:]
+    assert list(values) == elements
+
+
+def test_distinct_nonreflexive_elements_remain_distinct():
+    first, second = float('nan'), float('nan')
+    assert plist([first]) != plist([second])
+    with pytest.raises(ValueError):
+        plist([first]).remove(second)
+
+
+def test_distinct_elements_still_use_equality():
+    class EqualValue:
+        def __eq__(self, other):
+            return isinstance(other, EqualValue)
+
+    assert plist([EqualValue()]) == plist([EqualValue()])
+    assert plist([EqualValue(), 2]).remove(EqualValue()) == plist([2])
+
+
+def test_distinct_element_comparison_errors_propagate():
+    with pytest.raises(RuntimeError, match='comparison called'):
+        plist([EqualityRaises()]) == plist([object()])
+    with pytest.raises(RuntimeError, match='comparison called'):
+        plist([EqualityRaises()]).remove(object())
+
+
+def test_remove_identical_element_does_not_call_equality():
+    item = EqualityRaises()
+    values = plist([item, 1])
+    assert values.remove(item) == plist([1])
+    assert values.first is item
+
+
+def test_nan_hash_is_consistent_with_equality():
+    item = float('nan')
+    first = plist([item])
+    second = plist([item])
+    assert first == second
+    assert hash(first) == hash(second)
+    assert {first: 'found'}[second] == 'found'

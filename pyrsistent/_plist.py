@@ -155,7 +155,8 @@ class _PListBase(object):
         self_head = self
         other_head = other
         while self_head and other_head:
-            if not self_head.first == other_head.first:
+            if (self_head.first is not other_head.first
+                    and not self_head.first == other_head.first):
                 return False
             self_head = self_head.rest
             other_head = other_head.rest
@@ -213,7 +214,7 @@ class _PListBase(object):
         builder = _PListBuilder()
         head = self
         while head:
-            if head.first == elem:
+            if head.first is elem or head.first == elem:
                 return builder.append_plist(head.rest)
 
             builder.append_elem(head.first)
