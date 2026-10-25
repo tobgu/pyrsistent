@@ -362,7 +362,7 @@ def pdeque(iterable=(), maxlen=None):
     """
     t = tuple(iterable)
     if maxlen is not None:
-        t = t[-maxlen:]
+        t = t[-maxlen:] if maxlen else t[:maxlen]
     length = len(t)
     pivot = int(length / 2)
     left = plist(t[:pivot])

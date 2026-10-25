@@ -17,9 +17,35 @@ def test_construction_with_maxlen():
     assert pdeque([], maxlen=2) == pdeque()
 
 
+@pytest.mark.parametrize('elements', [[], [1], [1, 2, 3]])
+@pytest.mark.parametrize('maxlen', [0, False])
+def test_construction_with_zero_maxlen(elements, maxlen):
+    consumed = []
+
+    def source():
+        for element in elements:
+            consumed.append(element)
+            yield element
+
+    x = pdeque(source(), maxlen=maxlen)
+
+    assert consumed == elements
+    assert list(x) == []
+    assert len(x) == 0
+    assert x.maxlen == 0
+    for result in (x.append(4), x.appendleft(4), x.extend([4, 5]),
+                   x.extendleft([4, 5]), pickle.loads(pickle.dumps(x))):
+        assert list(result) == []
+        assert len(result) == 0
+        assert result.maxlen == 0
+
+
 def test_construction_with_invalid_maxlen():
     with pytest.raises(TypeError):
         pdeque([], maxlen='foo')
+
+    with pytest.raises(TypeError):
+        pdeque([1, 2], maxlen=0.0)
 
     with pytest.raises(ValueError):
         pdeque([], maxlen=-3)
