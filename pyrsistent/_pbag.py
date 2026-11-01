@@ -60,10 +60,10 @@ class PBag(Generic[T_co]):
         >>> s.update([1, 2])
         pbag([1, 1, 2])
         """
-        if iterable:
-            return PBag(reduce(_add_to_counters, iterable, self._counts))
-
-        return self
+        if iterable is None:
+            return self
+        counts = reduce(_add_to_counters, iterable, self._counts)
+        return self if counts is self._counts else PBag(counts)
 
     def remove(self, element):
         """
@@ -261,9 +261,10 @@ def pbag(elements):
     >>> pbag([1, 2, 3, 2])
     pbag([1, 2, 2, 3])
     """
-    if not elements:
+    if elements is None:
         return _EMPTY_PBAG
-    return PBag(reduce(_add_to_counters, elements, pmap()))
+    counts = reduce(_add_to_counters, elements, pmap())
+    return PBag(counts) if counts else _EMPTY_PBAG
 
 
 _EMPTY_PBAG = PBag(pmap())

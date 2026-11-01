@@ -148,3 +148,34 @@ def test_iterable():
     """
 
     assert pbag(iter("a")) == pbag(iter("a"))
+
+
+class FalseIterable:
+    def __iter__(self):
+        return iter([0, 0, 1])
+
+    def __bool__(self):
+        return False
+
+
+class NoTruthIterable(FalseIterable):
+    def __bool__(self):
+        raise ValueError('ambiguous iterable truth value')
+
+
+@pytest.mark.parametrize('factory', [FalseIterable, NoTruthIterable])
+def test_bag_consumes_iterables_without_testing_truth(factory):
+    assert pbag(factory()) == b(0, 0, 1)
+
+
+@pytest.mark.parametrize('factory', [FalseIterable, NoTruthIterable])
+def test_bag_update_consumes_iterables_without_testing_truth(factory):
+    original = b(2)
+    assert original.update(factory()) == b(0, 0, 1, 2)
+    assert original == b(2)
+
+
+def test_bag_empty_iterators_remain_empty_and_leave_original_unchanged():
+    assert pbag(iter(())) == b()
+    original = b(1)
+    assert original.update(iter(())) == original
