@@ -137,6 +137,9 @@ Random access and insert is log32(n) where n is the size of the map.
     # Evolve by merging with other mappings
     >>> m5.update(m(a=2, c=3), {'a': 17, 'd': 35})
     pmap({'a': 17, 'c': 3, 'b': 2, 'd': 35})
+    # Iterables of key/value pairs are also accepted, with the last value winning
+    >>> m5.update([('a', 3), ('a', 4)]) == {'a': 4, 'b': 2}
+    True
     >>> pmap({'x': 1, 'y': 2}) + pmap({'y': 3, 'z': 4})
     pmap({'y': 3, 'x': 1, 'z': 4})
 

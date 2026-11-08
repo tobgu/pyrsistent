@@ -1,5 +1,8 @@
 Revision history
 ----------------
+Unreleased
+ * Fix #272, allow PMap.update() and PMap.update_with() to accept iterables of key/value pairs.
+
 0.21.0, 2026-01-11
  * Drop official support for Python 3.8 and 3.9, these versions are no longer part of the test matrix.
  * Add Python 3.13 and 3.14 to test matrix and re-establish test coverage.

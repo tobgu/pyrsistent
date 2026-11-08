@@ -250,6 +250,105 @@ def test_update_no_arguments():
     assert x.update() is x
 
 
+@pytest.mark.parametrize('pairs', [list, tuple, iter])
+def test_update_item_pairs(pairs):
+    x = m(a=1)
+
+    assert x.update(pairs([('a', 2), ('b', 3), ('a', 4)])) == m(a=4, b=3)
+    assert x == m(a=1)
+
+
+def test_update_mixed_mappings_and_item_pairs():
+    x = pmap({(1, 2): 'old'})
+
+    assert x.update([((1, 2), 'first')], {(1, 2): 'second'},
+                    iter([((1, 2), 'last'), (3, 'new')])) == {(1, 2): 'last', 3: 'new'}
+
+
+def test_update_with_item_pairs_merges_each_value_in_order():
+    x = m(a='a')
+
+    assert x.update_with(add, [('a', 'b'), ('a', 'c'), ('b', 'd')],
+                         {'a': 'e'}, iter([('a', 'f'), ('b', 'g')])) == m(a='abcef', b='dg')
+    assert x == m(a='a')
+
+
+def test_update_empty_item_iterator():
+    x = m(a=1)
+
+    assert x.update(iter([])) is x
+    assert x.update_with(add, iter([])) is x
+
+
+def test_update_item_iterator_without_length_or_truth_value():
+    class Pairs:
+        def __iter__(self):
+            yield 'a', 2
+
+        def __len__(self):
+            raise AssertionError('Length is not required')
+
+        def __bool__(self):
+            raise AssertionError('Truth value is not required')
+
+    assert m(a=1).update(Pairs()) == m(a=2)
+
+
+def test_update_prefers_items_method_for_non_mapping():
+    class Items:
+        def items(self):
+            return iter([('a', 2)])
+
+        def __iter__(self):
+            raise AssertionError('Use items, not iteration over keys')
+
+    assert m(a=1).update(Items()) == m(a=2)
+
+
+def test_update_propagates_items_method_error():
+    class Items:
+        def items(self):
+            raise AttributeError('items failed')
+
+        def __iter__(self):
+            return iter([('a', 2)])
+
+    with pytest.raises(AttributeError, match='items failed'):
+        m(a=1).update(Items())
+
+
+@pytest.mark.parametrize('invalid, error', [
+    (('b',), ValueError),
+    (('b', 3, 4), ValueError),
+    (None, TypeError),
+    (([], 3), TypeError),
+])
+def test_update_invalid_item_pair_preserves_original(invalid, error):
+    x = m(a=1)
+
+    with pytest.raises(error):
+        x.update(iter([('a', 2), invalid]))
+    assert x == m(a=1)
+
+
+def test_update_item_iterator_failure_preserves_original():
+    def pairs():
+        yield 'a', 2
+        raise RuntimeError('iteration failed')
+
+    x = m(a=1)
+    with pytest.raises(RuntimeError, match='iteration failed'):
+        x.update(pairs())
+    assert x == m(a=1)
+
+
+def test_update_with_item_pairs_merger_failure_preserves_original():
+    x = m(a=1)
+    with pytest.raises(TypeError):
+        x.update_with(add, [('a', 2), ('a', 'invalid')])
+    assert x == m(a=1)
+
+
 def test_addition():
     assert m(x=1, y=2) + m(y=3, z=4) == m(x=1, y=3, z=4)
 
