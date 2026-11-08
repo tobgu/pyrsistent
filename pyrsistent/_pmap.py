@@ -319,19 +319,22 @@ class PMap(Generic[KT, VT_co]):
 
     def update(self, *maps):
         """
-        Return a new PMap with the items in Mappings inserted. If the same key is present in multiple
-        maps the rightmost (last) value is inserted.
+        Return a new PMap with the items in mappings or iterables of key/value pairs inserted.
+        Inputs are processed from left to right. If a key occurs more than once, the last value is inserted.
 
         >>> m1 = m(a=1, b=2)
         >>> m1.update(m(a=2, c=3), {'a': 17, 'd': 35}) == {'a': 17, 'b': 2, 'c': 3, 'd': 35}
+        True
+        >>> m1.update([('a', 3), ('a', 4)]) == {'a': 4, 'b': 2}
         True
         """
         return self.update_with(lambda l, r: r, *maps)
 
     def update_with(self, update_fn, *maps):
         """
-        Return a new PMap with the items in Mappings maps inserted. If the same key is present in multiple
-        maps the values will be merged using merge_fn going from left to right.
+        Return a new PMap with the items in mappings or iterables of key/value pairs inserted.
+        If a key occurs more than once, its values are merged using update_fn from left to right,
+        including repeated keys within a single iterable.
 
         >>> from operator import add
         >>> m1 = m(a=1, b=2)
@@ -346,7 +349,8 @@ class PMap(Generic[KT, VT_co]):
         """
         evolver = self.evolver()
         for map in maps:
-            for key, value in map.items():
+            items = map.items() if hasattr(map, 'items') else map
+            for key, value in items:
                 evolver.set(key, update_fn(evolver[key], value) if key in evolver else value)
 
         return evolver.persistent()

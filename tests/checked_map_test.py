@@ -50,6 +50,36 @@ def test_repr():
 
     assert str(x) == 'FloatToIntMap({1.25: 1})'
 
+def test_update_item_pairs_preserves_checked_map_type():
+    x = FloatToIntMap({1.25: 1})
+    updated = x.update(iter([(2.5, 2)]))
+
+    assert updated == {1.25: 1, 2.5: 2}
+    assert isinstance(updated, FloatToIntMap)
+    assert x == {1.25: 1}
+
+
+@pytest.mark.parametrize('pair, error', [
+    ((3, 3), CheckedKeyTypeError),
+    ((3.5, 3.0), CheckedValueTypeError),
+    ((3.5, 4), InvariantException),
+])
+def test_update_item_pairs_checks_types_and_invariants(pair, error):
+    x = FloatToIntMap({1.25: 1})
+
+    with pytest.raises(error):
+        x.update(iter([(2.5, 2), pair]))
+    assert x == {1.25: 1}
+
+
+def test_update_with_item_pairs_checks_merged_value():
+    x = FloatToIntMap({1.25: 1})
+
+    with pytest.raises(InvariantException):
+        x.update_with(lambda left, right: left + right, [(1.25, 1)])
+    assert x == {1.25: 1}
+
+
 def test_default_serialization():
     x = FloatToIntMap({1.25: 1, 2.5: 2})
 
