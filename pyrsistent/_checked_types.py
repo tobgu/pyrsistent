@@ -428,7 +428,7 @@ class CheckedPSet(PSet[T_co], CheckedType, metaclass=_CheckedTypeMeta):
                 raise InvariantException(error_codes=self._invariant_errors)
 
             if self.is_dirty() or self._destination_class != type(self._original_pset):
-                return self._destination_class(self._pmap_evolver.persistent())
+                self._original_pset = self._destination_class(self._pmap_evolver.persistent())
 
             return self._original_pset
 
@@ -542,6 +542,6 @@ class CheckedPMap(PMap[KT, VT_co], CheckedType, metaclass=_CheckedMapTypeMeta):
                 raise InvariantException(error_codes=self._invariant_errors)
 
             if self.is_dirty() or type(self._original_pmap) != self._destination_class:
-                return self._destination_class(self._buckets_evolver.persistent(), self._size)
+                self._original_pmap = self._destination_class(self._buckets_evolver.persistent(), self._size)
 
             return self._original_pmap
